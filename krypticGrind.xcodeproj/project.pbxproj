@@ -1,0 +1,448 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		E937A1322E1203EF00E3FCB5 /* ThemeSelectorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E937A1312E1203EF00E3FCB5 /* ThemeSelectorSheet.swift */; };
+		E93A8F5C2E13474A00873483 /* GeminiService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E93A8F5B2E13474A00873483 /* GeminiService.swift */; };
+		E953DE4C2E115DA400CA247C /* krypticGrindApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE4B2E115DA400CA247C /* krypticGrindApp.swift */; };
+		E953DE4E2E115DA400CA247C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE4D2E115DA400CA247C /* ContentView.swift */; };
+		E953DE502E115DA900CA247C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E953DE4F2E115DA900CA247C /* Assets.xcassets */; };
+		E953DE542E115DA900CA247C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E953DE532E115DA900CA247C /* Preview Assets.xcassets */; };
+		E953DE692E1160AD00CA247C /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE5B2E1160AD00CA247C /* Extensions.swift */; };
+		E953DE6A2E1160AD00CA247C /* HandleInputSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE5D2E1160AD00CA247C /* HandleInputSheet.swift */; };
+		E953DE6B2E1160AD00CA247C /* ContestListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE5E2E1160AD00CA247C /* ContestListView.swift */; };
+		E953DE6C2E1160AD00CA247C /* PracticeTrackerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE5F2E1160AD00CA247C /* PracticeTrackerView.swift */; };
+		E953DE6D2E1160AD00CA247C /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE602E1160AD00CA247C /* HomeView.swift */; };
+		E953DE6E2E1160AD00CA247C /* SubmissionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE612E1160AD00CA247C /* SubmissionsView.swift */; };
+		E953DE6F2E1160AD00CA247C /* RatingChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE622E1160AD00CA247C /* RatingChartView.swift */; };
+		E953DE702E1160AD00CA247C /* CFService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE642E1160AD00CA247C /* CFService.swift */; };
+		E953DE712E1160AD00CA247C /* Submission.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE662E1160AD00CA247C /* Submission.swift */; };
+		E953DE722E1160AD00CA247C /* Contest.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE672E1160AD00CA247C /* Contest.swift */; };
+		E953DE732E1160AD00CA247C /* CFUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE682E1160AD00CA247C /* CFUser.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		E937A1312E1203EF00E3FCB5 /* ThemeSelectorSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThemeSelectorSheet.swift; sourceTree = "<group>"; };
+		E93A8F5B2E13474A00873483 /* GeminiService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeminiService.swift; sourceTree = "<group>"; };
+		E953DE482E115DA400CA247C /* krypticGrind.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = krypticGrind.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E953DE4B2E115DA400CA247C /* krypticGrindApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = krypticGrindApp.swift; sourceTree = "<group>"; };
+		E953DE4D2E115DA400CA247C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		E953DE4F2E115DA900CA247C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E953DE512E115DA900CA247C /* krypticGrind.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = krypticGrind.entitlements; sourceTree = "<group>"; };
+		E953DE532E115DA900CA247C /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		E953DE5B2E1160AD00CA247C /* Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		E953DE5D2E1160AD00CA247C /* HandleInputSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HandleInputSheet.swift; sourceTree = "<group>"; };
+		E953DE5E2E1160AD00CA247C /* ContestListView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContestListView.swift; sourceTree = "<group>"; };
+		E953DE5F2E1160AD00CA247C /* PracticeTrackerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PracticeTrackerView.swift; sourceTree = "<group>"; };
+		E953DE602E1160AD00CA247C /* HomeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		E953DE612E1160AD00CA247C /* SubmissionsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubmissionsView.swift; sourceTree = "<group>"; };
+		E953DE622E1160AD00CA247C /* RatingChartView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RatingChartView.swift; sourceTree = "<group>"; };
+		E953DE642E1160AD00CA247C /* CFService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CFService.swift; sourceTree = "<group>"; };
+		E953DE662E1160AD00CA247C /* Submission.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Submission.swift; sourceTree = "<group>"; };
+		E953DE672E1160AD00CA247C /* Contest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Contest.swift; sourceTree = "<group>"; };
+		E953DE682E1160AD00CA247C /* CFUser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CFUser.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E953DE452E115DA400CA247C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E953DE3F2E115DA400CA247C = {
+			isa = PBXGroup;
+			children = (
+				E953DE4A2E115DA400CA247C /* krypticGrind */,
+				E953DE492E115DA400CA247C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E953DE492E115DA400CA247C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E953DE482E115DA400CA247C /* krypticGrind.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E953DE4A2E115DA400CA247C /* krypticGrind */ = {
+			isa = PBXGroup;
+			children = (
+				E953DE652E1160AD00CA247C /* Models */,
+				E953DE632E1160AD00CA247C /* Services */,
+				E953DE5A2E1160AD00CA247C /* Utils */,
+				E953DE5C2E1160AD00CA247C /* Views */,
+				E953DE4B2E115DA400CA247C /* krypticGrindApp.swift */,
+				E953DE4D2E115DA400CA247C /* ContentView.swift */,
+				E953DE4F2E115DA900CA247C /* Assets.xcassets */,
+				E953DE512E115DA900CA247C /* krypticGrind.entitlements */,
+				E953DE522E115DA900CA247C /* Preview Content */,
+			);
+			path = krypticGrind;
+			sourceTree = "<group>";
+		};
+		E953DE522E115DA900CA247C /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				E953DE532E115DA900CA247C /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		E953DE5A2E1160AD00CA247C /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				E953DE5B2E1160AD00CA247C /* Extensions.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		E953DE5C2E1160AD00CA247C /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				E937A1312E1203EF00E3FCB5 /* ThemeSelectorSheet.swift */,
+				E953DE5D2E1160AD00CA247C /* HandleInputSheet.swift */,
+				E953DE5E2E1160AD00CA247C /* ContestListView.swift */,
+				E953DE5F2E1160AD00CA247C /* PracticeTrackerView.swift */,
+				E953DE602E1160AD00CA247C /* HomeView.swift */,
+				E953DE612E1160AD00CA247C /* SubmissionsView.swift */,
+				E953DE622E1160AD00CA247C /* RatingChartView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		E953DE632E1160AD00CA247C /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				E93A8F5B2E13474A00873483 /* GeminiService.swift */,
+				E953DE642E1160AD00CA247C /* CFService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		E953DE652E1160AD00CA247C /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				E953DE662E1160AD00CA247C /* Submission.swift */,
+				E953DE672E1160AD00CA247C /* Contest.swift */,
+				E953DE682E1160AD00CA247C /* CFUser.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E953DE472E115DA400CA247C /* krypticGrind */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E953DE572E115DA900CA247C /* Build configuration list for PBXNativeTarget "krypticGrind" */;
+			buildPhases = (
+				E953DE442E115DA400CA247C /* Sources */,
+				E953DE452E115DA400CA247C /* Frameworks */,
+				E953DE462E115DA400CA247C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = krypticGrind;
+			productName = krypticGrind;
+			productReference = E953DE482E115DA400CA247C /* krypticGrind.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E953DE402E115DA400CA247C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1520;
+				LastUpgradeCheck = 1520;
+				TargetAttributes = {
+					E953DE472E115DA400CA247C = {
+						CreatedOnToolsVersion = 15.2;
+					};
+				};
+			};
+			buildConfigurationList = E953DE432E115DA400CA247C /* Build configuration list for PBXProject "krypticGrind" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E953DE3F2E115DA400CA247C;
+			productRefGroup = E953DE492E115DA400CA247C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E953DE472E115DA400CA247C /* krypticGrind */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E953DE462E115DA400CA247C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E953DE542E115DA900CA247C /* Preview Assets.xcassets in Resources */,
+				E953DE502E115DA900CA247C /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E953DE442E115DA400CA247C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E953DE6C2E1160AD00CA247C /* PracticeTrackerView.swift in Sources */,
+				E953DE6D2E1160AD00CA247C /* HomeView.swift in Sources */,
+				E937A1322E1203EF00E3FCB5 /* ThemeSelectorSheet.swift in Sources */,
+				E953DE6E2E1160AD00CA247C /* SubmissionsView.swift in Sources */,
+				E953DE4E2E115DA400CA247C /* ContentView.swift in Sources */,
+				E953DE702E1160AD00CA247C /* CFService.swift in Sources */,
+				E953DE732E1160AD00CA247C /* CFUser.swift in Sources */,
+				E93A8F5C2E13474A00873483 /* GeminiService.swift in Sources */,
+				E953DE6F2E1160AD00CA247C /* RatingChartView.swift in Sources */,
+				E953DE692E1160AD00CA247C /* Extensions.swift in Sources */,
+				E953DE712E1160AD00CA247C /* Submission.swift in Sources */,
+				E953DE722E1160AD00CA247C /* Contest.swift in Sources */,
+				E953DE6A2E1160AD00CA247C /* HandleInputSheet.swift in Sources */,
+				E953DE4C2E115DA400CA247C /* krypticGrindApp.swift in Sources */,
+				E953DE6B2E1160AD00CA247C /* ContestListView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		E953DE552E115DA900CA247C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		E953DE562E115DA900CA247C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		E953DE582E115DA900CA247C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = krypticGrind/krypticGrind.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"krypticGrind/Preview Content\"";
+				DEVELOPMENT_TEAM = KH96FSA6YT;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.akhilraghav.krypticGrind;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E953DE592E115DA900CA247C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = krypticGrind/krypticGrind.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"krypticGrind/Preview Content\"";
+				DEVELOPMENT_TEAM = KH96FSA6YT;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.akhilraghav.krypticGrind;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E953DE432E115DA400CA247C /* Build configuration list for PBXProject "krypticGrind" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E953DE552E115DA900CA247C /* Debug */,
+				E953DE562E115DA900CA247C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E953DE572E115DA900CA247C /* Build configuration list for PBXNativeTarget "krypticGrind" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E953DE582E115DA900CA247C /* Debug */,
+				E953DE592E115DA900CA247C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E953DE402E115DA400CA247C /* Project object */;
+}
