@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import SwiftUI
 
 // MARK: - Gemini API Models
 struct GeminiRequest: Codable {
@@ -78,6 +79,16 @@ struct AISuggestion {
             case .streak: return "red"
             }
         }
+        
+        var displayText: String {
+            switch self {
+            case .practice: return "Practice"
+            case .improvement: return "Improvement"
+            case .topic: return "Topic"
+            case .contest: return "Contest"
+            case .streak: return "Streak"
+            }
+        }
     }
     
     enum Priority: Int, CaseIterable {
@@ -94,7 +105,7 @@ struct AISuggestion {
 }
 
 // MARK: - Problem Recommendation Model
-struct ProblemRecommendation {
+struct ProblemRecommendation: Identifiable {
     let id = UUID()
     let title: String
     let difficulty: String
@@ -106,11 +117,11 @@ struct ProblemRecommendation {
     enum Priority {
         case high, medium, low
         
-        var color: String {
+        var color: Color {
             switch self {
-            case .high: return "red"
-            case .medium: return "orange"
-            case .low: return "blue"
+            case .high: return .red
+            case .medium: return .orange
+            case .low: return .blue
             }
         }
         
@@ -129,12 +140,34 @@ struct ProblemRecommendation {
 class GeminiService: ObservableObject {
     static let shared = GeminiService()
     
-    private let apiKey = "AIzaSyAA6sSSrUYbfHZePNn0TH2abg8XoSiwuYs"
-    private let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+    private let apiKey = "AIzaSyAc7AWHChXO40dNnjw2wvwCndXrd-hwQPI"
+    private let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent"
     
     @Published var isLoading = false
     @Published var suggestions: [AISuggestion] = []
     @Published var error: String?
+    
+    // MARK: - Caching for Practice Tags
+    private let tagCacheKey = "gemini_tag_cache"
+    
+    private struct TagCacheEntry: Codable {
+        let tags: [String]
+        let timestamp: Date
+    }
+    
+    private func loadTagCache() -> [String: TagCacheEntry] {
+        if let data = UserDefaults.standard.data(forKey: tagCacheKey),
+           let dict = try? JSONDecoder().decode([String: TagCacheEntry].self, from: data) {
+            return dict
+        }
+        return [:]
+    }
+    
+    private func saveTagCache(_ cache: [String: TagCacheEntry]) {
+        if let data = try? JSONEncoder().encode(cache) {
+            UserDefaults.standard.set(data, forKey: tagCacheKey)
+        }
+    }
     
     private init() {}
     
@@ -356,9 +389,20 @@ class GeminiService: ObservableObject {
         
         let (data, response) = try await URLSession.shared.data(for: urlRequest)
         
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw URLError(.badServerResponse)
+        if let httpResponse = response as? HTTPURLResponse {
+            if httpResponse.statusCode == 429 {
+                // User-friendly quota message
+                await MainActor.run {
+                    self.error = "You've reached the daily AI suggestion limit. Please try again tomorrow or check your API plan."
+                }
+                // Wait 15 seconds before allowing another attempt
+                try? await Task.sleep(nanoseconds: 15_000_000_000)
+                throw URLError(.badServerResponse)
+            } else if httpResponse.statusCode != 200 {
+                let errorString = String(data: data, encoding: .utf8) ?? ""
+                print("Gemini API error: \(httpResponse.statusCode)\n\(errorString)")
+                throw URLError(.badServerResponse)
+            }
         }
         
         let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
@@ -526,6 +570,47 @@ class GeminiService: ObservableObject {
             submission.problem.tags.contains { $0.lowercased() == topic.lowercased() }
         }.count
     }
+    
+    // MARK: - Generate Practice Tags (Optimized for Quota)
+    func generatePracticeTags(user: CFUser?, submissions: [CFSubmission]) async -> [String] {
+        let handle = user?.handle ?? "default"
+        var cache = loadTagCache()
+        if let entry = cache[handle], Date().timeIntervalSince(entry.timestamp) < 86400 {
+            return entry.tags
+        }
+        // Analyze weak topics locally
+        let accepted = submissions.filter { $0.isAccepted }
+        let allTags = accepted.flatMap { $0.problem.tags }
+        let tagCounts = Dictionary(grouping: allTags) { $0 }.mapValues { $0.count }
+        let importantTopics = ["implementation", "math", "greedy", "dp", "graph", "data structures", "binary search", "two pointers", "sorting", "strings", "number theory", "combinatorics", "geometry", "brute force"]
+        let weakTopics = importantTopics.filter { (tagCounts[$0] ?? 0) < 3 }
+        let weakTopicsString = weakTopics.isEmpty ? "various topics" : weakTopics.joined(separator: ", ")
+        let userRating = user?.rating ?? 1200
+        
+        let prompt = """
+        You are an AI coach for Codeforces. Suggest 3 Codeforces tags or topics that a user rated \(userRating) who struggles with \(weakTopicsString) should practice to improve their rating. Only output a list of tags, one per line.
+        """
+        
+        do {
+            let response = try await callGeminiAPI(prompt: prompt)
+            // Parse tags: split by newlines, commas, or bullets
+            let lines = response.components(separatedBy: .newlines)
+            let tags = lines.flatMap { line -> [String] in
+                line.replacingOccurrences(of: "-", with: "")
+                    .replacingOccurrences(of: "•", with: "")
+                    .split(separator: ",")
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            }
+            .filter { !$0.isEmpty }
+            let result = Array(Set(tags)).prefix(3).map { $0 }
+            cache[handle] = TagCacheEntry(tags: result, timestamp: Date())
+            saveTagCache(cache)
+            return result
+        } catch {
+            print("Gemini tag suggestion error: \(error)")
+            return []
+        }
+    }
 }
 
 // MARK: - User Stats Helper
@@ -539,5 +624,8 @@ struct UserStats {
     let topTopics: [String]
     let recentPerformance: String
 }
+
+// MARK: - SUGGESTION: For best quota usage, use Gemini only to generate problem ideas (offline or cached),
+// fetch URLs/resources yourself using HTTP APIs or scraping, and pass only minimal context to Gemini.
 
 

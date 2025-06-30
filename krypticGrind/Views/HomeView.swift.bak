@@ -629,6 +629,301 @@ struct ModernWelcomeCard: View {
     }
 }
 
+// MARK: - AI Problem Suggestion Card
+struct AIProblemSuggestionCard: View {
+    let user: CFUser
+    @StateObject private var geminiService = GeminiService.shared
+    @StateObject private var cfService = CFService.shared
+    @StateObject private var themeManager = ThemeManager.shared
+    @State private var recommendations: [ProblemRecommendation] = []
+    @State private var isLoading = false
+    @State private var selectedCategory: RecommendationCategory = .rankUp
+    
+    enum RecommendationCategory: String, CaseIterable {
+        case rankUp = "Rank Up"
+        case fundamentals = "Fundamentals"
+        case similar = "Similar Problems"
+        
+        var icon: String {
+            switch self {
+            case .rankUp: return "arrow.up.circle.fill"
+            case .fundamentals: return "building.columns.fill"
+            case .similar: return "repeat.circle.fill"
+            }
+        }
+        
+        var color: Color {
+            switch self {
+            case .rankUp: return .blue
+            case .fundamentals: return .orange
+            case .similar: return .purple
+            }
+        }
+        
+        var description: String {
+            switch self {
+            case .rankUp: return "Problems to help you reach the next rating"
+            case .fundamentals: return "Core concepts every programmer needs"
+            case .similar: return "Practice more of what you've solved"
+            }
+        }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header
+            HStack(spacing: 10) {
+                Image(systemName: "brain.head.profile")
+                    .font(.title3)
+                    .foregroundStyle(.blue)
+                
+                Text("AI Coach Suggestions")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                
+                Spacer()
+                
+                if !isLoading {
+                    Button(action: {
+                        Task {
+                            await generateRecommendations()
+                        }
+                    }) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            
+            // Category selector
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(RecommendationCategory.allCases, id: \.self) { category in
+                        CategoryButton(
+                            category: category,
+                            isSelected: selectedCategory == category,
+                            action: {
+                                withAnimation {
+                                    selectedCategory = category
+                                }
+                            }
+                        )
+                    }
+                }
+                .padding(.horizontal, 4)
+            }
+            
+            if isLoading {
+                HStack(spacing: 12) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("Generating personalized recommendations...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.vertical, 20)
+            } else if recommendations.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "lightbulb.fill")
+                        .font(.largeTitle)
+                        .foregroundStyle(.yellow)
+                    
+                    Text("Get Personalized Problem Recommendations")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                        .multilineTextAlignment(.center)
+                    
+                    Text("Let AI analyze your profile and suggest what to practice next")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    
+                    Button("Generate Suggestions") {
+                        Task {
+                            await generateRecommendations()
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+                    .padding(.top, 8)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+            } else {
+                // Filter recommendations based on selected category
+                let filteredRecommendations = getFilteredRecommendations()
+                
+                if filteredRecommendations.isEmpty {
+                    VStack(spacing: 8) {
+                        Text("No \(selectedCategory.rawValue.lowercased()) problems available yet")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        
+                        Button("Generate More") {
+                            Task {
+                                await generateRecommendations()
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                } else {
+                    VStack(spacing: 12) {
+                        ForEach(filteredRecommendations.prefix(3)) { recommendation in
+                            ProblemRecommendationRow(recommendation: recommendation)
+                        }
+                    }
+                }
+            }
+            
+            // View All Button
+            if !recommendations.isEmpty {
+                NavigationLink(destination: AISuggestionsView()) {
+                    Text("View All Suggestions")
+                        .font(.subheadline.bold())
+                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+                }
+            }
+        }
+        .padding()
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .task {
+            if recommendations.isEmpty && !isLoading {
+                await generateRecommendations()
+            }
+        }
+    }
+    
+    private func getFilteredRecommendations() -> [ProblemRecommendation] {
+        switch selectedCategory {
+        case .rankUp:
+            return recommendations.filter { $0.priority == .high }
+        case .fundamentals:
+            return recommendations.filter { $0.topic.contains("implementation") || $0.topic.contains("math") || $0.topic.contains("data structures") }
+        case .similar:
+            // Get topics from recent submissions and find similar problems
+            let recentTags = cfService.recentSubmissions.prefix(10)
+                .flatMap { $0.problem.tags }
+                .reduce(into: Set<String>()) { $0.insert($1) }
+            
+            return recommendations.filter { recommendation in
+                recentTags.contains { recommendation.topic.contains($0) }
+            }
+        }
+    }
+    
+    private func generateRecommendations() async {
+        isLoading = true
+        let recommendations = await geminiService.generateProblemRecommendations(
+            submissions: cfService.recentSubmissions,
+            user: user,
+            targetCount: 10
+        )
+        
+        await MainActor.run {
+            self.recommendations = recommendations
+            self.isLoading = false
+        }
+    }
+}
+
+struct CategoryButton: View {
+    let category: AIProblemSuggestionCard.RecommendationCategory
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: category.icon)
+                    .font(.headline)
+                    .foregroundStyle(isSelected ? .white : category.color)
+                
+                Text(category.rawValue)
+                    .font(.caption)
+                    .fontWeight(isSelected ? .semibold : .regular)
+                    .foregroundStyle(isSelected ? .white : .primary)
+            }
+            .frame(width: 100, height: 60)
+            .background(isSelected ? category.color : Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct ProblemRecommendationRow: View {
+    let recommendation: ProblemRecommendation
+    @Environment(\.openURL) private var openURL
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            // Priority indicator
+            Image(systemName: recommendation.priority.icon)
+                .font(.headline)
+                .foregroundStyle(recommendation.priority.color)
+                .frame(width: 24)
+            
+            // Problem info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(recommendation.title)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+                
+                Text(recommendation.reason)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                
+                HStack(spacing: 4) {
+                    Text(recommendation.topic.capitalized)
+                        .font(.caption)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.blue.opacity(0.1))
+                        .foregroundStyle(.blue)
+                        .clipShape(Capsule())
+                    
+                    Text(recommendation.difficulty)
+                        .font(.caption)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.1))
+                        .foregroundStyle(.orange)
+                        .clipShape(Capsule())
+                }
+                .padding(.top, 2)
+            }
+            
+            Spacer()
+            
+            // Solve button
+            Button {
+                if let url = URL(string: recommendation.codeforcesURL) {
+                    openURL(url)
+                }
+            } label: {
+                Text("Solve")
+                    .font(.footnote.bold())
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(.blue)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(10)
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+    }
+}
+
 #Preview {
     HomeView()
 }

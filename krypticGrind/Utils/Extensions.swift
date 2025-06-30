@@ -615,12 +615,17 @@ class ThemeManager: ObservableObject {
         let userDefaults = UserDefaults.standard
         let isDark: Bool
         
+        // Get the theme from UserDefaults instead of the actor-isolated property
+        let themeName = userDefaults.string(forKey: "selected_theme") ?? AppTheme.classic.rawValue
+        let theme = AppTheme(rawValue: themeName) ?? .classic
+        
+        // Determine dark/light mode
         if userDefaults.object(forKey: "is_dark_mode") != nil {
             isDark = userDefaults.bool(forKey: "is_dark_mode")
         } else {
             isDark = UITraitCollection.current.userInterfaceStyle == .dark
         }
         
-        return isDark ? currentTheme.darkColors : currentTheme.lightColors
+        return isDark ? theme.darkColors : theme.lightColors
     }
 }

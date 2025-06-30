@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		E937A1322E1203EF00E3FCB5 /* ThemeSelectorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E937A1312E1203EF00E3FCB5 /* ThemeSelectorSheet.swift */; };
 		E93A8F5C2E13474A00873483 /* GeminiService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E93A8F5B2E13474A00873483 /* GeminiService.swift */; };
+		E93A8F5F2E1352DB00873483 /* AISuggestionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E93A8F5D2E1352DB00873483 /* AISuggestionsView.swift */; };
+		E93A8F602E1352DB00873483 /* AIProblemSuggestionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E93A8F5E2E1352DB00873483 /* AIProblemSuggestionCard.swift */; };
 		E953DE4C2E115DA400CA247C /* krypticGrindApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE4B2E115DA400CA247C /* krypticGrindApp.swift */; };
 		E953DE4E2E115DA400CA247C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE4D2E115DA400CA247C /* ContentView.swift */; };
 		E953DE502E115DA900CA247C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E953DE4F2E115DA900CA247C /* Assets.xcassets */; };
@@ -29,6 +31,8 @@
 /* Begin PBXFileReference section */
 		E937A1312E1203EF00E3FCB5 /* ThemeSelectorSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThemeSelectorSheet.swift; sourceTree = "<group>"; };
 		E93A8F5B2E13474A00873483 /* GeminiService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeminiService.swift; sourceTree = "<group>"; };
+		E93A8F5D2E1352DB00873483 /* AISuggestionsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AISuggestionsView.swift; sourceTree = "<group>"; };
+		E93A8F5E2E1352DB00873483 /* AIProblemSuggestionCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AIProblemSuggestionCard.swift; sourceTree = "<group>"; };
 		E953DE482E115DA400CA247C /* krypticGrind.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = krypticGrind.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E953DE4B2E115DA400CA247C /* krypticGrindApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = krypticGrindApp.swift; sourceTree = "<group>"; };
 		E953DE4D2E115DA400CA247C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -110,6 +114,8 @@
 		E953DE5C2E1160AD00CA247C /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				E93A8F5E2E1352DB00873483 /* AIProblemSuggestionCard.swift */,
+				E93A8F5D2E1352DB00873483 /* AISuggestionsView.swift */,
 				E937A1312E1203EF00E3FCB5 /* ThemeSelectorSheet.swift */,
 				E953DE5D2E1160AD00CA247C /* HandleInputSheet.swift */,
 				E953DE5E2E1160AD00CA247C /* ContestListView.swift */,
@@ -212,6 +218,7 @@
 			files = (
 				E953DE6C2E1160AD00CA247C /* PracticeTrackerView.swift in Sources */,
 				E953DE6D2E1160AD00CA247C /* HomeView.swift in Sources */,
+				E93A8F5F2E1352DB00873483 /* AISuggestionsView.swift in Sources */,
 				E937A1322E1203EF00E3FCB5 /* ThemeSelectorSheet.swift in Sources */,
 				E953DE6E2E1160AD00CA247C /* SubmissionsView.swift in Sources */,
 				E953DE4E2E115DA400CA247C /* ContentView.swift in Sources */,
@@ -222,6 +229,7 @@
 				E953DE692E1160AD00CA247C /* Extensions.swift in Sources */,
 				E953DE712E1160AD00CA247C /* Submission.swift in Sources */,
 				E953DE722E1160AD00CA247C /* Contest.swift in Sources */,
+				E93A8F602E1352DB00873483 /* AIProblemSuggestionCard.swift in Sources */,
 				E953DE6A2E1160AD00CA247C /* HandleInputSheet.swift in Sources */,
 				E953DE4C2E115DA400CA247C /* krypticGrindApp.swift in Sources */,
 				E953DE6B2E1160AD00CA247C /* ContestListView.swift in Sources */,

@@ -78,22 +78,22 @@ struct ThemeSelectorSheet: View {
                                 .font(.headline)
                                 .padding(.horizontal, 16)
                                 
-                            LazyVStack(spacing: 12) {
-                                ForEach(AppTheme.allCases) { theme in
-                                    ThemeCard(
-                                        theme: theme,
-                                        isSelected: selectedTheme == theme
-                                    ) {
-                                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                                        impactFeedback.impactOccurred()
-                                        
-                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                            selectedTheme = theme
-                                            themeManager.currentTheme = theme
-                                        }
-                                    }
+                    LazyVStack(spacing: 12) {
+                        ForEach(AppTheme.allCases) { theme in
+                            ThemeCard(
+                                theme: theme,
+                                isSelected: selectedTheme == theme
+                            ) {
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                                impactFeedback.impactOccurred()
+                                
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    selectedTheme = theme
+                                    themeManager.currentTheme = theme
                                 }
                             }
+                        }
+                    }
                         }
                     }
                     .padding(.vertical, 16)

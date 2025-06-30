@@ -288,7 +288,7 @@ struct SuggestionCard: View {
                             .background(priorityColor.opacity(0.15), in: Capsule())
                             .foregroundStyle(priorityColor)
                         
-                        Text(suggestion.type.rawValue.capitalized)
+                        Text(suggestion.type.displayText)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
