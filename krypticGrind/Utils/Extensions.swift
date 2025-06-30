@@ -367,11 +367,17 @@ enum AppTheme: String, CaseIterable, Identifiable {
     }
     
     var colors: ThemeColors {
-        let themeManager = ThemeManager.shared
-        let isDark = themeManager.colorScheme == .dark || 
-                     (themeManager.colorScheme == nil && UITraitCollection.current.userInterfaceStyle == .dark)
+        // Use static value instead of accessing actor-isolated property
+        let colorScheme = UserDefaults.standard.object(forKey: "is_dark_mode") as? Bool
+        let isDarkMode: Bool
         
-        return isDark ? darkColors : lightColors
+        if let colorScheme = colorScheme {
+            isDarkMode = colorScheme
+        } else {
+            isDarkMode = UITraitCollection.current.userInterfaceStyle == .dark
+        }
+        
+        return isDarkMode ? darkColors : lightColors
     }
     
     var lightColors: ThemeColors {
@@ -605,9 +611,15 @@ class ThemeManager: ObservableObject {
         }
     }
     
-    var colors: ThemeColors {
-        let isDark = colorScheme == .dark || 
-                    (colorScheme == nil && UITraitCollection.current.userInterfaceStyle == .dark)
+    nonisolated var colors: ThemeColors {
+        let userDefaults = UserDefaults.standard
+        let isDark: Bool
+        
+        if userDefaults.object(forKey: "is_dark_mode") != nil {
+            isDark = userDefaults.bool(forKey: "is_dark_mode")
+        } else {
+            isDark = UITraitCollection.current.userInterfaceStyle == .dark
+        }
         
         return isDark ? currentTheme.darkColors : currentTheme.lightColors
     }

@@ -164,17 +164,37 @@ struct KrypticTextFieldStyle: TextFieldStyle {
     }
 }
 
+// MARK: - Settings Sheet
 struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("daily_goal") private var dailyGoal = 3
-    @AppStorage("show_notifications") private var showNotifications = true
-    @AppStorage("appearance_mode") private var appearanceMode: String = "system"
     @StateObject private var cfService = CFService.shared
     @StateObject private var themeManager = ThemeManager.shared
     @State private var showingHandleChange = false
     @State private var showingThemeSelector = false
     @State private var showingAppearanceSettings = false
-    @State private var newHandle = ""
+    @State private var newHandle: String = ""
+    @AppStorage("daily_goal") private var dailyGoal: Int = 3
+    @AppStorage("show_notifications") private var showNotifications: Bool = true
+    
+    private var systemImageForAppearanceMode: String {
+        let userDefaults = UserDefaults.standard
+        if userDefaults.object(forKey: "is_dark_mode") != nil {
+            let isDark = userDefaults.bool(forKey: "is_dark_mode")
+            return isDark ? "moon.fill" : "sun.max.fill"
+        } else {
+            return "circle.lefthalf.filled"
+        }
+    }
+    
+    private var displayNameForAppearanceMode: String {
+        let userDefaults = UserDefaults.standard
+        if userDefaults.object(forKey: "is_dark_mode") != nil {
+            let isDark = userDefaults.bool(forKey: "is_dark_mode") 
+            return isDark ? "Dark" : "Light"
+        } else {
+            return "System"
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -489,8 +509,6 @@ struct HandleChangeSheet: View {
         }
     }
 }
-
-
 
 #Preview {
     HandleInputSheet(handleInput: .constant("")) {

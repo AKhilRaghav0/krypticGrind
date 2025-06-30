@@ -10,8 +10,6 @@ import Charts
 
 struct ContentView: View {
     @StateObject private var themeManager = ThemeManager.shared
-    @AppStorage("appearance_mode") private var appearanceMode: String = "system"
-    
     var body: some View {
         TabView {
             HomeView()
@@ -39,16 +37,8 @@ struct ContentView: View {
                     Label("Practice", systemImage: "target")
                 }
         }
-        .preferredColorScheme(colorScheme)
+        .preferredColorScheme(themeManager.colorScheme)
         .tint(themeManager.colors.accent)
-    }
-    
-    private var colorScheme: ColorScheme? {
-        switch appearanceMode {
-        case "light": return .light
-        case "dark": return .dark
-        default: return nil // system
-        }
     }
 }
 
