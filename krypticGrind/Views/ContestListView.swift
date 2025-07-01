@@ -30,6 +30,22 @@ struct ContestListView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Button("Test Notification", systemImage: "bell") {
+                            NotificationManager.shared.testNotification()
+                        }
+                        Button("Test Live Activity", systemImage: "waveform.path.ecg.rectangle") {
+                            NotificationManager.shared.testLiveActivity()
+                        }
+                    } label: {
+                        Image(systemName: "bell")
+                            .imageScale(.large)
+                    }
+                    .accessibilityLabel("Test Actions")
+                }
+            }
         }
         .task {
             await cfService.fetchContests()
@@ -161,85 +177,165 @@ struct UpcomingContestCard: View {
     let contest: CFContest
     @StateObject private var themeManager = ThemeManager.shared
     @State private var showingDetails = false
+    @State private var showLiveActivityError = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Header
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(contest.name)
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(2)
-                    
-                    if let startDate = contest.startDate {
-                        Label(startDate.formatted(date: .abbreviated, time: .shortened), systemImage: "calendar")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+        ZStack {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
+            VStack(alignment: .leading, spacing: 0) {
+                // Top: Category chips
+                HStack(spacing: 8) {
+                    Chip(text: contest.type.capitalized, color: .blue)
+                    if let country = contest.country {
+                        Chip(text: country, color: .gray)
                     }
+                    Chip(text: contest.phaseDisplayText, color: contest.phaseColorValue)
                 }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 8) {
-                    // Contest phase
-                    Text(contest.phaseDisplayText)
-                        .font(.caption.weight(.semibold))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(contest.phaseColorValue.opacity(0.15), in: Capsule())
-                        .foregroundStyle(contest.phaseColorValue)
-                    
-                    // Time until start
-                    if let timeUntil = contest.timeUntilStart {
-                        HStack(spacing: 4) {
-                            Image(systemName: "clock")
-                                .font(.caption)
-                            Text(timeUntil)
-                                .font(.caption.weight(.medium))
+                .padding(.top, 16)
+                .padding(.horizontal, 16)
+                // Main info
+                HStack(alignment: .top, spacing: 16) {
+                    // Placeholder image
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Color(.systemGray5))
+                            .frame(width: 72, height: 72)
+                        Image(systemName: "trophy.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 36, height: 36)
+                            .foregroundColor(.accentColor)
+                    }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(contest.name)
+                            .font(.title3.bold())
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
+                        if let startDate = contest.startDate {
+                            HStack(spacing: 4) {
+                                Image(systemName: "calendar")
+                                    .foregroundColor(.secondary)
+                                Text(startDate.formatted(date: .abbreviated, time: .shortened))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
-                        .foregroundStyle(themeManager.colors.accent)
+                        if let timeUntil = contest.timeUntilStart {
+                            HStack(spacing: 4) {
+                                Image(systemName: "clock")
+                                    .foregroundColor(.secondary)
+                                Text(timeUntil)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(.top, 8)
+                .padding(.horizontal, 16)
+                // Info blocks
+                HStack(spacing: 16) {
+                    InfoBlock(icon: "timer", text: contest.duration)
+                    InfoBlock(icon: "person.3", text: contest.type.capitalized)
+                }
+                .padding(.top, 12)
+                .padding(.horizontal, 16)
+                // Action buttons
+                HStack(spacing: 12) {
+                    ActionButton(title: "Register", icon: "arrow.right.circle.fill", color: .blue) {
+                        if let url = URL(string: "https://codeforces.com/contest/\(contest.id)/register") {
+                            UIApplication.shared.open(url)
+                        }
+                    }
+                    ActionButton(title: "Notify", icon: "bell.fill", color: .orange) {
+                        NotificationManager.shared.scheduleNotification(
+                            title: "Contest Reminder",
+                            body: "\(contest.name) is starting soon!",
+                            date: contest.startDate ?? Date(),
+                            identifier: "contest_\(contest.id)"
+                        )
+                    }
+                    if isLiveActivitySupported {
+                        ActionButton(title: "Live", icon: "waveform.path.ecg.rectangle", color: .green) {
+                            #if canImport(ActivityKit)
+                            NotificationManager.shared.startContestLiveActivity(contest: contest)
+                            #endif
+                        }
+                    } else {
+                        ActionButton(title: "Live", icon: "waveform.path.ecg.rectangle", color: .gray.opacity(0.5)) {
+                            showLiveActivityError = true
+                        }
+                        .disabled(true)
                     }
                 }
+                .padding(.top, 16)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
             }
-            
-            // Contest details grid
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
-                ContestInfoCard(
-                    title: "Duration",
-                    value: contest.duration,
-                    icon: "timer",
-                    color: .orange
-                )
-                
-                ContestInfoCard(
-                    title: "Type",
-                    value: contest.type.capitalized,
-                    icon: "person.3",
-                    color: .blue
-                )
-            }
-            
-            // Action button
-            Button(action: {
-                if let url = URL(string: "https://codeforces.com/contest/\(contest.id)") {
-                    UIApplication.shared.open(url)
-                }
-            }) {
-                HStack {
-                    Image(systemName: "link")
-                    Text("View Contest")
-                        .font(.subheadline.weight(.medium))
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(themeManager.colors.accent.gradient, in: RoundedRectangle(cornerRadius: 10))
-                .foregroundStyle(.white)
-            }
-            .buttonStyle(.plain)
         }
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal, 4)
+        .alert(isPresented: $showLiveActivityError) {
+            Alert(title: Text("Live Activities Not Supported"), message: Text("Live Activities are not supported on this device or iOS version."), dismissButton: .default(Text("OK")))
+        }
+    }
+    var isLiveActivitySupported: Bool {
+        if #available(iOS 16.1, *), ProcessInfo.processInfo.isiOSAppOnMac == false {
+            return true
+        }
+        return false
+    }
+}
+
+// Helper UI components
+struct Chip: View {
+    let text: String
+    let color: Color
+    var body: some View {
+        Text(text)
+            .font(.caption.weight(.semibold))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(color.opacity(0.15), in: Capsule())
+            .foregroundStyle(color)
+    }
+}
+
+struct InfoBlock: View {
+    let icon: String
+    let text: String
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .foregroundColor(.accentColor)
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+        }
+        .padding(8)
+        .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+struct ActionButton: View {
+    let title: String
+    let icon: String
+    let color: Color
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                Text(title)
+            }
+            .font(.subheadline.bold())
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(color.opacity(0.15), in: Capsule())
+            .foregroundStyle(color)
+        }
     }
 }
 

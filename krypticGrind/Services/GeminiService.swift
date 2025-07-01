@@ -141,7 +141,7 @@ class GeminiService: ObservableObject {
     static let shared = GeminiService()
     
     private let apiKey = "AIzaSyAc7AWHChXO40dNnjw2wvwCndXrd-hwQPI"
-    private let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent"
+    private let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
     
     @Published var isLoading = false
     @Published var suggestions: [AISuggestion] = []

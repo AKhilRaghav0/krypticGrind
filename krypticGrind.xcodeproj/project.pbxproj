@@ -26,7 +26,40 @@
 		E953DE712E1160AD00CA247C /* Submission.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE662E1160AD00CA247C /* Submission.swift */; };
 		E953DE722E1160AD00CA247C /* Contest.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE672E1160AD00CA247C /* Contest.swift */; };
 		E953DE732E1160AD00CA247C /* CFUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953DE682E1160AD00CA247C /* CFUser.swift */; };
+		E97245AE2E135F6100AE9379 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97245AC2E135F6100AE9379 /* NotificationManager.swift */; };
+		E97245B82E1373CB00AE9379 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E97245B72E1373CB00AE9379 /* WidgetKit.framework */; };
+		E97245BA2E1373CB00AE9379 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E97245B92E1373CB00AE9379 /* SwiftUI.framework */; };
+		E97245BD2E1373CB00AE9379 /* ContestLiveActivityWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97245BC2E1373CB00AE9379 /* ContestLiveActivityWidgetBundle.swift */; };
+		E97245BF2E1373CC00AE9379 /* ContestLiveActivityWidgetLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97245BE2E1373CC00AE9379 /* ContestLiveActivityWidgetLiveActivity.swift */; };
+		E97245C12E1373CC00AE9379 /* ContestLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97245C02E1373CC00AE9379 /* ContestLiveActivityWidget.swift */; };
+		E97245C32E1373CC00AE9379 /* AppIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97245C22E1373CC00AE9379 /* AppIntent.swift */; };
+		E97245C52E1373D000AE9379 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E97245C42E1373D000AE9379 /* Assets.xcassets */; };
+		E97245C92E1373D000AE9379 /* ContestLiveActivityWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E97245B52E1373CB00AE9379 /* ContestLiveActivityWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E97245C72E1373D000AE9379 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E953DE402E115DA400CA247C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E97245B42E1373CB00AE9379;
+			remoteInfo = ContestLiveActivityWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E97245CD2E1373D000AE9379 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				E97245C92E1373D000AE9379 /* ContestLiveActivityWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		E937A1312E1203EF00E3FCB5 /* ThemeSelectorSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThemeSelectorSheet.swift; sourceTree = "<group>"; };
@@ -50,6 +83,17 @@
 		E953DE662E1160AD00CA247C /* Submission.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Submission.swift; sourceTree = "<group>"; };
 		E953DE672E1160AD00CA247C /* Contest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Contest.swift; sourceTree = "<group>"; };
 		E953DE682E1160AD00CA247C /* CFUser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CFUser.swift; sourceTree = "<group>"; };
+		E97245AC2E135F6100AE9379 /* NotificationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		E97245B02E13700900AE9379 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		E97245B52E1373CB00AE9379 /* ContestLiveActivityWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ContestLiveActivityWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E97245B72E1373CB00AE9379 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		E97245B92E1373CB00AE9379 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		E97245BC2E1373CB00AE9379 /* ContestLiveActivityWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContestLiveActivityWidgetBundle.swift; sourceTree = "<group>"; };
+		E97245BE2E1373CC00AE9379 /* ContestLiveActivityWidgetLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContestLiveActivityWidgetLiveActivity.swift; sourceTree = "<group>"; };
+		E97245C02E1373CC00AE9379 /* ContestLiveActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContestLiveActivityWidget.swift; sourceTree = "<group>"; };
+		E97245C22E1373CC00AE9379 /* AppIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntent.swift; sourceTree = "<group>"; };
+		E97245C42E1373D000AE9379 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E97245C62E1373D000AE9379 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +104,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E97245B22E1373CB00AE9379 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E97245BA2E1373CB00AE9379 /* SwiftUI.framework in Frameworks */,
+				E97245B82E1373CB00AE9379 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -67,6 +120,8 @@
 			isa = PBXGroup;
 			children = (
 				E953DE4A2E115DA400CA247C /* krypticGrind */,
+				E97245BB2E1373CB00AE9379 /* ContestLiveActivityWidget */,
+				E97245B62E1373CB00AE9379 /* Frameworks */,
 				E953DE492E115DA400CA247C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -75,6 +130,7 @@
 			isa = PBXGroup;
 			children = (
 				E953DE482E115DA400CA247C /* krypticGrind.app */,
+				E97245B52E1373CB00AE9379 /* ContestLiveActivityWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -82,6 +138,7 @@
 		E953DE4A2E115DA400CA247C /* krypticGrind */ = {
 			isa = PBXGroup;
 			children = (
+				E97245B02E13700900AE9379 /* Info.plist */,
 				E953DE652E1160AD00CA247C /* Models */,
 				E953DE632E1160AD00CA247C /* Services */,
 				E953DE5A2E1160AD00CA247C /* Utils */,
@@ -106,6 +163,7 @@
 		E953DE5A2E1160AD00CA247C /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				E97245AC2E135F6100AE9379 /* NotificationManager.swift */,
 				E953DE5B2E1160AD00CA247C /* Extensions.swift */,
 			);
 			path = Utils;
@@ -146,6 +204,28 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		E97245B62E1373CB00AE9379 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E97245B72E1373CB00AE9379 /* WidgetKit.framework */,
+				E97245B92E1373CB00AE9379 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		E97245BB2E1373CB00AE9379 /* ContestLiveActivityWidget */ = {
+			isa = PBXGroup;
+			children = (
+				E97245BC2E1373CB00AE9379 /* ContestLiveActivityWidgetBundle.swift */,
+				E97245BE2E1373CC00AE9379 /* ContestLiveActivityWidgetLiveActivity.swift */,
+				E97245C02E1373CC00AE9379 /* ContestLiveActivityWidget.swift */,
+				E97245C22E1373CC00AE9379 /* AppIntent.swift */,
+				E97245C42E1373D000AE9379 /* Assets.xcassets */,
+				E97245C62E1373D000AE9379 /* Info.plist */,
+			);
+			path = ContestLiveActivityWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -156,15 +236,34 @@
 				E953DE442E115DA400CA247C /* Sources */,
 				E953DE452E115DA400CA247C /* Frameworks */,
 				E953DE462E115DA400CA247C /* Resources */,
+				E97245CD2E1373D000AE9379 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				E97245C82E1373D000AE9379 /* PBXTargetDependency */,
 			);
 			name = krypticGrind;
 			productName = krypticGrind;
 			productReference = E953DE482E115DA400CA247C /* krypticGrind.app */;
 			productType = "com.apple.product-type.application";
+		};
+		E97245B42E1373CB00AE9379 /* ContestLiveActivityWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E97245CA2E1373D000AE9379 /* Build configuration list for PBXNativeTarget "ContestLiveActivityWidgetExtension" */;
+			buildPhases = (
+				E97245B12E1373CB00AE9379 /* Sources */,
+				E97245B22E1373CB00AE9379 /* Frameworks */,
+				E97245B32E1373CB00AE9379 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ContestLiveActivityWidgetExtension;
+			productName = ContestLiveActivityWidgetExtension;
+			productReference = E97245B52E1373CB00AE9379 /* ContestLiveActivityWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -177,6 +276,9 @@
 				LastUpgradeCheck = 1520;
 				TargetAttributes = {
 					E953DE472E115DA400CA247C = {
+						CreatedOnToolsVersion = 15.2;
+					};
+					E97245B42E1373CB00AE9379 = {
 						CreatedOnToolsVersion = 15.2;
 					};
 				};
@@ -195,6 +297,7 @@
 			projectRoot = "";
 			targets = (
 				E953DE472E115DA400CA247C /* krypticGrind */,
+				E97245B42E1373CB00AE9379 /* ContestLiveActivityWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -206,6 +309,14 @@
 			files = (
 				E953DE542E115DA900CA247C /* Preview Assets.xcassets in Resources */,
 				E953DE502E115DA900CA247C /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E97245B32E1373CB00AE9379 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E97245C52E1373D000AE9379 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -228,6 +339,7 @@
 				E953DE6F2E1160AD00CA247C /* RatingChartView.swift in Sources */,
 				E953DE692E1160AD00CA247C /* Extensions.swift in Sources */,
 				E953DE712E1160AD00CA247C /* Submission.swift in Sources */,
+				E97245AE2E135F6100AE9379 /* NotificationManager.swift in Sources */,
 				E953DE722E1160AD00CA247C /* Contest.swift in Sources */,
 				E93A8F602E1352DB00873483 /* AIProblemSuggestionCard.swift in Sources */,
 				E953DE6A2E1160AD00CA247C /* HandleInputSheet.swift in Sources */,
@@ -236,7 +348,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E97245B12E1373CB00AE9379 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E97245BF2E1373CC00AE9379 /* ContestLiveActivityWidgetLiveActivity.swift in Sources */,
+				E97245C32E1373CC00AE9379 /* AppIntent.swift in Sources */,
+				E97245C12E1373CC00AE9379 /* ContestLiveActivityWidget.swift in Sources */,
+				E97245BD2E1373CB00AE9379 /* ContestLiveActivityWidgetBundle.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E97245C82E1373D000AE9379 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E97245B42E1373CB00AE9379 /* ContestLiveActivityWidgetExtension */;
+			targetProxy = E97245C72E1373D000AE9379 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		E953DE552E115DA900CA247C /* Debug */ = {
@@ -356,6 +487,7 @@
 		E953DE582E115DA900CA247C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = krypticGrind/krypticGrind.entitlements;
@@ -366,6 +498,9 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = krypticGrind/Info.plist;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -394,6 +529,7 @@
 		E953DE592E115DA900CA247C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = krypticGrind/krypticGrind.entitlements;
@@ -404,6 +540,9 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = krypticGrind/Info.plist;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -429,6 +568,65 @@
 			};
 			name = Release;
 		};
+		E97245CB2E1373D000AE9379 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KH96FSA6YT;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ContestLiveActivityWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ContestLiveActivityWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.akhilraghav.krypticGrind.ContestLiveActivityWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E97245CC2E1373D000AE9379 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KH96FSA6YT;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ContestLiveActivityWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ContestLiveActivityWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.akhilraghav.krypticGrind.ContestLiveActivityWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -446,6 +644,15 @@
 			buildConfigurations = (
 				E953DE582E115DA900CA247C /* Debug */,
 				E953DE592E115DA900CA247C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E97245CA2E1373D000AE9379 /* Build configuration list for PBXNativeTarget "ContestLiveActivityWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E97245CB2E1373D000AE9379 /* Debug */,
+				E97245CC2E1373D000AE9379 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
