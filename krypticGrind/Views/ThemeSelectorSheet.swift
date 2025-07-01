@@ -10,29 +10,38 @@ import SwiftUI
 struct ThemeSelectorSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var themeManager = ThemeManager.shared
-    @State private var selectedTheme: AppTheme
     @State private var selectedAppearance: ColorScheme?
     
     init() {
-        _selectedTheme = State(initialValue: ThemeManager.shared.currentTheme)
         _selectedAppearance = State(initialValue: ThemeManager.shared.colorScheme)
     }
     
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color(.systemGroupedBackground)
-                    .ignoresSafeArea()
+            VStack(spacing: 0) {
+                // Large, bold title
+                HStack {
+                    Text("Appearance")
+                        .font(.largeTitle.bold())
+                        .padding(.top, 24)
+                    Spacer()
+                    Button("Done") { 
+                        themeManager.colorScheme = selectedAppearance
+                        dismiss() 
+                    }
+                    .fontWeight(.semibold)
+                    .padding(.top, 24)
+                }
+                .padding(.horizontal)
                 
                 ScrollView {
-                    VStack(spacing: 24) {
+                    VStack(alignment: .leading, spacing: 32) {
                         // Appearance Mode Selector
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 16) {
                             Text("Appearance")
                                 .font(.headline)
-                                .padding(.horizontal, 16)
-                            
-                            HStack(spacing: 12) {
+                                .padding(.horizontal, 8)
+                            HStack(spacing: 16) {
                                 AppearanceButton(
                                     title: "System",
                                     icon: "circle.lefthalf.filled",
@@ -43,7 +52,6 @@ struct ThemeSelectorSheet: View {
                                         themeManager.colorScheme = nil
                                     }
                                 }
-                                
                                 AppearanceButton(
                                     title: "Light",
                                     icon: "sun.max.fill",
@@ -54,7 +62,6 @@ struct ThemeSelectorSheet: View {
                                         themeManager.colorScheme = .light
                                     }
                                 }
-                                
                                 AppearanceButton(
                                     title: "Dark",
                                     icon: "moon.fill",
@@ -66,50 +73,15 @@ struct ThemeSelectorSheet: View {
                                     }
                                 }
                             }
-                            .padding(.horizontal, 16)
                         }
-                        
-                        Divider()
-                            .padding(.horizontal, 16)
-                        
-                        // Theme Selector
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Theme")
-                                .font(.headline)
-                                .padding(.horizontal, 16)
-                                
-                    LazyVStack(spacing: 12) {
-                        ForEach(AppTheme.allCases) { theme in
-                            ThemeCard(
-                                theme: theme,
-                                isSelected: selectedTheme == theme
-                            ) {
-                                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                                impactFeedback.impactOccurred()
-                                
-                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                    selectedTheme = theme
-                                    themeManager.currentTheme = theme
-                                }
-                            }
-                        }
+                        .padding()
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                        .padding(.horizontal)
                     }
-                        }
-                    }
-                    .padding(.vertical, 16)
-                    .padding(.bottom, 100) // Safe area for bottom
+                    .padding(.vertical)
                 }
             }
-            .navigationTitle("Appearance")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
+            .background(Color(.systemGroupedBackground))
         }
     }
 }

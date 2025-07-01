@@ -5,5 +5,6 @@ import SwiftUI
 struct ContestLiveActivityWidgetBundle: WidgetBundle {
     var body: some Widget {
         ContestLiveActivityWidgetLiveActivity()
+//        UpcomingContestsWidget()
     }
 }

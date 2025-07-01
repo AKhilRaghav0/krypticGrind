@@ -36,6 +36,11 @@ struct ContentView: View {
                 .tabItem {
                     Label("Practice", systemImage: "target")
                 }
+            
+            LeaderboardView()
+                .tabItem {
+                    Label("Leaderboard", systemImage: "trophy")
+                }
         }
         .preferredColorScheme(themeManager.colorScheme)
         .tint(themeManager.colors.accent)

@@ -164,7 +164,46 @@ struct KrypticTextFieldStyle: TextFieldStyle {
     }
 }
 
-// MARK: - Settings Sheet
+// --- SectionHeader helper ---
+struct SectionHeader: View {
+    let title: String
+    var body: some View {
+        HStack {
+            Text(title.uppercased())
+                .font(.caption2.weight(.semibold))
+                .foregroundColor(.secondary)
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+}
+
+// --- SettingsRow helper ---
+struct SettingsRow<Content: View>: View {
+    let icon: String
+    let title: String
+    var value: String? = nil
+    let content: () -> Content
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(.accentColor)
+            Text(title)
+                .font(.body)
+            Spacer()
+            if let value = value {
+                Text(value)
+                    .foregroundColor(.secondary)
+            }
+            content()
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal)
+    }
+}
+
+// --- Refactored SettingsSheet ---
 struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var cfService = CFService.shared
@@ -185,7 +224,6 @@ struct SettingsSheet: View {
             return "circle.lefthalf.filled"
         }
     }
-    
     private var displayNameForAppearanceMode: String {
         let userDefaults = UserDefaults.standard
         if userDefaults.object(forKey: "is_dark_mode") != nil {
@@ -198,164 +236,113 @@ struct SettingsSheet: View {
     
     var body: some View {
         NavigationStack {
-            Form {
-                // Profile Section
-                Section("Profile") {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Profile Card
+                    SectionHeader(title: "Profile")
                     HStack(spacing: 16) {
-                        if let user = cfService.currentUser {
-                            AsyncImage(url: URL(string: user.avatar)) { image in
+                        if let avatarURL = cfService.currentUser?.avatar, let url = URL(string: avatarURL) {
+                            AsyncImage(url: url, transaction: .init(animation: .default)) { phase in
+                                switch phase {
+                                case .empty:
+                                    ProgressView()
+                                        .frame(width: 56, height: 56)
+                                case .success(let image):
                                 image
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                            } placeholder: {
-                                Circle()
-                                    .fill(.quaternary)
-                                    .overlay {
-                                        Image(systemName: "person.fill")
-                                            .foregroundStyle(.secondary)
-                                    }
-                            }
-                            .frame(width: 44, height: 44)
-                            .clipShape(Circle())
-                        } else {
-                            Circle()
-                                .fill(.quaternary)
-                                .frame(width: 44, height: 44)
-                                .overlay {
-                                    Image(systemName: "person.fill")
-                                        .foregroundStyle(.secondary)
+                                        .frame(width: 56, height: 56)
+                                        .clipShape(Circle())
+                                        .shadow(radius: 4)
+                                case .failure:
+                                    Image(systemName: "person.crop.circle.fill")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 56, height: 56)
+                                        .foregroundColor(.secondary)
+                                @unknown default:
+                                    Image(systemName: "person.crop.circle.fill")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 56, height: 56)
+                                        .foregroundColor(.secondary)
                                 }
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            if let user = cfService.currentUser {
-                                Text(user.displayName)
-                                    .font(.headline)
-                                    .foregroundStyle(.primary)
-                                
-                                Text("@\(user.handle)")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            } else {
-                                Text("Not signed in")
-                                    .font(.headline)
-                                    .foregroundStyle(.primary)
-                                
-                                Text("Tap to add your handle")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
                             }
-                        }
-                        
+                            .id(url)
+                        } else {
+                            Image(systemName: "person.crop.circle.fill")
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 56, height: 56)
+                                .foregroundColor(.secondary)
+                                }
+                        VStack(alignment: .leading) {
+                            Text(cfService.currentUser?.displayName ?? "Akhil Raghav")
+                                .font(.title3.bold())
+                            Text("@" + (cfService.currentUser?.handle ?? "KrypticBit"))
+                                    .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            }
                         Spacer()
-                        
-                        Button("Change") {
-                            newHandle = cfService.currentUser?.handle ?? ""
-                            showingHandleChange = true
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
+                        Button("Change") { showingHandleChange = true }
+                            .buttonStyle(.bordered)
                     }
-                    .padding(.vertical, 8)
-                }
+                    .padding()
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                    .padding(.horizontal)
                 
                 // Appearance Section
-                Section("Appearance") {
-                    HStack {
-                        Label("Theme", systemImage: "paintbrush.fill")
-                        
-                        Spacer()
-                        
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text(themeManager.currentTheme.displayName)
-                                .font(.subheadline)
-                                .foregroundStyle(.primary)
-                            
-                            Text(themeManager.currentTheme.description)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        Button("Change") {
-                            showingThemeSelector = true
-                        }
+                    SectionHeader(title: "Appearance")
+                    VStack(spacing: 12) {
+                        SettingsRow(icon: "paintbrush.fill", title: "Theme", value: themeManager.currentTheme.displayName) {
+                            Button("Change") { showingThemeSelector = true }
                         .buttonStyle(.bordered)
-                        .controlSize(.small)
-                    }
-                    .padding(.vertical, 4)
-                    
-                    HStack {
-                        Label("Appearance Mode", systemImage: systemImageForAppearanceMode)
-                        
-                        Spacer()
-                        
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text(displayNameForAppearanceMode)
-                                .font(.subheadline)
-                                .foregroundStyle(.primary)
-                            
-                            Text("Light, Dark, or System")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
                         }
-                        
-                        Button("Change") {
-                            showingAppearanceSettings = true
-                        }
+                        SettingsRow(icon: systemImageForAppearanceMode, title: "Appearance Mode", value: displayNameForAppearanceMode) {
+                            Button("Change") { showingAppearanceSettings = true }
                         .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        }
                     }
-                    .padding(.vertical, 4)
-                }
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                    .padding(.horizontal)
                 
                 // Preferences Section
-                Section("Preferences") {
-                    HStack {
-                        Label("Daily Goal", systemImage: "target")
-                        
-                        Spacer()
-                        
-                        Stepper("\(dailyGoal) problems", value: $dailyGoal, in: 1...20)
+                    SectionHeader(title: "Preferences")
+                    VStack(spacing: 12) {
+                        SettingsRow(icon: "target", title: "Daily Goal") {
+                            Stepper("", value: $dailyGoal, in: 1...20)
                             .labelsHidden()
                     }
-                    
-                    Toggle(isOn: $showNotifications) {
-                        Label("Notifications", systemImage: "bell.fill")
+                        SettingsRow(icon: "bell.fill", title: "Notifications") {
+                            Toggle("", isOn: $showNotifications)
+                                .labelsHidden()
+                        }
                     }
-                }
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                    .padding(.horizontal)
                 
                 // About Section
-                Section("About") {
-                    HStack {
-                        Label("Version", systemImage: "info.circle.fill")
-                        Spacer()
-                        Text("1.0.0")
-                            .foregroundStyle(.secondary)
+                    SectionHeader(title: "About")
+                    VStack(spacing: 12) {
+                        SettingsRow(icon: "info.circle.fill", title: "Version", value: "1.0.0") { EmptyView() }
+                        SettingsRow(icon: "heart.fill", title: "Made with 💜", value: "KrypticVerse") { EmptyView() }
                     }
-                    
-                    HStack {
-                        Label("Made with 💜", systemImage: "heart.fill")
-                        Spacer()
-                        Text("KrypticVerse")
-                            .foregroundStyle(.secondary)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                    .padding(.horizontal)
                     }
-                }
+                .padding(.vertical)
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
+                    Button("Done") { dismiss() }
                     .fontWeight(.semibold)
                 }
             }
             .sheet(isPresented: $showingHandleChange) {
                 HandleChangeSheet(currentHandle: newHandle) { handle in
-                    Task {
-                        await cfService.fetchAllUserData(handle: handle)
-                    }
+                    Task { await cfService.fetchAllUserData(handle: handle) }
                     showingHandleChange = false
                 }
                 .presentationDetents([.medium])
@@ -448,33 +435,20 @@ struct HandleChangeSheet: View {
                         .background(.red.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
                     }
                     
-                    HStack(spacing: 12) {
+                    HStack(spacing: 16) {
                         Button("Cancel") {
                             dismiss()
                         }
                         .buttonStyle(.bordered)
                         .frame(maxWidth: .infinity)
                         
-                        Button(action: submitHandle) {
-                            HStack(spacing: 8) {
-                                if cfService.isLoading {
-                                    ProgressView()
-                                        .scaleEffect(0.9)
-                                } else {
-                                    Image(systemName: "checkmark")
-                                }
-                                
-                                Text(cfService.isLoading ? "Updating..." : "Update")
-                                    .fontWeight(.semibold)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(isButtonEnabled ? .blue : .gray, in: RoundedRectangle(cornerRadius: 12))
-                            .foregroundStyle(.white)
+                        Button("Update") {
+                            submitHandle()
                         }
-                        .disabled(!isButtonEnabled)
-                        .buttonStyle(.plain)
+                        .buttonStyle(.borderedProminent)
+                            .frame(maxWidth: .infinity)
                     }
+                    .padding(.top, 12)
                 }
                 
                 Spacer()

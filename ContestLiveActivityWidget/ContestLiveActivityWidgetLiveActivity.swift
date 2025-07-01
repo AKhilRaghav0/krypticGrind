@@ -2,14 +2,6 @@ import ActivityKit
 import WidgetKit
 import SwiftUI
 
-struct ContestCountdownAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
-        var startDate: Date
-        var endDate: Date
-    }
-    var contestName: String
-}
-
 struct ContestLiveActivityWidgetLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: ContestCountdownAttributes.self) { context in
@@ -88,7 +80,10 @@ struct ContestLiveActivityWidgetLiveActivity: Widget {
                 Image(systemName: "trophy.fill")
                     .foregroundColor(.yellow)
             } compactTrailing: {
-                Text(timerInterval: context.state.startDate...context.state.endDate, countsDown: true)
+                let remaining = max(context.state.endDate.timeIntervalSinceNow, 0)
+                let minutes = Int(remaining) / 60
+                let seconds = Int(remaining) % 60
+                Text(String(format: "%d:%02d", minutes, seconds))
                     .font(.caption2.monospacedDigit())
                     .foregroundColor(.white)
             } minimal: {

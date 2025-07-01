@@ -74,7 +74,7 @@ class NotificationManager {
     func testLiveActivity() {
         print("[LiveActivity] Test Live Activity triggered")
         let now = Date()
-        let end = now.addingTimeInterval(60) // 1 minute from now
+        let end = now.addingTimeInterval(3 * 60) // 3 minutes from now
         let attributes = ContestCountdownAttributes(contestName: "Test Live Activity")
         let state = ContestCountdownAttributes.ContentState(startDate: now, endDate: end)
         if #available(iOS 16.1, *) {
@@ -92,11 +92,5 @@ class NotificationManager {
 }
 
 #if canImport(ActivityKit)
-struct ContestCountdownAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
-        var startDate: Date
-        var endDate: Date
-    }
-    var contestName: String
-}
+// ContestCountdownAttributes is defined in ContestLiveActivityWidgetLiveActivity.swift
 #endif 

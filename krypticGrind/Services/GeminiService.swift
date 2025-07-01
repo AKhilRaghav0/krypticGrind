@@ -611,6 +611,89 @@ class GeminiService: ObservableObject {
             return []
         }
     }
+    
+    // MARK: - Simple Practice Suggestion for RecommendationsCard
+    func getPracticeSuggestion(completion: @escaping (Result<String, Error>) -> Void) {
+        // You can customize the prompt as needed
+        let prompt = "Based on my recent coding practice, what is one area or topic I should focus on to improve my competitive programming skills? Please keep the suggestion short and actionable."
+        
+        let request = GeminiRequest(
+            contents: [
+                .init(parts: [.init(text: prompt)])
+            ],
+            generationConfig: .init(temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: 60)
+        )
+        
+        guard let url = URL(string: baseURL + "?key=" + apiKey) else {
+            completion(.failure(NSError(domain: "GeminiService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+            return
+        }
+        
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.httpBody = try? JSONEncoder().encode(request)
+        
+        let task = URLSession.shared.dataTask(with: urlRequest) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            guard let data = data else {
+                completion(.failure(NSError(domain: "GeminiService", code: 2, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+                return
+            }
+            do {
+                let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
+                let suggestion = geminiResponse.candidates.first?.content.parts.first?.text ?? "No suggestion available."
+                completion(.success(suggestion))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+        task.resume()
+    }
+    
+    // MARK: - Personalized Practice Suggestion for RecommendationsCard
+    func getPersonalizedPracticeSuggestion(problemsSummary: String, completion: @escaping (Result<String, Error>) -> Void) {
+        let prompt = "Here are my 10 most recent competitive programming problems and their results. Based on this, give me only the single most important, actionable topic or area to focus on. Respond with just the topic or advice, no extra explanation or generic statements.\n\n" + problemsSummary
+        let request = GeminiRequest(
+            contents: [
+                .init(parts: [.init(text: prompt)])
+            ],
+            generationConfig: .init(temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: 60)
+        )
+        guard let url = URL(string: baseURL + "?key=" + apiKey) else {
+            completion(.failure(NSError(domain: "GeminiService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+            return
+        }
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.httpBody = try? JSONEncoder().encode(request)
+        let task = URLSession.shared.dataTask(with: urlRequest) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            guard let data = data else {
+                completion(.failure(NSError(domain: "GeminiService", code: 2, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+                return
+            }
+            do {
+                let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
+                var suggestion = geminiResponse.candidates.first?.content.parts.first?.text ?? "No suggestion available."
+                // Post-process: Only keep the first actionable sentence or phrase
+                if let firstLine = suggestion.components(separatedBy: .newlines).first(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) {
+                    suggestion = firstLine
+                }
+                completion(.success(suggestion))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+        task.resume()
+    }
 }
 
 // MARK: - User Stats Helper

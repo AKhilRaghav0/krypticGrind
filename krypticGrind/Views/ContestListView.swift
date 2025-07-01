@@ -39,6 +39,9 @@ struct ContestListView: View {
                         Button("Test Live Activity", systemImage: "waveform.path.ecg.rectangle") {
                             NotificationManager.shared.testLiveActivity()
                         }
+                        Button("Remove Live Tile", systemImage: "xmark.circle") {
+                            NotificationManager.shared.endContestLiveActivity()
+                        }
                     } label: {
                         Image(systemName: "bell")
                             .imageScale(.large)

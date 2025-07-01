@@ -355,6 +355,66 @@ class CFService: ObservableObject {
             return submission.isAccepted && submissionDate >= today && submissionDate < tomorrow
         }.count
     }
+    
+    func recentProblemsSummary(count: Int = 10) -> String {
+        let recent = Array(recentSubmissions.prefix(count))
+        var summary = "Recent problems:\n"
+        for (i, sub) in recent.enumerated() {
+            let tags = sub.problem.tags.joined(separator: ", ")
+            let verdict = sub.verdict
+            summary += "\(i+1). \(sub.problem.name) (tags: \(tags)) - \(verdict)\n"
+        }
+        return summary
+    }
+    
+    // MARK: - Fetch Submission Source Code
+    func fetchSubmissionSourceCode(submissionId: Int) async -> String? {
+        logger.info("📄 Fetching source code for submission: \(submissionId)")
+        
+        do {
+            let url = URL(string: "https://codeforces.com/contest/\(submissionId)/submission/\(submissionId)")!
+            logger.debug("📡 Source code URL: \(url.absoluteString)")
+            
+            let (data, response) = try await session.data(from: url)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                logger.info("📊 Source code HTTP Status: \(httpResponse.statusCode)")
+                
+                if httpResponse.statusCode == 200 {
+                    if let htmlString = String(data: data, encoding: .utf8) {
+                        // Extract source code from HTML
+                        return extractSourceCodeFromHTML(htmlString)
+                    }
+                }
+            }
+        } catch {
+            logger.error("💥 Failed to fetch source code: \(error.localizedDescription)")
+        }
+        
+        return nil
+    }
+    
+    private func extractSourceCodeFromHTML(_ html: String) -> String? {
+        // Simple extraction - look for <pre> tags containing code
+        let pattern = #"<pre[^>]*>(.*?)</pre>"#
+        
+        if let regex = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators]) {
+            let range = NSRange(html.startIndex..<html.endIndex, in: html)
+            if let match = regex.firstMatch(in: html, options: [], range: range) {
+                if let range = Range(match.range(at: 1), in: html) {
+                    let code = String(html[range])
+                    // Decode HTML entities
+                    return code.replacingOccurrences(of: "&lt;", with: "<")
+                               .replacingOccurrences(of: "&gt;", with: ">")
+                               .replacingOccurrences(of: "&amp;", with: "&")
+                               .replacingOccurrences(of: "&quot;", with: "\"")
+                               .replacingOccurrences(of: "&#39;", with: "'")
+                }
+            }
+        }
+        
+        return nil
+    }
 }
 
 // MARK: - Error Handling & Retry

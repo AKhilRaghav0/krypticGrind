@@ -58,6 +58,12 @@ struct PracticeTrackerView: View {
                             RecommendationsCard()
                         }
                         
+                        // Review Later Card
+                        ReviewLaterPreviewCard()
+                        
+                        // Topic Progression
+                        TopicProgressionCard()
+                        
                         // Progress Insights
                         ProgressInsightsCard()
                     }
@@ -118,12 +124,14 @@ struct AnalysisTab: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(
-                isSelected ? type.color.gradient : themeManager.colors.surface.gradient,
-                in: Capsule()
+                Capsule().fill(
+                    isSelected ? AnyShapeStyle(type.color) : AnyShapeStyle(.ultraThinMaterial)
             )
+            )
+
             .overlay(
                 Capsule()
-                    .stroke(isSelected ? Color.clear : Color.gray.opacity(0.3), lineWidth: 1)
+                    .stroke(isSelected ? Color.clear : Color.gray.opacity(0.15), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -174,7 +182,7 @@ struct AnalysisChart: View {
             }
         }
         .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
     
     private func getDifficultyStatistics() -> [(String, Int)] {
@@ -198,18 +206,12 @@ struct HorizontalBarChart: View {
     
     var body: some View {
         Chart {
-            ForEach(Array(data.enumerated()), id: \.offset) { index, item in
+            ForEach(Array(data.enumerated()), id: \ .offset) { index, item in
                 BarMark(
                     x: .value("Count", item.1),
                     y: .value("Category", item.0)
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.blue, .purple],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
+                .foregroundStyle(Color.accentColor)
                 .cornerRadius(4)
             }
         }
@@ -225,7 +227,7 @@ struct HorizontalBarChart: View {
         .chartYAxis {
             AxisMarks(values: .automatic) { _ in
                 AxisValueLabel()
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
             }
         }
     }
@@ -236,18 +238,12 @@ struct VerticalBarChart: View {
     
     var body: some View {
         Chart {
-            ForEach(Array(data.enumerated()), id: \.offset) { index, item in
+            ForEach(Array(data.enumerated()), id: \ .offset) { index, item in
                 BarMark(
                     x: .value("Category", item.0),
                     y: .value("Count", item.1)
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.blue, .purple],
-                        startPoint: .bottom,
-                        endPoint: .top
-                    )
-                )
+                .foregroundStyle(Color.accentColor)
                 .cornerRadius(4)
             }
         }
@@ -255,7 +251,7 @@ struct VerticalBarChart: View {
         .chartXAxis {
             AxisMarks(values: .automatic) { _ in
                 AxisValueLabel()
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
             }
         }
         .chartYAxis {
@@ -289,7 +285,7 @@ struct PieChartView: View {
     }
     
     private func pieColor(for index: Int) -> Color {
-        let colors: [Color] = [.blue, .purple, .green, .orange, .red, .yellow, .pink, .cyan]
+        let colors: [Color] = [.blue, .green, .orange, .red, .yellow, .pink, .cyan, .purple]
         return colors[index % colors.count]
     }
 }
@@ -402,7 +398,7 @@ struct PracticeStatsGrid: View {
             }
         }
         .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -420,28 +416,65 @@ struct PracticeStatCard: View {
             
             Text(value)
                 .font(.title3.bold())
-                .foregroundColor(.white)
+                .foregroundColor(.primary)
             
             Text(title)
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color.gray.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
     }
 }
 
 struct RecommendationsCard: View {
     @StateObject private var cfService = CFService.shared
+    @State private var geminiSuggestion: String? = nil
+    @State private var isLoadingGemini = false
+    @State private var geminiError: String? = nil
+    @State private var lastHandle: String? = UserDefaults.standard.savedHandle
+    @Namespace private var animation
+    @State private var isFetchingProblems = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 22) {
             Label("Recommendations", systemImage: "lightbulb.fill")
                 .font(.headline.bold())
                 .foregroundStyle(.primary)
             
+            // Gemini suggestion section
+            Group {
+                if isLoadingGemini || isFetchingProblems {
+                    ProgressView(isFetchingProblems ? "Fetching recent problems..." : "Fetching AI suggestion...")
+                        .font(.caption)
+                } else if let error = geminiError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                } else if let suggestion = geminiSuggestion, !suggestion.isEmpty {
+                    Button(action: { /* TODO: Hook up action */ }) {
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "sparkle")
+                                .foregroundColor(.accentColor)
+                            Text(suggestion)
+                                .font(.body.weight(.semibold))
+                                .foregroundColor(.primary)
+                                .multilineTextAlignment(.leading)
+                        }
+                        .padding(10)
+                        .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .matchedGeometryEffect(id: "geminiSuggestion", in: animation)
+                    }
+                    .buttonStyle(.plain)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: geminiSuggestion)
+                }
+            }
+
+            Divider().padding(.vertical, 2)
+
             let tagStats = cfService.getTagStatistics()
             let totalSolved = tagStats.values.reduce(0, +)
             
@@ -450,7 +483,7 @@ struct RecommendationsCard: View {
                     .font(.body)
                     .foregroundColor(.gray)
             } else {
-                let weakTags = getWeakTags(tagStats: tagStats)
+                let weakTags = getTopWeakTags(tagStats: tagStats, limit: 2)
                 
                 if weakTags.isEmpty {
                     Text("Great work! You're well-balanced across different topics.")
@@ -460,34 +493,86 @@ struct RecommendationsCard: View {
                     Text("Consider practicing these topics:")
                         .font(.subheadline)
                         .foregroundColor(.gray)
-                    
-                    LazyVGrid(columns: [
-                        GridItem(.adaptive(minimum: 100))
-                    ], spacing: 8) {
-                        ForEach(weakTags, id: \.self) { tag in
-                            Text(tag)
-                                .font(.caption.bold())
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.orange.opacity(0.2))
-                                .foregroundColor(.orange)
-                                .cornerRadius(6)
-                        }
-                    }
+                        .padding(.bottom, 2)
+
+                    FlexibleTagGrid(tags: weakTags, animation: animation)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: weakTags)
                 }
             }
         }
         .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .onAppear {
+            fetchAndSuggest()
+        }
+        .onChange(of: UserDefaults.standard.savedHandle) { newHandle in
+            if lastHandle != newHandle {
+                lastHandle = newHandle
+                geminiSuggestion = nil
+                fetchAndSuggest()
+            }
+        }
+    }
+
+    private func fetchAndSuggest() {
+        guard !isLoadingGemini && geminiSuggestion == nil else { return }
+        isFetchingProblems = true
+        geminiError = nil
+        Task {
+            // Always fetch latest submissions before suggesting
+            if let handle = UserDefaults.standard.savedHandle {
+                await cfService.fetchUserSubmissions(handle: handle, count: 20)
+                        }
+            isFetchingProblems = false
+            isLoadingGemini = true
+            let problemsSummary = cfService.recentProblemsSummary(count: 10)
+            GeminiService.shared.getPersonalizedPracticeSuggestion(problemsSummary: problemsSummary) { result in
+                DispatchQueue.main.async {
+                    isLoadingGemini = false
+                    switch result {
+                    case .success(let suggestion):
+                        withAnimation {
+                            geminiSuggestion = suggestion
+                        }
+                    case .failure:
+                        geminiError = "Could not fetch AI suggestion."
+                    }
+                }
+            }
+        }
     }
     
-    private func getWeakTags(tagStats: [String: Int]) -> [String] {
+    private func getTopWeakTags(tagStats: [String: Int], limit: Int) -> [String] {
         let commonTags = ["implementation", "math", "greedy", "dp", "graphs", "strings", "sorting", "binary search"]
         let avgCount = tagStats.values.reduce(0, +) / max(tagStats.count, 1)
-        
-        return commonTags.filter { tag in
+        let weakTags = commonTags.filter { tag in
             (tagStats[tag] ?? 0) < avgCount / 2
-        }.prefix(6).map { $0 }
+        }
+        .sorted { (tagStats[$0] ?? 0) < (tagStats[$1] ?? 0) }
+        return Array(weakTags.prefix(limit))
+    }
+}
+
+struct FlexibleTagGrid: View {
+    let tags: [String]
+    var animation: Namespace.ID? = nil
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 80), spacing: 8)], spacing: 8) {
+            ForEach(tags, id: \.self) { tag in
+                Button(action: { /* TODO: Hook up tag action */ }) {
+                    Text(tag)
+                        .font(.caption.weight(.medium))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.orange.opacity(0.18), in: Capsule())
+                        .foregroundColor(.orange)
+                        .shadow(color: .black.opacity(0.04), radius: 2, x: 0, y: 1)
+                        .scaleEffect(0.98)
+                        .matchedGeometryEffect(id: tag, in: animation ?? Namespace().wrappedValue)
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 }
 
@@ -527,7 +612,7 @@ struct ProgressInsightsCard: View {
             }
         }
         .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
     
     private func getMostUsedLanguage() -> String {
@@ -598,6 +683,514 @@ struct InsightRow: View {
                 .font(.subheadline.bold())
                 .foregroundColor(.white)
         }
+    }
+}
+
+struct ReviewLaterPreviewCard: View {
+    @StateObject private var problemDataManager = ProblemDataManager.shared
+    @StateObject private var cfService = CFService.shared
+    @State private var showingReviewLaterView = false
+    
+    var reviewLaterCount: Int {
+        problemDataManager.getReviewLaterProblems().count
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Label("Review Later", systemImage: "bookmark")
+                    .font(.headline.bold())
+                    .foregroundStyle(.primary)
+                
+                Spacer()
+                
+                if reviewLaterCount > 0 {
+                    Text("\(reviewLaterCount)")
+                        .font(.headline.bold())
+                        .foregroundStyle(.orange)
+                }
+            }
+            
+            if reviewLaterCount == 0 {
+                VStack(spacing: 12) {
+                    Image(systemName: "bookmark")
+                        .font(.system(size: 40))
+                        .foregroundStyle(.orange.opacity(0.6))
+                    
+                    VStack(spacing: 4) {
+                        Text("No Problems to Review")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.primary)
+                        
+                        Text("Mark problems from your submissions to review them later")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+            } else {
+                VStack(spacing: 12) {
+                    // Show up to 3 recent review later problems
+                    ForEach(Array(problemDataManager.getReviewLaterProblems().prefix(3)), id: \.id) { reviewLater in
+                        if let submission = cfService.recentSubmissions.first(where: { $0.problem.problemId == reviewLater.problemId }) {
+                            ReviewLaterPreviewRow(submission: submission, reviewLater: reviewLater)
+                        }
+                    }
+                    
+                    if reviewLaterCount > 3 {
+                        Text("+ \(reviewLaterCount - 3) more")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            
+            Button(action: {
+                showingReviewLaterView = true
+            }) {
+                HStack {
+                    Text(reviewLaterCount > 0 ? "View All" : "Start Reviewing")
+                        .font(.subheadline.weight(.medium))
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                }
+                .foregroundStyle(.orange)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
+                .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+            }
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .sheet(isPresented: $showingReviewLaterView) {
+            ReviewLaterView()
+        }
+    }
+}
+
+struct ReviewLaterPreviewRow: View {
+    let submission: CFSubmission
+    let reviewLater: ProblemReviewLater
+    @StateObject private var themeManager = ThemeManager.shared
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Problem info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(submission.problem.name)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                
+                HStack(spacing: 8) {
+                    Text(submission.problem.index)
+                        .font(.caption.weight(.semibold))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(.blue.opacity(0.15), in: RoundedRectangle(cornerRadius: 4))
+                        .foregroundStyle(.blue)
+                    
+                    if let rating = submission.problem.rating {
+                        Text("\(rating)")
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.ratingColor(for: rating).opacity(0.15), in: RoundedRectangle(cornerRadius: 4))
+                            .foregroundStyle(Color.ratingColor(for: rating))
+                    }
+                    
+                    Text(submission.verdictDisplayText)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(Color.verdictColor(for: submission.verdict ?? ""))
+                }
+            }
+            
+            Spacer()
+            
+            // Bookmark icon
+            Image(systemName: "bookmark.fill")
+                .font(.caption)
+                .foregroundStyle(.orange)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+struct TopicProgressionCard: View {
+    @StateObject private var cfService = CFService.shared
+    @State private var showingAllTopics = false
+    
+    var topTopics: [(String, Int)] {
+        Array(cfService.getTagStatistics()
+            .sorted { $0.value > $1.value }
+            .prefix(6))
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Label("Topic Progression", systemImage: "chart.bar.fill")
+                    .font(.headline.bold())
+                    .foregroundStyle(.primary)
+                
+                Spacer()
+                
+                if !topTopics.isEmpty {
+                    Button("View All") {
+                        showingAllTopics = true
+                    }
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.blue)
+                }
+            }
+            
+            if topTopics.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "chart.bar")
+                        .font(.system(size: 40))
+                        .foregroundStyle(.blue.opacity(0.6))
+                    
+                    VStack(spacing: 4) {
+                        Text("No Topic Data")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.primary)
+                        
+                        Text("Solve more problems to see your topic progression")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(topTopics, id: \.0) { topic, count in
+                        TopicProgressRow(topic: topic, count: count, maxCount: topTopics.first?.1 ?? 1)
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .sheet(isPresented: $showingAllTopics) {
+            TopicProgressionView()
+        }
+    }
+}
+
+struct TopicProgressRow: View {
+    let topic: String
+    let count: Int
+    let maxCount: Int
+    @StateObject private var themeManager = ThemeManager.shared
+    
+    private var progress: Double {
+        guard maxCount > 0 else { return 0 }
+        return Double(count) / Double(maxCount)
+    }
+    
+    private var progressColor: Color {
+        if progress >= 0.8 { return .green }
+        else if progress >= 0.5 { return .orange }
+        else { return .blue }
+    }
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Text(topic.capitalized())
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.primary)
+                
+                Spacer()
+                
+                Text("\(count)")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(progressColor)
+            }
+            
+            // Progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(height: 6)
+                    
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(progressColor.gradient)
+                        .frame(width: geometry.size.width * progress, height: 6)
+                        .animation(.easeInOut(duration: 0.5), value: progress)
+                }
+            }
+            .frame(height: 6)
+        }
+    }
+}
+
+struct TopicProgressionView: View {
+    @StateObject private var cfService = CFService.shared
+    @StateObject private var themeManager = ThemeManager.shared
+    @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
+    
+    var filteredTopics: [(String, Int)] {
+        let allTopics = Array(cfService.getTagStatistics()
+            .sorted { $0.value > $1.value })
+        
+        if searchText.isEmpty {
+            return allTopics
+        }
+        
+        return allTopics.filter { topic, _ in
+            topic.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                themeManager.colors.background
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Search Bar
+                    SearchBar(searchText: $searchText)
+                        .padding()
+                    
+                    if filteredTopics.isEmpty {
+                        EmptyTopicProgressionView(searchText: searchText)
+                    } else {
+                        TopicProgressionList(topics: filteredTopics)
+                    }
+                }
+            }
+            .navigationTitle("Topic Progression")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundStyle(themeManager.colors.accent)
+                }
+            }
+        }
+        .task {
+            if let handle = UserDefaults.standard.savedHandle {
+                await cfService.fetchUserSubmissions(handle: handle, count: 200)
+            }
+        }
+    }
+}
+
+struct TopicProgressionList: View {
+    let topics: [(String, Int)]
+    @StateObject private var themeManager = ThemeManager.shared
+    
+    var maxCount: Int {
+        topics.first?.1 ?? 1
+    }
+    
+    var body: some View {
+        ScrollView {
+            LazyVStack(spacing: 16) {
+                ForEach(topics, id: \.0) { topic, count in
+                    TopicProgressionDetailCard(topic: topic, count: count, maxCount: maxCount)
+                }
+            }
+            .padding()
+        }
+    }
+}
+
+struct TopicProgressionDetailCard: View {
+    let topic: String
+    let count: Int
+    let maxCount: Int
+    @StateObject private var themeManager = ThemeManager.shared
+    @StateObject private var cfService = CFService.shared
+    
+    private var progress: Double {
+        guard maxCount > 0 else { return 0 }
+        return Double(count) / Double(maxCount)
+    }
+    
+    private var progressColor: Color {
+        if progress >= 0.8 { return .green }
+        else if progress >= 0.5 { return .orange }
+        else { return .blue }
+    }
+    
+    private var problemsInTopic: [CFSubmission] {
+        cfService.recentSubmissions.filter { submission in
+            submission.isAccepted && submission.problem.tags.contains(topic)
+        }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(topic.capitalized())
+                        .font(.headline.bold())
+                        .foregroundStyle(.primary)
+                    
+                    Text("\(count) problems solved")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                Text("\(Int(progress * 100))%")
+                    .font(.title2.bold())
+                    .foregroundStyle(progressColor)
+            }
+            
+            // Progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(height: 8)
+                    
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(progressColor.gradient)
+                        .frame(width: geometry.size.width * progress, height: 8)
+                        .animation(.easeInOut(duration: 0.5), value: progress)
+                }
+            }
+            .frame(height: 8)
+            
+            // Recent problems in this topic
+            if !problemsInTopic.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Recent Problems")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.primary)
+                    
+                    ForEach(Array(problemsInTopic.prefix(3)), id: \.id) { submission in
+                        HStack {
+                            Text(submission.problem.name)
+                                .font(.caption)
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                            
+                            Spacer()
+                            
+                            if let rating = submission.problem.rating {
+                                Text("\(rating)")
+                                    .font(.caption.weight(.semibold))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.ratingColor(for: rating).opacity(0.15), in: RoundedRectangle(cornerRadius: 4))
+                                    .foregroundStyle(Color.ratingColor(for: rating))
+                            }
+                        }
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+struct EmptyTopicProgressionView: View {
+    let searchText: String
+    @StateObject private var themeManager = ThemeManager.shared
+    
+    var body: some View {
+        VStack(spacing: 24) {
+            VStack(spacing: 16) {
+                Image(systemName: "chart.bar")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.blue.gradient)
+                
+                VStack(spacing: 8) {
+                    Text(emptyTitle)
+                        .font(.title2.bold())
+                        .foregroundStyle(.primary)
+                    
+                    Text(emptyMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+            }
+            
+            if searchText.isEmpty {
+                Button("Start Practicing") {
+                    if let url = URL(string: "https://codeforces.com/problemset") {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+    }
+    
+    private var emptyTitle: String {
+        if searchText.isEmpty {
+            return "No Topic Data"
+        } else {
+            return "No Matching Topics"
+        }
+    }
+    
+    private var emptyMessage: String {
+        if searchText.isEmpty {
+            return "Solve more problems to see your topic progression and identify your strengths and weaknesses."
+        } else {
+            return "No topics match your search. Try different keywords or clear the search."
+        }
+    }
+}
+
+// MARK: - Reusable SearchBar
+struct SearchBar: View {
+    @Binding var searchText: String
+    @StateObject private var themeManager = ThemeManager.shared
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .font(.subheadline)
+            
+            TextField("Search topics...", text: $searchText)
+                .foregroundStyle(.primary)
+            
+            if !searchText.isEmpty {
+                Button(action: {
+                    searchText = ""
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.tertiary)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
