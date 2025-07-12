@@ -1,53 +1,32 @@
-//
-//  ContentView.swift
-//  KrypticGrind
-//
-//  Created by akhil on 29/06/25.
-//
-
+// Depends on MainTab and CustomTabBar from Views/CustomTabBar.swift
 import SwiftUI
 import Charts
 
 struct ContentView: View {
+    @State private var selectedTab: MainTab = .home
     @StateObject private var themeManager = ThemeManager.shared
+
     var body: some View {
-        TabView {
-            NavigationView {
-                FontTestView()
+        ZStack(alignment: .bottom) {
+            Group {
+                switch selectedTab {
+                case .rating:
+                    RatingChartView()
+                case .submissions:
+                    SubmissionsView()
+                case .home:
+                    HomeView()
+                case .contests:
+                    ContestListView()
+                case .practice:
+                    PracticeTrackerView() // You can merge Leaderboard here if needed
+                }
             }
-            .tabItem {
-                Label("Test", systemImage: "textformat")
-            }
-            
-            HomeView()
-                .tabItem {
-                    Label("Home", systemImage: "house.fill")
-                }
-            
-            RatingChartView()
-                .tabItem {
-                    Label("Rating", systemImage: "chart.line.uptrend.xyaxis")
-                }
-            
-            SubmissionsView()
-                .tabItem {
-                    Label("Submissions", systemImage: "doc.text.fill")
-                }
-            
-            ContestListView()
-                .tabItem {
-                    Label("Contests", systemImage: "trophy.fill")
-                }
-            
-            PracticeTrackerView()
-                .tabItem {
-                    Label("Practice", systemImage: "target")
-                }
-            
-            LeaderboardView()
-                .tabItem {
-                    Label("Leaderboard", systemImage: "trophy")
-                }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.lightLavender.ignoresSafeArea())
+
+            CustomTabBar(selectedTab: $selectedTab)
+                .padding(.bottom, 8)
         }
         .preferredColorScheme(themeManager.colorScheme)
         .tint(themeManager.colors.accent)

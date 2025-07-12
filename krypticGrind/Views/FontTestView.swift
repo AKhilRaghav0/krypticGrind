@@ -6,32 +6,32 @@ struct FontTestView: View {
             VStack(alignment: .leading, spacing: 20) {
                 // Font showcase
                 Group {
-                    Text("Fabrizio Font Test")
-                        .font(.fabrizioLargeTitle)
+                    Text("TT Phobos Font Test")
+                        .font(.ttphobosLargeTitle)
                         .foregroundColor(.primary)
                     
                     Text("Large Title")
-                        .font(.fabrizioTitle)
+                        .font(.ttphobosTitle)
                         .foregroundColor(.secondary)
                     
                     Text("Title 2")
-                        .font(.fabrizioTitle2)
+                        .font(.ttphobosTitle2)
                         .foregroundColor(.primary)
                     
                     Text("Headline")
-                        .font(.fabrizioHeadline)
+                        .font(.ttphobosHeadline)
                         .foregroundColor(.primary)
                     
-                    Text("Body text with Fabrizio font. This is how your problem descriptions will look.")
-                        .font(.fabrizioBody)
+                    Text("Body text with TT Phobos font. This is how your problem descriptions will look.")
+                        .font(.ttphobosBody)
                         .foregroundColor(.primary)
                     
                     Text("Callout text")
-                        .font(.fabrizioCallout)
+                        .font(.ttphobosCallout)
                         .foregroundColor(.secondary)
                     
                     Text("Caption text")
-                        .font(.fabrizioCaption)
+                        .font(.ttphobosCaption)
                         .foregroundColor(.secondary)
                 }
                 
@@ -40,31 +40,31 @@ struct FontTestView: View {
                 // Icon showcase
                 Group {
                     Text("Icon System")
-                        .font(.fabrizioTitle2)
+                        .font(.ttphobosTitle2)
                         .foregroundColor(.primary)
                     
                     HStack(spacing: 20) {
-                        AppIcon(.search, size: 24)
-                        AppIcon(.brain, size: 24)
-                        AppIcon(.trophy, size: 24)
-                        AppIcon(.star, size: 24)
-                        AppIcon(.bookmark, size: 24)
+                        AppIcon("magnifyingglass")
+                        AppIcon("brain")
+                        AppIcon("trophy")
+                        AppIcon("star.fill", color: .yellow)
+                        AppIcon("bookmark")
                     }
                     
                     HStack(spacing: 20) {
-                        AppIcon(.video, size: 24)
-                        AppIcon(.gear, size: 24)
-                        AppIcon(.speaker, size: 24)
-                        AppIcon(.house, size: 24)
-                        AppIcon(.chart, size: 24)
+                        AppIcon("video")
+                        AppIcon("gearshape")
+                        AppIcon("speaker.wave.2")
+                        AppIcon("house")
+                        AppIcon("chart.line.uptrend.xyaxis")
                     }
                     
                     HStack(spacing: 20) {
-                        AppIcon(.target, size: 24)
-                        AppIcon(.note, size: 24)
-                        AppIcon(.play, size: 24)
-                        AppIcon(.pause, size: 24)
-                        AppIcon(.stop, size: 24)
+                        AppIcon("target")
+                        AppIcon("note.text")
+                        AppIcon("play.fill")
+                        AppIcon("pause.fill")
+                        AppIcon("stop.fill")
                     }
                 }
                 
@@ -73,19 +73,17 @@ struct FontTestView: View {
                 // Button showcase
                 Group {
                     Text("Icon Buttons")
-                        .font(.fabrizioTitle2)
+                        .font(.ttphobosTitle2)
                         .foregroundColor(.primary)
                     
                     HStack(spacing: 15) {
-                        IconButton(.play, size: 24) {
+                        IconButton("play.fill") {
                             print("Play tapped")
                         }
-                        
-                        IconButton(.pause, size: 24) {
+                        IconButton("pause.fill") {
                             print("Pause tapped")
                         }
-                        
-                        IconButton(.stop, size: 24) {
+                        IconButton("stop.fill") {
                             print("Stop tapped")
                         }
                     }
@@ -99,43 +97,39 @@ struct FontTestView: View {
                 // Sample CP problem card
                 Group {
                     Text("Sample Problem Card")
-                        .font(.fabrizioTitle2)
+                        .font(.ttphobosTitle2)
                         .foregroundColor(.primary)
                     
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Text("1512C - A-B Palindrome")
-                                .font(.fabrizioHeadline)
+                                .font(.ttphobosHeadline)
                                 .foregroundColor(.primary)
                             Spacer()
                             HStack(spacing: 4) {
-                                AppIcon(.star, size: 16, color: .yellow)
+                                AppIcon("star.fill", size: 16, color: .yellow)
                                 Text("1200")
-                                    .font(.fabrizioCaption)
+                                    .font(.ttphobosCaption)
                                     .foregroundColor(.secondary)
                             }
                         }
                         
                         Text("DP, Greedy")
-                            .font(.fabrizioCaption)
+                            .font(.ttphobosCaption)
                             .foregroundColor(.blue)
                         
                         HStack {
-                            IconButton(.brain, size: 20) {
+                            IconButton("brain", size: 20) {
                                 print("AI Explain tapped")
                             }
-                            
-                            IconButton(.speaker, size: 20) {
+                            IconButton("speaker.wave.2", size: 20) {
                                 print("Voice Explain tapped")
                             }
-                            
-                            IconButton(.video, size: 20) {
+                            IconButton("video", size: 20) {
                                 print("Generate Video tapped")
                             }
-                            
                             Spacer()
-                            
-                            IconButton(.bookmark, size: 20) {
+                            IconButton("bookmark", size: 20) {
                                 print("Save tapped")
                             }
                         }

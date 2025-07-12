@@ -6,9 +6,12 @@
 	<true/>
 	<key>UIAppFonts</key>
 	<array>
-		<string>Fonts/Fabrizio-Regular.ttf</string>
-		<string>Fonts/Fabrizio-Medium.ttf</string>
-		<string>Fonts/Fabrizio-Bold.ttf</string>
+		<string>Fonts/TT Phobos Trial Regular.otf</string>
+		<string>Fonts/TT Phobos Trial Bold.otf</string>
+		<string>Fonts/TT Phobos Trial DemiBold.otf</string>
+		<string>Fonts/TT Phobos Trial Light.otf</string>
+		<string>Fonts/TT Phobos Trial Italic.otf</string>
+		<string>Fonts/TT Phobos Trial Bold Italic.otf</string>
 	</array>
 </dict>
 </plist>

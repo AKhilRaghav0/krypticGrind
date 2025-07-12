@@ -34,6 +34,12 @@
 		E97245C32E1373CC00AE9379 /* AppIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97245C22E1373CC00AE9379 /* AppIntent.swift */; };
 		E97245C52E1373D000AE9379 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E97245C42E1373D000AE9379 /* Assets.xcassets */; };
 		E97245C92E1373D000AE9379 /* ContestLiveActivityWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E97245B52E1373CB00AE9379 /* ContestLiveActivityWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E985EAEB2E231F3F00C54711 /* ColorPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = E985EAEA2E231F3F00C54711 /* ColorPalette.swift */; };
+		E985EAED2E231F5800C54711 /* CustomTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E985EAEC2E231F5800C54711 /* CustomTabBar.swift */; };
+		E9B5AE132E2257CF00D264FA /* IconSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B5AE112E2257CE00D264FA /* IconSystem.swift */; };
+		E9B5AE142E2257CF00D264FA /* FontExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B5AE122E2257CF00D264FA /* FontExtension.swift */; };
+		E9B5AE162E22581800D264FA /* FontTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B5AE152E22581800D264FA /* FontTestView.swift */; };
+		E9B5AE182E22582A00D264FA /* Fonts in Resources */ = {isa = PBXBuildFile; fileRef = E9B5AE172E22582A00D264FA /* Fonts */; };
 		E9BE03B12E13905B00FF868F /* LiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97245D02E1373E000AE9379 /* LiveActivityAttributes.swift */; };
 		E9BE03B22E13905C00FF868F /* LiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97245D02E1373E000AE9379 /* LiveActivityAttributes.swift */; };
 		E9BE03B52E13BADF00FF868F /* LeaderboardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9BE03B32E13BADF00FF868F /* LeaderboardManager.swift */; };
@@ -99,6 +105,12 @@
 		E97245C42E1373D000AE9379 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E97245C62E1373D000AE9379 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E97245D02E1373E000AE9379 /* LiveActivityAttributes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LiveActivityAttributes.swift; sourceTree = "<group>"; };
+		E985EAEA2E231F3F00C54711 /* ColorPalette.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ColorPalette.swift; sourceTree = "<group>"; };
+		E985EAEC2E231F5800C54711 /* CustomTabBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomTabBar.swift; sourceTree = "<group>"; };
+		E9B5AE112E2257CE00D264FA /* IconSystem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IconSystem.swift; sourceTree = "<group>"; };
+		E9B5AE122E2257CF00D264FA /* FontExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FontExtension.swift; sourceTree = "<group>"; };
+		E9B5AE152E22581800D264FA /* FontTestView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FontTestView.swift; sourceTree = "<group>"; };
+		E9B5AE172E22582A00D264FA /* Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Fonts; sourceTree = "<group>"; };
 		E9BE03B32E13BADF00FF868F /* LeaderboardManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LeaderboardManager.swift; sourceTree = "<group>"; };
 		E9BE03B42E13BADF00FF868F /* ProblemNote.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProblemNote.swift; sourceTree = "<group>"; };
 		E9BE03B72E13BC1900FF868F /* LeaderboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
@@ -147,6 +159,7 @@
 		E953DE4A2E115DA400CA247C /* krypticGrind */ = {
 			isa = PBXGroup;
 			children = (
+				E9B5AE172E22582A00D264FA /* Fonts */,
 				E97245B02E13700900AE9379 /* Info.plist */,
 				E953DE652E1160AD00CA247C /* Models */,
 				E953DE632E1160AD00CA247C /* Services */,
@@ -172,6 +185,9 @@
 		E953DE5A2E1160AD00CA247C /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				E985EAEA2E231F3F00C54711 /* ColorPalette.swift */,
+				E9B5AE122E2257CF00D264FA /* FontExtension.swift */,
+				E9B5AE112E2257CE00D264FA /* IconSystem.swift */,
 				E97245AC2E135F6100AE9379 /* NotificationManager.swift */,
 				E953DE5B2E1160AD00CA247C /* Extensions.swift */,
 			);
@@ -181,6 +197,8 @@
 		E953DE5C2E1160AD00CA247C /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				E985EAEC2E231F5800C54711 /* CustomTabBar.swift */,
+				E9B5AE152E22581800D264FA /* FontTestView.swift */,
 				E9BE03B92E13BCDF00FF868F /* ReviewLaterView.swift */,
 				E9BE03B72E13BC1900FF868F /* LeaderboardView.swift */,
 				E93A8F5E2E1352DB00873483 /* AIProblemSuggestionCard.swift */,
@@ -257,6 +275,8 @@
 				E97245C82E1373D000AE9379 /* PBXTargetDependency */,
 			);
 			name = krypticGrind;
+			packageProductDependencies = (
+			);
 			productName = krypticGrind;
 			productReference = E953DE482E115DA400CA247C /* krypticGrind.app */;
 			productType = "com.apple.product-type.application";
@@ -305,6 +325,9 @@
 				Base,
 			);
 			mainGroup = E953DE3F2E115DA400CA247C;
+			packageReferences = (
+				E9B5AE192E2262E700D264FA /* XCRemoteSwiftPackageReference "swift" */,
+			);
 			productRefGroup = E953DE492E115DA400CA247C /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -320,6 +343,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E9B5AE182E22582A00D264FA /* Fonts in Resources */,
 				E953DE542E115DA900CA247C /* Preview Assets.xcassets in Resources */,
 				E953DE502E115DA900CA247C /* Assets.xcassets in Resources */,
 			);
@@ -340,23 +364,28 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E9B5AE142E2257CF00D264FA /* FontExtension.swift in Sources */,
 				E953DE6C2E1160AD00CA247C /* PracticeTrackerView.swift in Sources */,
 				E9BE03B12E13905B00FF868F /* LiveActivityAttributes.swift in Sources */,
 				E9BE03B62E13BADF00FF868F /* ProblemNote.swift in Sources */,
 				E953DE6D2E1160AD00CA247C /* HomeView.swift in Sources */,
 				E93A8F5F2E1352DB00873483 /* AISuggestionsView.swift in Sources */,
 				E937A1322E1203EF00E3FCB5 /* ThemeSelectorSheet.swift in Sources */,
+				E9B5AE162E22581800D264FA /* FontTestView.swift in Sources */,
 				E953DE6E2E1160AD00CA247C /* SubmissionsView.swift in Sources */,
 				E953DE4E2E115DA400CA247C /* ContentView.swift in Sources */,
 				E953DE702E1160AD00CA247C /* CFService.swift in Sources */,
+				E9B5AE132E2257CF00D264FA /* IconSystem.swift in Sources */,
 				E953DE732E1160AD00CA247C /* CFUser.swift in Sources */,
 				E9BE03BA2E13BCDF00FF868F /* ReviewLaterView.swift in Sources */,
 				E93A8F5C2E13474A00873483 /* GeminiService.swift in Sources */,
 				E953DE6F2E1160AD00CA247C /* RatingChartView.swift in Sources */,
+				E985EAED2E231F5800C54711 /* CustomTabBar.swift in Sources */,
 				E9BE03B52E13BADF00FF868F /* LeaderboardManager.swift in Sources */,
 				E953DE692E1160AD00CA247C /* Extensions.swift in Sources */,
 				E953DE712E1160AD00CA247C /* Submission.swift in Sources */,
 				E97245AE2E135F6100AE9379 /* NotificationManager.swift in Sources */,
+				E985EAEB2E231F3F00C54711 /* ColorPalette.swift in Sources */,
 				E953DE722E1160AD00CA247C /* Contest.swift in Sources */,
 				E93A8F602E1352DB00873483 /* AIProblemSuggestionCard.swift in Sources */,
 				E9BE03B82E13BC1900FF868F /* LeaderboardView.swift in Sources */,
@@ -676,6 +705,17 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E9B5AE192E2262E700D264FA /* XCRemoteSwiftPackageReference "swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/phosphor-icons/swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 	};
 	rootObject = E953DE402E115DA400CA247C /* Project object */;
 }
