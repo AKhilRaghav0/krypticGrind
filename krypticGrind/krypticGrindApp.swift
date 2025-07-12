@@ -13,6 +13,9 @@ struct KrypticGrindApp: App {
     @StateObject private var themeManager = ThemeManager.shared
     
     init() {
+        // Register custom fonts
+        Font.registerFonts()
+        
         NotificationManager.shared.requestAuthorization()
         UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
     }

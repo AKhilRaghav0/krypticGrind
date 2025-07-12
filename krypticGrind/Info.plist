@@ -4,5 +4,11 @@
 <dict>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Fonts/Fabrizio-Regular.ttf</string>
+		<string>Fonts/Fabrizio-Medium.ttf</string>
+		<string>Fonts/Fabrizio-Bold.ttf</string>
+	</array>
 </dict>
 </plist>

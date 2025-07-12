@@ -12,6 +12,13 @@ struct ContentView: View {
     @StateObject private var themeManager = ThemeManager.shared
     var body: some View {
         TabView {
+            NavigationView {
+                FontTestView()
+            }
+            .tabItem {
+                Label("Test", systemImage: "textformat")
+            }
+            
             HomeView()
                 .tabItem {
                     Label("Home", systemImage: "house.fill")
