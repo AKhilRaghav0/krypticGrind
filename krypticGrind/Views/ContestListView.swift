@@ -56,12 +56,12 @@ struct ContestToggle: View {
             }) {
                 Text("Upcoming")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(showingFinished ? themeManager.colors.textSecondary : .white)
+                    .foregroundStyle(showingFinished ? themeManager.colors.textSecondary : themeManager.colors.textPrimary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(showingFinished ? Color(.systemBackground).opacity(0.9) : themeManager.colors.accent)
+                            .fill(showingFinished ? themeManager.colors.surface.opacity(0.9) : themeManager.colors.accent)
                             .shadow(color: showingFinished ? Color.black.opacity(0.05) : themeManager.colors.accent.opacity(0.3), radius: 8, y: 2)
                     )
             }
@@ -71,12 +71,12 @@ struct ContestToggle: View {
             }) {
                 Text("Recent")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(showingFinished ? .white : themeManager.colors.textSecondary)
+                    .foregroundStyle(showingFinished ? themeManager.colors.textPrimary : themeManager.colors.textSecondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(showingFinished ? themeManager.colors.accent : Color(.systemBackground).opacity(0.9))
+                            .fill(showingFinished ? themeManager.colors.accent : themeManager.colors.surface.opacity(0.9))
                             .shadow(color: showingFinished ? themeManager.colors.accent.opacity(0.3) : Color.black.opacity(0.05), radius: 8, y: 2)
                     )
             }
@@ -84,7 +84,7 @@ struct ContestToggle: View {
         .padding(4)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(.systemBackground).opacity(0.9))
+                .fill(themeManager.colors.surface.opacity(0.9))
                 .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
         )
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: showingFinished)
@@ -236,7 +236,7 @@ struct UpcomingContestCard: View {
                 ActionButton(
                     title: "Notify",
                     icon: "bell.fill",
-                    color: .orange
+                    color: themeManager.colors.warning
                 ) {
                     NotificationManager.shared.scheduleNotification(
                         title: "Contest Reminder",
@@ -271,7 +271,7 @@ struct UpcomingContestCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground).opacity(0.9))
+                .fill(themeManager.colors.surface.opacity(0.9))
                 .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
         )
         .alert("Live Activity Not Supported", isPresented: $showLiveActivityError) {
@@ -291,43 +291,46 @@ struct UpcomingContestCard: View {
 
 struct ContestTypeBadge: View {
     let type: String
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         Text(type.capitalized)
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(.white)
+            .foregroundStyle(themeManager.colors.textPrimary)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(.blue)
+                    .fill(themeManager.colors.accent)
             )
     }
 }
 
 struct ContestCountryBadge: View {
     let country: String
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         Text(country)
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(.white)
+            .foregroundStyle(themeManager.colors.textPrimary)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(.gray)
+                    .fill(themeManager.colors.textSecondary)
             )
     }
 }
 
 struct ContestPhaseBadge: View {
     let phase: String
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         Text(phaseDisplayText)
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(.white)
+            .foregroundStyle(themeManager.colors.textPrimary)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(
@@ -349,12 +352,12 @@ struct ContestPhaseBadge: View {
     
     private var phaseColor: Color {
         switch phase {
-        case "BEFORE": return .blue
-        case "CODING": return .green
-        case "PENDING_SYSTEM_TEST": return .orange
-        case "SYSTEM_TEST": return .orange
-        case "FINISHED": return .gray
-        default: return .gray
+        case "BEFORE": return themeManager.colors.accent
+        case "CODING": return themeManager.colors.success
+        case "PENDING_SYSTEM_TEST": return themeManager.colors.warning
+        case "SYSTEM_TEST": return themeManager.colors.warning
+        case "FINISHED": return themeManager.colors.textSecondary
+        default: return themeManager.colors.textSecondary
         }
     }
 }
@@ -364,6 +367,7 @@ struct ActionButton: View {
     let icon: String
     let color: Color
     let action: () -> Void
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         Button(action: action) {
@@ -374,7 +378,7 @@ struct ActionButton: View {
                 Text(title)
                     .font(.system(size: 14, weight: .semibold))
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(themeManager.colors.textPrimary)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(
@@ -409,6 +413,7 @@ struct ContestInfoCard: View {
     let value: String
     let icon: String
     let color: Color
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         VStack(spacing: 8) {
@@ -423,16 +428,16 @@ struct ContestInfoCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(themeManager.colors.textPrimary)
                 
                 Text(title)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeManager.colors.textSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding()
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+        .background(themeManager.colors.textSecondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
     }
 }
 
@@ -446,13 +451,13 @@ struct FinishedContestCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(contest.name)
                         .font(.headline.bold())
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(themeManager.colors.textPrimary)
                         .lineLimit(2)
                     
                     if let startDate = contest.startDate {
                         Text("Held on \(startDate.formatted())")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(themeManager.colors.textSecondary)
                     }
                 }
                 
@@ -462,8 +467,8 @@ struct FinishedContestCard: View {
                     .font(.caption.bold())
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.gray.opacity(0.2))
-                    .foregroundStyle(.secondary)
+                    .background(themeManager.colors.textSecondary.opacity(0.2))
+                    .foregroundStyle(themeManager.colors.textSecondary)
                     .cornerRadius(6)
             }
             
@@ -494,7 +499,7 @@ struct FinishedContestCard: View {
             }
         }
         .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -502,21 +507,22 @@ struct ContestInfoItem: View {
     let title: String
     let value: String
     let icon: String
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(themeManager.colors.textSecondary)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeManager.colors.textSecondary)
                 
                 Text(value)
                     .font(.caption.bold())
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(themeManager.colors.textPrimary)
             }
         }
     }
@@ -524,23 +530,24 @@ struct ContestInfoItem: View {
 
 struct EmptyContestsView: View {
     let isUpcoming: Bool
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: isUpcoming ? "calendar" : "checkmark.circle")
                 .font(.system(size: 50))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(themeManager.colors.textSecondary)
             
             Text(isUpcoming ? "No upcoming contests" : "Loading recent contests...")
                 .font(.title3.bold())
-                .foregroundStyle(.primary)
+                .foregroundStyle(themeManager.colors.textPrimary)
             
             Text(isUpcoming ? 
                  "Check back later for new contests" : 
                  "Please wait while we fetch contest data"
             )
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(themeManager.colors.textSecondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -565,7 +572,7 @@ struct ContestDetailSheet: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(contest.name)
                                 .font(.title2.bold())
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(themeManager.colors.textPrimary)
                             
                             HStack {
                                 Text(contest.phaseDisplayText)
@@ -580,13 +587,13 @@ struct ContestDetailSheet: View {
                             }
                         }
                         .padding()
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
                         
                         // Contest Details
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Details")
                                 .font(.headline.bold())
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(themeManager.colors.textPrimary)
                             
                             if let startDate = contest.startDate {
                                 InfoRow(title: "Start Time", value: startDate.formatted())
@@ -608,21 +615,21 @@ struct ContestDetailSheet: View {
                             }
                         }
                         .padding()
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
                         
                         // Description
                         if let description = contest.description, !description.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Description")
                                     .font(.headline.bold())
-                                    .foregroundStyle(.primary)
+                                    .foregroundStyle(themeManager.colors.textPrimary)
                                 
                                 Text(description)
                                     .font(.body)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(themeManager.colors.textSecondary)
                             }
                             .padding()
-                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                            .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
                         }
                         
                         // Action Button
@@ -633,7 +640,7 @@ struct ContestDetailSheet: View {
                         }) {
                             Label("Open in Codeforces", systemImage: "link")
                                 .font(.headline.bold())
-                                .foregroundStyle(.white)
+                                .foregroundStyle(themeManager.colors.textPrimary)
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .background(themeManager.colors.accent)
