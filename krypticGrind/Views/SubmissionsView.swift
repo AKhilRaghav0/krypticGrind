@@ -14,7 +14,6 @@ struct SubmissionsView: View {
     @State private var searchText = ""
     
     enum SubmissionFilter: String, CaseIterable {
-
         case all = "All"
         case accepted = "Accepted"
         case wrongAnswer = "Wrong Answer"
@@ -68,28 +67,33 @@ struct SubmissionsView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Search Bar
-                SubmissionsSearchBar(searchText: $searchText)
-                    .padding()
+            ZStack {
+                themeManager.colors.background
+                    .ignoresSafeArea()
                 
-                // Filter Tabs
-                FilterTabs(selectedFilter: $selectedFilter)
-                    .padding(.horizontal)
-                
-                // Submissions List
-                if filteredSubmissions.isEmpty {
-                    EmptySubmissionsView(filter: selectedFilter)
-                } else {
-                    SubmissionsList(submissions: filteredSubmissions)
+                VStack(spacing: 0) {
+                    // Search Bar
+                    SubmissionsSearchBar(searchText: $searchText)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 8)
+                    
+                    // Filter Tabs
+                    FilterTabs(selectedFilter: $selectedFilter)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                    
+                    // Submissions List
+                    if filteredSubmissions.isEmpty {
+                        EmptySubmissionsView(filter: selectedFilter)
+                    } else {
+                        SubmissionsList(submissions: filteredSubmissions)
+                    }
                 }
             }
-            .background(themeManager.colors.background)
             .navigationTitle("Submissions")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.inline)
         }
+        .tint(themeManager.colors.accent)
         .task {
             if let handle = UserDefaults.standard.savedHandle {
                 await cfService.fetchUserSubmissions(handle: handle, count: 100)
@@ -105,24 +109,30 @@ struct SubmissionsSearchBar: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-                .font(.subheadline)
+                .foregroundStyle(themeManager.colors.textSecondary)
+                .font(.system(size: 16, weight: .medium))
             
             TextField("Search problems, languages...", text: $searchText)
-                .foregroundStyle(.primary)
+                .foregroundStyle(themeManager.colors.textPrimary)
+                .font(.system(size: 16, weight: .regular))
             
             if !searchText.isEmpty {
                 Button(action: {
                     searchText = ""
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(themeManager.colors.textSecondary)
+                        .font(.system(size: 16))
                 }
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.05), radius: 8, y: 2)
+        )
     }
 }
 
@@ -132,7 +142,7 @@ struct FilterTabs: View {
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: 12) {
                 ForEach(SubmissionsView.SubmissionFilter.allCases, id: \.self) { filter in
                     FilterTab(
                         filter: filter,
@@ -142,7 +152,7 @@ struct FilterTabs: View {
                     }
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 4)
         }
     }
 }
@@ -157,21 +167,18 @@ struct FilterTab: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: filter.systemImage)
-                    .font(.subheadline)
+                    .font(.system(size: 14, weight: .medium))
                 
                 Text(filter.rawValue)
-                    .font(.subheadline.weight(.medium))
+                    .font(.system(size: 14, weight: .medium))
             }
-            .foregroundStyle(isSelected ? .white : .primary)
+            .foregroundStyle(isSelected ? .white : themeManager.colors.textPrimary)
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.vertical, 10)
             .background(
-                isSelected ? filter.color.gradient : themeManager.colors.surface.gradient,
-                in: Capsule()
-            )
-            .overlay(
-                Capsule()
-                    .stroke(isSelected ? Color.clear : Color.gray.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(isSelected ? themeManager.colors.accent : Color(.systemBackground).opacity(0.9))
+                    .shadow(color: isSelected ? themeManager.colors.accent.opacity(0.3) : Color.black.opacity(0.05), radius: 8, y: 2)
             )
         }
         .buttonStyle(.plain)
@@ -186,12 +193,13 @@ struct SubmissionsList: View {
     
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
+            LazyVStack(spacing: 16) {
                 ForEach(submissions) { submission in
                     SubmissionCard(submission: submission)
                 }
             }
-            .padding()
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
         }
     }
 }
@@ -199,123 +207,147 @@ struct SubmissionsList: View {
 struct SubmissionCard: View {
     let submission: CFSubmission
     @StateObject private var themeManager = ThemeManager.shared
-    @State private var showingProblemDetails = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header with problem info
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(submission.problem.name)
-                        .font(.headline.weight(.medium))
-                        .foregroundStyle(.primary)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(themeManager.colors.textPrimary)
                         .lineLimit(2)
                     
-                    HStack(spacing: 8) {
-                        // Problem index
-                        Text(submission.problem.index)
-                            .font(.caption.weight(.semibold))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(.blue.opacity(0.15), in: RoundedRectangle(cornerRadius: 6))
-                            .foregroundStyle(.blue)
-                        
-                        // Problem rating
-                        if let rating = submission.problem.rating {
-                            Text("\(rating)")
-                                .font(.caption.weight(.semibold))
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .background(Color.ratingColor(for: rating).opacity(0.15), in: RoundedRectangle(cornerRadius: 6))
-                                .foregroundStyle(Color.ratingColor(for: rating))
-                        }
-                    }
-                }
-                
-                Spacer()
-                
-                // Verdict and time
-                VStack(alignment: .trailing, spacing: 4) {
-                    HStack(spacing: 4) {
-                        Image(systemName: submission.isAccepted ? "checkmark.circle.fill" : "xmark.circle.fill")
-                            .font(.subheadline)
-                        
-                        Text(submission.verdictDisplayText)
-                            .font(.subheadline.weight(.medium))
-                    }
-                    .foregroundStyle(Color.verdictColor(for: submission.verdict ?? ""))
-                    
-                    Text(submission.submissionDate.timeAgo())
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            
-            // Programming language and additional details
-            HStack(spacing: 16) {
-                Label(submission.programmingLanguage, systemImage: "chevron.left.forwardslash.chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                
-                if submission.memoryConsumedBytes > 0 {
-                    Label("\(submission.memoryConsumedBytes / 1024) KB", systemImage: "memorychip")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                
-                if submission.timeConsumedMillis > 0 {
-                    Label("\(submission.timeConsumedMillis) ms", systemImage: "clock")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                
-                Spacer()
-            }
-            
-            // Tags (if any)
-            if !submission.problem.tags.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(submission.problem.tags.prefix(5), id: \.self) { tag in
-                            Text(tag)
-                                .font(.caption2.weight(.medium))
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .background(.purple.opacity(0.15), in: RoundedRectangle(cornerRadius: 6))
-                                .foregroundStyle(.purple)
-                        }
-                    }
-                    .padding(.horizontal, 1)
-                }
-            }
-            
-            // Action Buttons
-            HStack(spacing: 12) {
-                Button(action: {
-                    if let url = URL(string: submission.problem.problemUrl) {
-                        UIApplication.shared.open(url)
-                    }
-                }) {
-                    Label("View Problem", systemImage: "safari")
-                        .font(.caption.weight(.medium))
+                    Text(submission.problem.index)
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(themeManager.colors.accent)
                 }
                 
                 Spacer()
                 
-                Button(action: {
-                    showingProblemDetails = true
-                }) {
-                    Label("Details", systemImage: "info.circle")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
+                // Verdict badge
+                VerdictBadge(verdict: submission.verdict ?? "UNKNOWN")
+            }
+            
+            // Submission details
+            HStack(spacing: 16) {
+                DetailItem(
+                    icon: "chevron.left.forwardslash.chevron.right",
+                    text: submission.programmingLanguage,
+                    color: themeManager.colors.textSecondary
+                )
+                
+                DetailItem(
+                    icon: "clock",
+                    text: submission.submissionDate.formatted(date: .abbreviated, time: .shortened),
+                    color: themeManager.colors.textSecondary
+                )
+                
+                if let rating = submission.problem.rating {
+                    DetailItem(
+                        icon: "star.fill",
+                        text: "\(rating)",
+                        color: Color.ratingColor(for: rating)
+                    )
+                }
+            }
+            
+            // Problem link
+            if let url = URL(string: submission.problem.problemUrl) {
+                Link(destination: url) {
+                    HStack {
+                        Text("View Problem")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(themeManager.colors.accent)
+                    )
                 }
             }
         }
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-        .sheet(isPresented: $showingProblemDetails) {
-            ProblemDetailSheet(submission: submission)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
+        )
+    }
+}
+
+struct VerdictBadge: View {
+    let verdict: String
+    @StateObject private var themeManager = ThemeManager.shared
+    
+    var body: some View {
+        Text(verdictDisplayText)
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(verdictColor)
+            )
+    }
+    
+    private var verdictDisplayText: String {
+        switch verdict {
+        case "OK": return "AC"
+        case "WRONG_ANSWER": return "WA"
+        case "TIME_LIMIT_EXCEEDED": return "TLE"
+        case "MEMORY_LIMIT_EXCEEDED": return "MLE"
+        case "RUNTIME_ERROR": return "RTE"
+        case "COMPILATION_ERROR": return "CE"
+        case "PRESENTATION_ERROR": return "PE"
+        case "IDLENESS_LIMIT_EXCEEDED": return "ILE"
+        case "SECURITY_VIOLATED": return "SV"
+        case "CRASHED": return "CRASHED"
+        case "INPUT_PREPARATION_CRASHED": return "IPC"
+        case "CHALLENGED": return "HACK"
+        case "SKIPPED": return "SKIP"
+        case "TESTING": return "TESTING"
+        case "REJECTED": return "REJECTED"
+        default: return verdict
+        }
+    }
+    
+    private var verdictColor: Color {
+        switch verdict {
+        case "OK": return .green
+        case "WRONG_ANSWER": return .red
+        case "TIME_LIMIT_EXCEEDED": return .orange
+        case "MEMORY_LIMIT_EXCEEDED": return .orange
+        case "RUNTIME_ERROR": return .purple
+        case "COMPILATION_ERROR": return .gray
+        default: return .blue
+        }
+    }
+}
+
+struct DetailItem: View {
+    let icon: String
+    let text: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(color)
+            
+            Text(text)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(color)
         }
     }
 }
@@ -325,50 +357,53 @@ struct EmptySubmissionsView: View {
     @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
-        VStack(spacing: 24) {
-            VStack(spacing: 16) {
-                Image(systemName: filter.systemImage)
-                    .font(.system(size: 60))
-                    .foregroundStyle(filter.color.gradient)
+        VStack(spacing: 20) {
+            Spacer()
+            
+            Image(systemName: emptyIcon)
+                .font(.system(size: 48, weight: .light))
+                .foregroundStyle(themeManager.colors.textSecondary)
+            
+            VStack(spacing: 8) {
+                Text(emptyTitle)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(themeManager.colors.textPrimary)
                 
-                VStack(spacing: 8) {
-                    Text("No \(filter.rawValue) Submissions")
-                        .font(.title2.bold())
-                        .foregroundStyle(.primary)
-                    
-                    Text(emptyMessage)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
+                Text(emptyMessage)
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .multilineTextAlignment(.center)
             }
             
-            if filter == .all {
-                Button("Start Coding") {
-                    // Handle action to open Codeforces
-                    if let url = URL(string: "https://codeforces.com/problemset") {
-                        UIApplication.shared.open(url)
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-            }
+            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
+        .padding(.horizontal, 40)
+    }
+    
+    private var emptyIcon: String {
+        switch filter {
+        case .all: return "doc.text"
+        case .accepted: return "checkmark.circle"
+        case .wrongAnswer: return "xmark.circle"
+        case .today: return "calendar"
+        }
+    }
+    
+    private var emptyTitle: String {
+        switch filter {
+        case .all: return "No Submissions"
+        case .accepted: return "No Accepted Solutions"
+        case .wrongAnswer: return "No Wrong Answers"
+        case .today: return "No Submissions Today"
+        }
     }
     
     private var emptyMessage: String {
         switch filter {
-        case .all:
-            return "Submit some problems on Codeforces to see your submission history here"
-        case .accepted:
-            return "No accepted submissions yet. Keep practicing and you'll get there!"
-        case .wrongAnswer:
-            return "No wrong answers found. Your accuracy is impressive!"
-        case .today:
-            return "No submissions today. Ready to tackle some problems?"
+        case .all: return "Start solving problems to see your submissions here"
+        case .accepted: return "Keep practicing! Accepted solutions will appear here"
+        case .wrongAnswer: return "No wrong answers found. Great job!"
+        case .today: return "No submissions made today. Time to practice!"
         }
     }
 }
