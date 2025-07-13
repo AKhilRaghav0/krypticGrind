@@ -13,15 +13,17 @@ struct CustomTopBar: View {
     let onProfile: () -> Void
     let onReload: () -> Void
     let accent: Color
+    @StateObject private var themeManager = ThemeManager.shared
+    
     var body: some View {
         ZStack {
             // Minimal, flat background
-            Color(.systemBackground)
+            themeManager.colors.surface
                 .ignoresSafeArea(edges: .top)
             HStack {
                 Button(action: onProfile) {
                     Circle()
-                        .fill(Color.secondary.opacity(0.13))
+                        .fill(themeManager.colors.textSecondary.opacity(0.13))
                         .frame(width: 36, height: 36)
                         .overlay(
                             Image(systemName: "person.crop.circle")
@@ -32,11 +34,11 @@ struct CustomTopBar: View {
                 Spacer()
                 Text(title)
                     .font(.custom("TTPhobosTrial-Bold", size: 20))
-                    .foregroundColor(.primary)
+                    .foregroundColor(themeManager.colors.textPrimary)
                 Spacer()
                 Button(action: onReload) {
                     Circle()
-                        .fill(Color.secondary.opacity(0.13))
+                        .fill(themeManager.colors.textSecondary.opacity(0.13))
                         .frame(width: 36, height: 36)
                         .overlay(
                             Image(systemName: "arrow.clockwise")
@@ -95,6 +97,7 @@ struct HomeView: View {
                     Button(action: { showingSettingsSheet = true }) {
                         Image(systemName: "person.crop.circle")
                             .font(.title3)
+                            .foregroundColor(themeManager.colors.accent)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -103,6 +106,7 @@ struct HomeView: View {
                     }) {
                         Image(systemName: "arrow.clockwise")
                             .font(.title3)
+                            .foregroundColor(themeManager.colors.accent)
                     }
                 }
             }
@@ -119,6 +123,7 @@ struct HomeView: View {
 // MARK: - Modern User Profile Card
 struct ModernUserProfileCard: View {
     let user: CFUser
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         VStack(spacing: 0) {
@@ -130,10 +135,10 @@ struct ModernUserProfileCard: View {
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Circle()
-                        .fill(.quaternary)
+                        .fill(themeManager.colors.textSecondary.opacity(0.2))
                         .overlay {
                             Image(systemName: "person.fill")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(themeManager.colors.textSecondary)
                         }
                 }
                 .frame(width: 64, height: 64)
@@ -142,11 +147,11 @@ struct ModernUserProfileCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(user.displayName)
                         .font(.title2.bold())
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(themeManager.colors.textPrimary)
                     
                     Text("@\(user.handle)")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(themeManager.colors.textSecondary)
                     
                     HStack(spacing: 8) {
                         Text(user.rank)
@@ -167,6 +172,7 @@ struct ModernUserProfileCard: View {
             .padding(.bottom, 12)
             
             Divider()
+                .background(themeManager.colors.divider)
                 .padding(.horizontal, 16)
             
             // Rating stats
@@ -178,6 +184,7 @@ struct ModernUserProfileCard: View {
                 )
                 
                 Divider()
+                    .background(themeManager.colors.divider)
                     .frame(height: 40)
                 
                 StatColumn(
@@ -187,18 +194,19 @@ struct ModernUserProfileCard: View {
                 )
                 
                 Divider()
+                    .background(themeManager.colors.divider)
                     .frame(height: 40)
                 
                 StatColumn(
                     title: "Contribution",
                     value: "\(user.contribution)",
-                    color: user.contribution >= 0 ? .green : .red
+                    color: user.contribution >= 0 ? themeManager.colors.success : themeManager.colors.error
                 )
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
         }
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -206,12 +214,13 @@ struct StatColumn: View {
     let title: String
     let value: String
     let color: Color
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         VStack(spacing: 4) {
             Text(title)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(themeManager.colors.textSecondary)
             
             Text(value)
                 .font(.title3.bold())
@@ -224,6 +233,7 @@ struct StatColumn: View {
 // MARK: - Modern Stats Grid
 struct ModernStatsGrid: View {
     @StateObject private var cfService = CFService.shared
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         LazyVGrid(columns: [
@@ -235,7 +245,7 @@ struct ModernStatsGrid: View {
                 title: "Contests",
                 value: "\(cfService.ratingHistory.count)",
                 icon: "trophy.fill",
-                color: .orange,
+                color: themeManager.colors.warning,
                 subtitle: "participated"
             )
             
@@ -243,7 +253,7 @@ struct ModernStatsGrid: View {
                 title: "Submissions",
                 value: "\(cfService.recentSubmissions.count)",
                 icon: "doc.text.fill",
-                color: .blue,
+                color: themeManager.colors.accent,
                 subtitle: "total"
             )
             
@@ -251,18 +261,55 @@ struct ModernStatsGrid: View {
                 title: "Accepted",
                 value: "\(cfService.recentSubmissions.acceptedSubmissions().count)",
                 icon: "checkmark.circle.fill",
-                color: .green,
+                color: themeManager.colors.success,
                 subtitle: "solved"
             )
         }
     }
 }
 
-
+// MARK: - Modern Stat Card
+struct ModernStatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    let subtitle: String
+    @StateObject private var themeManager = ThemeManager.shared
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(color)
+                
+                Spacer()
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(value)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(themeManager.colors.textPrimary)
+                
+                Text(title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(themeManager.colors.textSecondary)
+                
+                Text(subtitle)
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundStyle(themeManager.colors.textSecondary.opacity(0.7))
+            }
+        }
+        .padding(16)
+        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
+    }
+}
 
 // MARK: - Modern Progress Card
 struct ModernProgressCard: View {
     @StateObject private var cfService = CFService.shared
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         let todaysSubmissions = cfService.recentSubmissions.todaysSubmissions()
@@ -275,11 +322,11 @@ struct ModernProgressCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Today's Progress")
                         .font(.headline)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(themeManager.colors.textPrimary)
                     
                     Text("\(todaysAccepted.count) of \(dailyGoal) problems solved")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(themeManager.colors.textSecondary)
                 }
                 
                 Spacer()
@@ -287,7 +334,7 @@ struct ModernProgressCard: View {
                 if progress >= 1.0 {
                     Image(systemName: "star.fill")
                         .font(.title2)
-                        .foregroundStyle(.yellow)
+                        .foregroundStyle(themeManager.colors.warning)
                         .scaleEffect(1.1)
                         .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: progress)
                 }
@@ -298,54 +345,55 @@ struct ModernProgressCard: View {
                 HStack {
                     Text("\(Int(progress * 100))%")
                         .font(.caption.bold())
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(themeManager.colors.textSecondary)
                     Spacer()
                 }
             }
             .progressViewStyle(.linear)
-            .tint(.blue)
+            .tint(themeManager.colors.accent)
             .scaleEffect(y: 1.5)
             
             HStack {
                 Label("\(todaysSubmissions.count) submissions today", systemImage: "paperplane.fill")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeManager.colors.textSecondary)
                 
                 Spacer()
                 
                 if progress >= 1.0 {
                     Text("Goal achieved! 🎉")
                         .font(.caption.bold())
-                        .foregroundStyle(.green)
+                        .foregroundStyle(themeManager.colors.success)
                 } else {
                     Text("\(dailyGoal - todaysAccepted.count) more to go")
                         .font(.caption)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(themeManager.colors.warning)
                 }
             }
         }
         .padding(16)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
 // MARK: - Modern Activity Card
 struct ModernActivityCard: View {
     @StateObject private var cfService = CFService.shared
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Recent Activity")
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(themeManager.colors.textPrimary)
                 
                 Spacer()
                 
                 NavigationLink(destination: SubmissionsView()) {
                     Text("View All")
                         .font(.subheadline)
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(themeManager.colors.accent)
                 }
             }
             
@@ -356,12 +404,13 @@ struct ModernActivityCard: View {
             }
         }
         .padding(16)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
 struct ModernSubmissionRow: View {
     let submission: CFSubmission
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         HStack(spacing: 12) {
@@ -373,12 +422,12 @@ struct ModernSubmissionRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(submission.problem.name)
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(themeManager.colors.textPrimary)
                     .lineLimit(1)
                 
                 Text("\(submission.problem.index) • \(submission.programmingLanguage)")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(themeManager.colors.textSecondary)
             }
             
             Spacer()
@@ -390,7 +439,7 @@ struct ModernSubmissionRow: View {
                 
                 Text(submission.submissionDate.timeAgo())
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(themeManager.colors.textSecondary)
             }
         }
         .padding(.vertical, 4)
@@ -492,6 +541,8 @@ struct ErrorRetryHomeView: View {
 
 // MARK: - Modern Loading View
 struct ModernLoadingView: View {
+    @StateObject private var themeManager = ThemeManager.shared
+    
     var body: some View {
         VStack(spacing: 16) {
             ProgressView()
@@ -499,11 +550,11 @@ struct ModernLoadingView: View {
             
             Text("Loading your data...")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(themeManager.colors.textSecondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -517,17 +568,17 @@ struct ErrorBannerView: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(themeManager.colors.error)
                 .font(.title3)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text("Error")
                     .font(.subheadline.bold())
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(themeManager.colors.textPrimary)
                 
                 Text(message)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeManager.colors.textSecondary)
                     .lineLimit(2)
             }
             
@@ -541,10 +592,10 @@ struct ErrorBannerView: View {
             .disabled(isLoading)
         }
         .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(.red.opacity(0.3), lineWidth: 1)
+                .stroke(themeManager.colors.error.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -558,31 +609,31 @@ struct ModernWelcomeCard: View {
         VStack(spacing: 20) {
             Image(systemName: "star.circle.fill")
                 .font(.system(size: 60))
-                .foregroundStyle(.blue.gradient)
+                .foregroundStyle(themeManager.colors.accent.gradient)
             
             VStack(spacing: 8) {
                 Text("Welcome to KrypticGrind")
                     .font(.title2.bold())
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(themeManager.colors.textPrimary)
                 
                 Text("Track your competitive programming journey")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeManager.colors.textSecondary)
                     .multilineTextAlignment(.center)
             }
             
             Button(action: action) {
                 Text("Get Started")
                     .font(.headline.bold())
-                    .foregroundStyle(.white)
+                    .foregroundStyle(themeManager.colors.textPrimary)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(.blue.gradient)
+                    .background(themeManager.colors.accent.gradient)
                     .cornerRadius(12)
             }
         }
         .padding(24)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -590,6 +641,8 @@ struct ModernWelcomeCard: View {
 struct ContestNextUpCard: View {
     let contest: CFContest
     let accent: Color
+    @StateObject private var themeManager = ThemeManager.shared
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Next Up")
@@ -597,19 +650,19 @@ struct ContestNextUpCard: View {
                 .foregroundColor(accent)
             Text(contest.name)
                 .font(.custom("TTPhobosTrial-Bold", size: 22))
-                .foregroundColor(.primary)
+                .foregroundColor(themeManager.colors.textPrimary)
             HStack {
                 Image(systemName: "calendar")
                     .foregroundColor(accent)
                 Text(contest.startDate?.formatted(date: .abbreviated, time: .shortened) ?? "TBD")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(themeManager.colors.textSecondary)
                 Spacer()
                 if let url = URL(string: contest.contestUrl) {
                     Link(destination: url) {
                         Text("Details")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(themeManager.colors.textPrimary)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                             .background(accent)
@@ -621,7 +674,7 @@ struct ContestNextUpCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground).opacity(0.9))
+                .fill(themeManager.colors.surface.opacity(0.9))
                 .shadow(color: accent.opacity(0.08), radius: 8, y: 2)
         )
     }
