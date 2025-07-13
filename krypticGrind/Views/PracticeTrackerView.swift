@@ -40,42 +40,47 @@ struct PracticeTrackerView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Analysis Type Selector
-                AnalysisSelector(selectedAnalysis: $selectedAnalysis)
-                    .padding()
+            ZStack {
+                themeManager.colors.background
+                    .ignoresSafeArea()
                 
-                ScrollView {
-                    LazyVStack(spacing: 20) {
-                        // Main Chart
-                        AnalysisChart(analysisType: selectedAnalysis)
-                        
-                        // Statistics Cards
-                        PracticeStatsGrid()
-                        
-                        // Recommendations
-                        if selectedAnalysis == .tags {
-                            RecommendationsCard()
+                VStack(spacing: 0) {
+                    // Analysis Type Selector
+                    AnalysisSelector(selectedAnalysis: $selectedAnalysis)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                    
+                    ScrollView {
+                        LazyVStack(spacing: 20) {
+                            // Main Chart
+                            AnalysisChart(analysisType: selectedAnalysis)
+                            
+                            // Statistics Cards
+                            PracticeStatsGrid()
+                            
+                            // Recommendations
+                            if selectedAnalysis == .tags {
+                                RecommendationsCard()
+                            }
+                            
+                            // Review Later Card
+                            ReviewLaterPreviewCard()
+                            
+                            // Topic Progression
+                            TopicProgressionCard()
+                            
+                            // Progress Insights
+                            ProgressInsightsCard()
                         }
-                        
-                        // Review Later Card
-                        ReviewLaterPreviewCard()
-                        
-                        // Topic Progression
-                        TopicProgressionCard()
-                        
-                        // Progress Insights
-                        ProgressInsightsCard()
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
                     }
-                    .padding()
                 }
             }
-            .background(themeManager.colors.background)
             .navigationTitle("Practice Tracker")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.inline)
         }
+        .tint(themeManager.colors.accent)
         .task {
             if let handle = UserDefaults.standard.savedHandle {
                 await cfService.fetchUserSubmissions(handle: handle, count: 200)
@@ -90,7 +95,7 @@ struct AnalysisSelector: View {
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: 12) {
                 ForEach(PracticeTrackerView.AnalysisType.allCases, id: \.self) { type in
                     AnalysisTab(
                         type: type,
@@ -100,7 +105,7 @@ struct AnalysisSelector: View {
                     }
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 4)
         }
     }
 }
@@ -115,23 +120,18 @@ struct AnalysisTab: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: type.systemImage)
-                    .font(.subheadline)
+                    .font(.system(size: 14, weight: .medium))
                 
                 Text(type.rawValue)
-                    .font(.subheadline.weight(.medium))
+                    .font(.system(size: 14, weight: .medium))
             }
-            .foregroundStyle(isSelected ? .white : .primary)
+            .foregroundStyle(isSelected ? .white : themeManager.colors.textPrimary)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(
-                Capsule().fill(
-                    isSelected ? AnyShapeStyle(type.color) : AnyShapeStyle(.ultraThinMaterial)
-            )
-            )
-
-            .overlay(
-                Capsule()
-                    .stroke(isSelected ? Color.clear : Color.gray.opacity(0.15), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(isSelected ? type.color : Color(.systemBackground).opacity(0.9))
+                    .shadow(color: isSelected ? type.color.opacity(0.3) : Color.black.opacity(0.05), radius: 8, y: 2)
             )
         }
         .buttonStyle(.plain)
@@ -143,6 +143,7 @@ struct AnalysisTab: View {
 struct AnalysisChart: View {
     let analysisType: PracticeTrackerView.AnalysisType
     @StateObject private var cfService = CFService.shared
+    @StateObject private var themeManager = ThemeManager.shared
     
     var chartData: [(String, Int)] {
         switch analysisType {
@@ -164,9 +165,9 @@ struct AnalysisChart: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label("\(analysisType.rawValue) Analysis", systemImage: analysisType.systemImage)
-                .font(.headline.bold())
-                .foregroundStyle(.primary)
+            Text("\(analysisType.rawValue) Analysis")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(themeManager.colors.textPrimary)
             
             if chartData.isEmpty {
                 EmptyChartView(analysisType: analysisType)
@@ -181,8 +182,12 @@ struct AnalysisChart: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
+        )
     }
     
     private func getDifficultyStatistics() -> [(String, Int)] {
@@ -201,65 +206,57 @@ struct AnalysisChart: View {
     }
 }
 
-struct HorizontalBarChart: View {
-    let data: [(String, Int)]
+struct EmptyChartView: View {
+    let analysisType: PracticeTrackerView.AnalysisType
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
-        Chart {
-            ForEach(Array(data.enumerated()), id: \ .offset) { index, item in
-                BarMark(
-                    x: .value("Count", item.1),
-                    y: .value("Category", item.0)
-                )
-                .foregroundStyle(Color.accentColor)
-                .cornerRadius(4)
-            }
-        }
-        .frame(height: max(200, CGFloat(data.count * 25)))
-        .chartXAxis {
-            AxisMarks(values: .automatic) { _ in
-                AxisGridLine()
-                    .foregroundStyle(.gray.opacity(0.3))
-                AxisValueLabel()
-                    .foregroundStyle(.gray)
-            }
-        }
-        .chartYAxis {
-            AxisMarks(values: .automatic) { _ in
-                AxisValueLabel()
-                    .foregroundStyle(.primary)
-            }
-        }
-    }
-}
-
-struct VerticalBarChart: View {
-    let data: [(String, Int)]
-    
-    var body: some View {
-        Chart {
-            ForEach(Array(data.enumerated()), id: \ .offset) { index, item in
-                BarMark(
-                    x: .value("Category", item.0),
-                    y: .value("Count", item.1)
-                )
-                .foregroundStyle(Color.accentColor)
-                .cornerRadius(4)
+        VStack(spacing: 20) {
+            Image(systemName: analysisType.systemImage)
+                .font(.system(size: 48, weight: .light))
+                .foregroundStyle(themeManager.colors.textSecondary)
+            
+            VStack(spacing: 8) {
+                Text("No \(analysisType.rawValue) Data")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(themeManager.colors.textPrimary)
+                
+                Text("Start solving problems to see your \(analysisType.rawValue.lowercased()) analysis")
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .multilineTextAlignment(.center)
             }
         }
         .frame(height: 200)
-        .chartXAxis {
-            AxisMarks(values: .automatic) { _ in
-                AxisValueLabel()
-                    .foregroundStyle(.primary)
-            }
-        }
-        .chartYAxis {
-            AxisMarks(values: .automatic) { _ in
-                AxisGridLine()
-                    .foregroundStyle(.gray.opacity(0.3))
-                AxisValueLabel()
-                    .foregroundStyle(.gray)
+        .frame(maxWidth: .infinity)
+    }
+}
+
+struct HorizontalBarChart: View {
+    let data: [(String, Int)]
+    @StateObject private var themeManager = ThemeManager.shared
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            ForEach(data.prefix(8), id: \.0) { item in
+                HStack {
+                    Text(item.0)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(themeManager.colors.textPrimary)
+                        .frame(width: 80, alignment: .leading)
+                    
+                    GeometryReader { geometry in
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(themeManager.colors.accent.gradient)
+                            .frame(width: geometry.size.width * CGFloat(item.1) / CGFloat(data.first?.1 ?? 1))
+                    }
+                    .frame(height: 20)
+                    
+                    Text("\(item.1)")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(themeManager.colors.textPrimary)
+                        .frame(width: 30, alignment: .trailing)
+                }
             }
         }
     }
@@ -267,138 +264,109 @@ struct VerticalBarChart: View {
 
 struct PieChartView: View {
     let data: [(String, Int)]
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
-        VStack(spacing: 16) {
-            // Simple pie chart representation using progress circles
-            VStack(spacing: 12) {
-                ForEach(Array(data.enumerated()), id: \.offset) { index, item in
-                    PieSliceRow(
-                        label: item.0,
-                        value: item.1,
-                        total: data.reduce(0) { $0 + $1.1 },
-                        color: pieColor(for: index)
-                    )
+        HStack {
+            // Simple pie chart representation
+            ZStack {
+                Circle()
+                    .stroke(themeManager.colors.accent.opacity(0.2), lineWidth: 20)
+                    .frame(width: 120, height: 120)
+                
+                Circle()
+                    .trim(from: 0, to: 0.7)
+                    .stroke(themeManager.colors.accent, style: StrokeStyle(lineWidth: 20, lineCap: .round))
+                    .frame(width: 120, height: 120)
+                    .rotationEffect(.degrees(-90))
+            }
+            
+            Spacer()
+            
+            // Legend
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(data.prefix(5), id: \.0) { item in
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(themeManager.colors.accent)
+                            .frame(width: 8, height: 8)
+                        
+                        Text(item.0)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(themeManager.colors.textPrimary)
+                        
+                        Text("\(item.1)")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(themeManager.colors.textSecondary)
+                    }
                 }
             }
         }
     }
-    
-    private func pieColor(for index: Int) -> Color {
-        let colors: [Color] = [.blue, .green, .orange, .red, .yellow, .pink, .cyan, .purple]
-        return colors[index % colors.count]
-    }
 }
 
-struct PieSliceRow: View {
-    let label: String
-    let value: Int
-    let total: Int
-    let color: Color
-    
-    var percentage: Double {
-        Double(value) / Double(total) * 100
-    }
+struct VerticalBarChart: View {
+    let data: [(String, Int)]
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
-        HStack {
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(color)
-                    .frame(width: 12, height: 12)
-                
-                Text(label)
-                    .font(.subheadline)
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                Text("\(value)")
-                    .font(.subheadline.bold())
-                    .foregroundColor(.white)
-                
-                Text("(\(Int(percentage))%)")
-                    .font(.caption)
-                    .foregroundColor(.gray)
+        HStack(alignment: .bottom, spacing: 8) {
+            ForEach(data, id: \.0) { item in
+                VStack(spacing: 8) {
+                    Text("\(item.1)")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(themeManager.colors.textPrimary)
+                    
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .fill(themeManager.colors.accent.gradient)
+                        .frame(height: CGFloat(item.1) * 3 + 20)
+                    
+                    Text(item.0)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(themeManager.colors.textSecondary)
+                        .rotationEffect(.degrees(-45))
+                        .frame(height: 20)
+                }
             }
-            
-            ProgressView(value: percentage / 100)
-                .progressViewStyle(LinearProgressViewStyle(tint: color))
-                .frame(width: 60)
-        }
-    }
-}
-
-struct EmptyChartView: View {
-    let analysisType: PracticeTrackerView.AnalysisType
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: analysisType.systemImage)
-                .font(.system(size: 40))
-                .foregroundColor(.gray)
-            
-            Text("No data available")
-                .font(.subheadline)
-                .foregroundColor(.gray)
-            
-            Text("Submit some problems to see \(analysisType.rawValue.lowercased()) analysis")
-                .font(.caption)
-                .foregroundColor(.gray)
-                .multilineTextAlignment(.center)
         }
         .frame(height: 150)
-        .frame(maxWidth: .infinity)
     }
 }
 
 struct PracticeStatsGrid: View {
     @StateObject private var cfService = CFService.shared
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Label("Practice Statistics", systemImage: "chart.bar.fill")
-                .font(.headline.bold())
-                .foregroundStyle(.primary)
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
+            PracticeStatCard(
+                title: "Total Submissions",
+                value: "\(cfService.recentSubmissions.count)",
+                icon: "doc.text.fill",
+                color: themeManager.colors.accent
+            )
             
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 12) {
-                PracticeStatCard(
-                    title: "Total Submissions",
-                    value: "\(cfService.recentSubmissions.count)",
-                    icon: "doc.text",
-                    color: .blue
-                )
-                
-                PracticeStatCard(
-                    title: "Accepted",
-                    value: "\(cfService.recentSubmissions.acceptedSubmissions().count)",
-                    icon: "checkmark.circle",
-                    color: .green
-                )
-                
-                let acceptanceRate = cfService.recentSubmissions.isEmpty ? 0 : 
-                    (Double(cfService.recentSubmissions.acceptedSubmissions().count) / Double(cfService.recentSubmissions.count) * 100)
-                
-                PracticeStatCard(
-                    title: "Acceptance Rate",
-                    value: "\(Int(acceptanceRate))%",
-                    icon: "percent",
-                    color: acceptanceRate >= 50 ? .green : .orange
-                )
-                
-                PracticeStatCard(
-                    title: "Unique Problems",
-                    value: "\(Set(cfService.recentSubmissions.map { $0.problem.name }).count)",
-                    icon: "puzzlepiece",
-                    color: .purple
-                )
-            }
+            PracticeStatCard(
+                title: "Accepted",
+                value: "\(cfService.recentSubmissions.filter { $0.isAccepted }.count)",
+                icon: "checkmark.circle.fill",
+                color: .green
+            )
+            
+            PracticeStatCard(
+                title: "Accuracy",
+                value: "\(Int((Double(cfService.recentSubmissions.filter { $0.isAccepted }.count) / Double(max(cfService.recentSubmissions.count, 1))) * 100))%",
+                icon: "percent",
+                color: .blue
+            )
+            
+            PracticeStatCard(
+                title: "Languages",
+                value: "\(Set(cfService.recentSubmissions.map { $0.programmingLanguage }).count)",
+                icon: "chevron.left.forwardslash.chevron.right",
+                color: .purple
+            )
         }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -407,26 +375,34 @@ struct PracticeStatCard: View {
     let value: String
     let icon: String
     let color: Color
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(color)
+                
+                Spacer()
+            }
             
-            Text(value)
-                .font(.title3.bold())
-                .foregroundColor(.primary)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(value)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(themeManager.colors.textPrimary)
+                
+                Text(title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(themeManager.colors.textSecondary)
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
+        )
     }
 }
 
@@ -1193,6 +1169,8 @@ struct SearchBar: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }
+
+// Remove PracticeAndLeaderboardView struct from this file to avoid redeclaration error.
 
 #Preview {
     NavigationView {
