@@ -7,117 +7,112 @@
 
 import SwiftUI
 
+// MARK: - Custom Minimal Top Bar
+struct CustomTopBar: View {
+    let title: String
+    let onProfile: () -> Void
+    let onReload: () -> Void
+    let accent: Color
+    var body: some View {
+        ZStack {
+            // Minimal, flat background
+            Color(.systemBackground)
+                .ignoresSafeArea(edges: .top)
+            HStack {
+                Button(action: onProfile) {
+                    Circle()
+                        .fill(Color.secondary.opacity(0.13))
+                        .frame(width: 36, height: 36)
+                        .overlay(
+                            Image(systemName: "person.crop.circle")
+                                .font(.system(size: 18, weight: .regular))
+                                .foregroundColor(accent)
+                        )
+                }
+                Spacer()
+                Text(title)
+                    .font(.custom("TTPhobosTrial-Bold", size: 20))
+                    .foregroundColor(.primary)
+                Spacer()
+                Button(action: onReload) {
+                    Circle()
+                        .fill(Color.secondary.opacity(0.13))
+                        .frame(width: 36, height: 36)
+                        .overlay(
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 18, weight: .regular))
+                                .foregroundColor(accent)
+                        )
+                }
+            }
+            .padding(.horizontal, 16)
+            .frame(height: 48)
+        }
+        .frame(height: 48 + (UIApplication.shared.windows.first?.safeAreaInsets.top ?? 20))
+        .padding(.top, UIApplication.shared.windows.first?.safeAreaInsets.top ?? 20)
+    }
+}
+
 struct HomeView: View {
     @StateObject private var cfService = CFService.shared
     @StateObject private var themeManager = ThemeManager.shared
-    @StateObject private var geminiService = GeminiService.shared
-    @State private var showingHandleInput = false
-    @State private var handleInput = ""
     @State private var showingSettingsSheet = false
     
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.systemGroupedBackground)
+                themeManager.colors.background
                     .ignoresSafeArea()
-                
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        // Error handling with retry
-                        if let error = cfService.error {
-                            ErrorBannerView(
-                                message: error,
-                                isLoading: cfService.isLoading,
-                                onRetry: {
-                                    Task {
-                                        await cfService.retryLastOperation()
-                                    }
-                                }
+                VStack(spacing: 32) {
+                    Spacer().frame(height: 12)
+                    // Title
+                    Text("KrypticGrind")
+                        .font(.custom("TTPhobosTrial-Bold", size: 32))
+                        .foregroundColor(themeManager.colors.text)
+                        .padding(.top, 8)
+                    // Next Contest Card
+                    if let nextContest = cfService.nextContest {
+                        ContestNextUpCard(contest: nextContest, accent: themeManager.colors.accent)
+                            .padding(.horizontal, 20)
+                    } else {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(themeManager.colors.surface.opacity(0.7))
+                            .frame(height: 120)
+                            .overlay(
+                                Text("No upcoming contests")
+                                    .font(.custom("TTPhobosTrial-Bold", size: 20))
+                                    .foregroundColor(themeManager.colors.text.opacity(0.5))
                             )
-                        }
-                        
-                        if let user = cfService.currentUser {
-                            // User Profile Section
-                            ModernUserProfileCard(user: user)
-                            
-                            // AI Problem Suggestions
-                            AIProblemSuggestionCard(user: user)
-                            
-                            // Quick Stats Grid
-                            ModernStatsGrid()
-                            
-                            // Today's Progress
-                            ModernProgressCard()
-                            
-                            // Recent Activity
-                            ModernActivityCard()
-                            
-                        } else if !cfService.isLoading {
-                            // Welcome Section
-                            ModernWelcomeCard {
-                                showingHandleInput = true
-                            }
-                        }
-                        
-                        // Loading State
-                        if cfService.isLoading {
-                            ModernLoadingView()
-                        }
+                            .padding(.horizontal, 20)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .padding(.bottom, 100)
-                }
-                .refreshable {
-                    await cfService.refreshData()
+                    Spacer()
                 }
             }
-            .navigationTitle("KrypticGrind")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button(action: {
-                        showingSettingsSheet = true
-                    }) {
+                    Button(action: { showingSettingsSheet = true }) {
                         Image(systemName: "person.crop.circle")
                             .font(.title3)
                     }
                 }
-                
                 ToolbarItem(placement: .topBarTrailing) {
-                    if cfService.currentUser != nil {
-                        Button(action: {
-                            Task {
-                                await cfService.refreshData()
-                            }
-                        }) {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.title3)
-                        }
+                    Button(action: {
+                        Task { await cfService.refreshData() }
+                    }) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.title3)
                     }
                 }
-            }
-            .sheet(isPresented: $showingHandleInput) {
-                HandleInputSheet(handleInput: $handleInput) {
-                    Task {
-                        await cfService.fetchAllUserData(handle: handleInput)
-                    }
-                    showingHandleInput = false
-                }
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showingSettingsSheet) {
                 SettingsSheet()
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-            }
-            .task {
-                if let savedHandle = UserDefaults.standard.savedHandle {
-                    await cfService.fetchAllUserData(handle: savedHandle)
-                }
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
             }
         }
+        .tint(themeManager.colors.accent)
     }
 }
 
@@ -626,6 +621,47 @@ struct ModernWelcomeCard: View {
         }
         .padding(24)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+// Minimal Contest Next Up Card
+struct ContestNextUpCard: View {
+    let contest: CFContest
+    let accent: Color
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Next Up")
+                .font(.custom("TTPhobosTrial-Bold", size: 18))
+                .foregroundColor(accent)
+            Text(contest.name)
+                .font(.custom("TTPhobosTrial-Bold", size: 22))
+                .foregroundColor(.primary)
+            HStack {
+                Image(systemName: "calendar")
+                    .foregroundColor(accent)
+                Text(contest.dateFormatted)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.secondary)
+                Spacer()
+                if let url = contest.url {
+                    Link(destination: url) {
+                        Text("Details")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(accent)
+                            .cornerRadius(16)
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: accent.opacity(0.08), radius: 8, y: 2)
+        )
     }
 }
 
