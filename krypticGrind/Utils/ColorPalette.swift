@@ -25,76 +25,86 @@ class ColorThemeManager: ObservableObject {
         didSet { objectWillChange.send() }
     }
     var themes: [ColorTheme] = [
-        // Palette 1 (Lavender)
+        // Palette 1 (Ocean) - Professional and calming
+        ColorTheme(
+            name: "Ocean",
+            background: Color(hex: "#0F172A"), // Dark slate
+            tabBar: Color(hex: "#1E293B"),     // Slate 800
+            accent: Color(hex: "#3B82F6"),     // Blue 500
+            text: Color(hex: "#F1F5F9"),       // Slate 100
+            secondary: Color(hex: "#64748B"),  // Slate 500
+            error: Color(hex: "#EF4444"),      // Red 500
+            link: Color(hex: "#06B6D4")        // Cyan 500
+        ),
+        
+        // Palette 2 (Sunset) - Warm and energetic
+        ColorTheme(
+            name: "Sunset",
+            background: Color(hex: "#1A1A2E"), // Deep navy
+            tabBar: Color(hex: "#16213E"),     // Dark blue
+            accent: Color(hex: "#F59E0B"),     // Amber 500
+            text: Color(hex: "#FEF3C7"),       // Amber 100
+            secondary: Color(hex: "#92400E"),  // Amber 800
+            error: Color(hex: "#DC2626"),      // Red 600
+            link: Color(hex: "#F472B6")        // Pink 400
+        ),
+        
+        // Palette 3 (Forest) - Nature-inspired focus
+        ColorTheme(
+            name: "Forest",
+            background: Color(hex: "#0F1419"), // Very dark green
+            tabBar: Color(hex: "#1F2937"),     // Gray 800
+            accent: Color(hex: "#10B981"),     // Emerald 500
+            text: Color(hex: "#ECFDF5"),       // Emerald 50
+            secondary: Color(hex: "#6B7280"),  // Gray 500
+            error: Color(hex: "#F87171"),      // Red 400
+            link: Color(hex: "#34D399")        // Emerald 400
+        ),
+        
+        // Palette 4 (Cosmic) - Modern purple theme
+        ColorTheme(
+            name: "Cosmic",
+            background: Color(hex: "#0A0A0F"), // Deep space
+            tabBar: Color(hex: "#16161A"),     // Card surface
+            accent: Color(hex: "#7C3AED"),     // Violet 600
+            text: Color(hex: "#F8FAFC"),       // Slate 50
+            secondary: Color(hex: "#94A3B8"),  // Slate 400
+            error: Color(hex: "#EF4565"),      // Pink red
+            link: Color(hex: "#A78BFA")        // Violet 400
+        ),
+        
+        // Palette 5 (Minimal) - Clean and minimalist
+        ColorTheme(
+            name: "Minimal",
+            background: Color(hex: "#FAFAFA"), // Almost white
+            tabBar: Color(hex: "#FFFFFF"),     // Pure white
+            accent: Color(hex: "#1F2937"),     // Gray 800
+            text: Color(hex: "#111827"),       // Gray 900
+            secondary: Color(hex: "#6B7280"),  // Gray 500
+            error: Color(hex: "#DC2626"),      // Red 600
+            link: Color(hex: "#2563EB")        // Blue 600
+        ),
+        
+        // Legacy themes (keeping for existing users)
         ColorTheme(
             name: "Lavender",
-            background: Color(red: 192/255, green: 201/255, blue: 238/255), // #C0C9EE
-            tabBar: Color(red: 255/255, green: 242/255, blue: 224/255),     // #FFF2E0
-            accent: Color(red: 162/255, green: 170/255, blue: 219/255),     // #A2AADB
-            text: Color(red: 137/255, green: 138/255, blue: 196/255),       // #898AC4
-            secondary: Color(red: 255/255, green: 242/255, blue: 224/255),  // #FFF2E0
+            background: Color(red: 192/255, green: 201/255, blue: 238/255),
+            tabBar: Color(red: 255/255, green: 242/255, blue: 224/255),
+            accent: Color(red: 162/255, green: 170/255, blue: 219/255),
+            text: Color(red: 137/255, green: 138/255, blue: 196/255),
+            secondary: Color(red: 255/255, green: 242/255, blue: 224/255),
             error: nil, link: nil
         ),
-        // Palette 2 (Blue/Beige)
-        ColorTheme(
-            name: "BlueBeige",
-            background: Color(red: 69/255, green: 104/255, blue: 130/255),   // #456882
-            tabBar: Color(red: 249/255, green: 243/255, blue: 239/255),     // #F9F3EF
-            accent: Color(red: 27/255, green: 60/255, blue: 83/255),        // #1B3C53
-            text: Color(red: 27/255, green: 60/255, blue: 83/255),          // #1B3C53
-            secondary: Color(red: 210/255, green: 193/255, blue: 182/255),  // #D2C1B6
-            error: nil, link: nil
-        ),
-        // Palette 3 (Teal/Purple)
-        ColorTheme(
-            name: "TealPurple",
-            background: Color(red: 15/255, green: 130/255, blue: 140/255),   // #0F828C
-            tabBar: Color(red: 120/255, green: 185/255, blue: 181/255),     // #78B9B5
-            accent: Color(red: 6/255, green: 80/255, blue: 132/255),        // #065084
-            text: Color(red: 50/255, green: 10/255, blue: 107/255),         // #320A6B
-            secondary: Color(red: 6/255, green: 80/255, blue: 132/255),     // #065084
-            error: nil, link: nil
-        ),
-        // Palette 4 (Dark/Teal)
-        ColorTheme(
-            name: "DarkTeal",
-            background: Color(red: 57/255, green: 62/255, blue: 70/255),     // #393E46
-            tabBar: Color(red: 238/255, green: 238/255, blue: 238/255),     // #EEEEEE
-            accent: Color(red: 0/255, green: 173/255, blue: 181/255),       // #00ADB5
-            text: Color(red: 34/255, green: 40/255, blue: 49/255),          // #222831
-            secondary: Color(red: 238/255, green: 238/255, blue: 238/255),  // #EEEEEE
-            error: nil, link: nil
-        ),
-        // Palette 5 (Beige)
-        ColorTheme(
-            name: "Beige",
-            background: Color(red: 206/255, green: 171/255, blue: 147/255),  // #CEAB93
-            tabBar: Color(red: 255/255, green: 251/255, blue: 233/255),     // #FFFBE9
-            accent: Color(red: 173/255, green: 139/255, blue: 115/255),     // #AD8B73
-            text: Color(red: 227/255, green: 202/255, blue: 165/255),       // #E3CAA5
-            secondary: Color(red: 227/255, green: 202/255, blue: 165/255),  // #E3CAA5
-            error: nil, link: nil
-        ),
-        // Palette 6 (Dusty Blue/Beige)
-        ColorTheme(
-            name: "DustyBlueBeige",
-            background: Color(red: 183/255, green: 196/255, blue: 207/255),  // #B7C4CF
-            tabBar: Color(red: 238/255, green: 227/255, blue: 203/255),     // #EEE3CB
-            accent: Color(red: 215/255, green: 192/255, blue: 174/255),     // #D7C0AE
-            text: Color(red: 150/255, green: 126/255, blue: 118/255),       // #967E76
-            secondary: Color(red: 215/255, green: 192/255, blue: 174/255),  // #D7C0AE
-            error: nil, link: nil
-        ),
-        // Palette 7 (Cyberpunk)
+        
         ColorTheme(
             name: "Cyberpunk",
-            background: Color(hex: "#0A0A0F"), // Deep black-blue       // #0A0A0F
-            tabBar: Color(hex: "#16161A"),    // Surface card            // #16161A
-            accent: Color(hex: "#7F5AF0"),    // Cyberpunk violet        // #7F5AF0
-            text: Color(hex: "#F8F8F2"),      // Off-white                // #F8F8F2
-            secondary: Color(hex: "#94A1B2"), // Muted text                // #94A1B2
-            error: Color(hex: "#EF4565"),     // Error/alert              // #EF4565
-            link: Color(hex: "#00BFFF")       // Link color                // #00BFFF
+            background: Color(hex: "#0A0A0F"),
+            tabBar: Color(hex: "#16161A"),
+            accent: Color(hex: "#7F5AF0"),
+            text: Color(hex: "#F8F8F2"),
+            secondary: Color(hex: "#94A1B2"),
+            error: Color(hex: "#EF4565"),
+            link: Color(hex: "#00BFFF")
         )
     ]
 

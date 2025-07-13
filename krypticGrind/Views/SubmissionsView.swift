@@ -12,6 +12,8 @@ struct SubmissionsView: View {
     @StateObject private var colorThemeManager = ColorThemeManager()
     @State private var selectedFilter: SubmissionFilter = .all
     @State private var searchText = ""
+    @State private var filteredSubmissions: [CFSubmission] = []
+    @State private var isLoading = false
     
     enum SubmissionFilter: String, CaseIterable {
         case all = "All"
@@ -38,33 +40,6 @@ struct SubmissionsView: View {
         }
     }
     
-    var filteredSubmissions: [CFSubmission] {
-        var submissions = cfService.recentSubmissions
-        
-        // Apply filter
-        switch selectedFilter {
-        case .all:
-            break
-        case .accepted:
-            submissions = submissions.filter { $0.isAccepted }
-        case .wrongAnswer:
-            submissions = submissions.filter { $0.verdict == "WRONG_ANSWER" }
-        case .today:
-            submissions = submissions.todaysSubmissions()
-        }
-        
-        // Apply search
-        if !searchText.isEmpty {
-            submissions = submissions.filter { submission in
-                submission.problem.name.localizedCaseInsensitiveContains(searchText) ||
-                submission.problem.index.localizedCaseInsensitiveContains(searchText) ||
-                submission.programmingLanguage.localizedCaseInsensitiveContains(searchText)
-            }
-        }
-        
-        return submissions
-    }
-    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -83,7 +58,11 @@ struct SubmissionsView: View {
                         .padding(.top, 16)
                     
                     // Submissions List
-                    if filteredSubmissions.isEmpty {
+                    if isLoading {
+                        ProgressView("Filtering submissions...")
+                            .foregroundStyle(colorThemeManager.current.text)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if filteredSubmissions.isEmpty {
                         EmptySubmissionsView(filter: selectedFilter)
                     } else {
                         SubmissionsList(submissions: filteredSubmissions)
@@ -111,8 +90,62 @@ struct SubmissionsView: View {
         .task {
             if let handle = UserDefaults.standard.savedHandle {
                 await cfService.fetchUserSubmissions(handle: handle, count: 100)
+                await filterSubmissions()
             }
         }
+        .onChange(of: selectedFilter) { _, _ in
+            Task {
+                await filterSubmissions()
+            }
+        }
+        .onChange(of: searchText) { _, _ in
+            Task {
+                await filterSubmissions()
+            }
+        }
+        .onChange(of: cfService.recentSubmissions) { _, _ in
+            Task {
+                await filterSubmissions()
+            }
+        }
+    }
+    
+    // Async filtering to prevent UI hangs
+    private func filterSubmissions() async {
+        isLoading = true
+        
+        let filtered = await Task.detached(priority: .userInitiated) {
+            var submissions = self.cfService.recentSubmissions
+            
+            // Apply filter
+            switch self.selectedFilter {
+            case .all:
+                break
+            case .accepted:
+                submissions = submissions.filter { $0.isAccepted }
+            case .wrongAnswer:
+                submissions = submissions.filter { $0.verdict == "WRONG_ANSWER" }
+            case .today:
+                submissions = submissions.todaysSubmissions()
+            }
+            
+            // Apply search
+            if !self.searchText.isEmpty {
+                submissions = submissions.filter { submission in
+                    submission.problem.name.localizedCaseInsensitiveContains(self.searchText) ||
+                    submission.problem.index.localizedCaseInsensitiveContains(self.searchText) ||
+                    submission.programmingLanguage.localizedCaseInsensitiveContains(self.searchText)
+                }
+            }
+            
+            return submissions
+        }.value
+        
+        await MainActor.run {
+            filteredSubmissions = filtered
+            isLoading = false
+        }
+    }
     }
 }
 

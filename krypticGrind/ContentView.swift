@@ -4,9 +4,32 @@ import Charts
 
 struct ContentView: View {
     @State private var selectedTab: MainTab = .home
+    @State private var isFirstLaunch = UserDefaults.standard.bool(forKey: "isFirstLaunch") == false ? true : false
     @EnvironmentObject var colorThemeManager: ColorThemeManager
 
     var body: some View {
+        ZStack {
+            if isFirstLaunch {
+                OnboardingView(isFirstLaunch: $isFirstLaunch)
+                    .environmentObject(colorThemeManager)
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .scale(scale: 0.9)),
+                        removal: .opacity.combined(with: .scale(scale: 1.1))
+                    ))
+            } else {
+                mainAppView
+            }
+        }
+        .onAppear {
+            // Set default value for first launch if not set
+            if UserDefaults.standard.object(forKey: "isFirstLaunch") == nil {
+                UserDefaults.standard.set(true, forKey: "isFirstLaunch")
+                isFirstLaunch = true
+            }
+        }
+    }
+    
+    private var mainAppView: some View {
         ZStack(alignment: .bottom) {
             Group {
                 switch selectedTab {
