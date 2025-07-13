@@ -14,25 +14,29 @@ struct RatingChartView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LazyVStack(spacing: 20) {
-                    // Chart Section
-                    RatingChart()
-                    
-                    // Stats Section
-                    RatingStatsCard()
-                    
-                    // Contest History
-                    ContestHistoryList()
+            ZStack {
+                themeManager.colors.background
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    LazyVStack(spacing: 20) {
+                        // Chart Section
+                        RatingChart()
+                        
+                        // Stats Section
+                        RatingStatsCard()
+                        
+                        // Contest History
+                        ContestHistoryList()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
                 }
-                .padding()
             }
-            .background(themeManager.colors.background)
             .navigationTitle("Rating History")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.inline)
         }
+        .tint(themeManager.colors.accent)
         .task {
             if let handle = UserDefaults.standard.savedHandle {
                 await cfService.fetchRatingHistory(handle: handle)
@@ -48,9 +52,9 @@ struct RatingChart: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Label("Rating Progress", systemImage: "chart.line.uptrend.xyaxis")
-                    .font(.headline.bold())
-                    .foregroundStyle(.primary)
+                Text("Rating Progress")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(themeManager.colors.textPrimary)
                 
                 Spacer()
                 
@@ -61,19 +65,19 @@ struct RatingChart: View {
             }
             
             if cfService.ratingHistory.isEmpty {
-                VStack(spacing: 16) {
+                VStack(spacing: 20) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
-                        .font(.system(size: 50))
-                        .foregroundStyle(.tertiary)
+                        .font(.system(size: 48, weight: .light))
+                        .foregroundStyle(themeManager.colors.textSecondary)
                     
                     VStack(spacing: 8) {
                         Text("No Contest History")
-                            .font(.headline)
-                            .foregroundStyle(.primary)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(themeManager.colors.textPrimary)
                         
                         Text("Your rating changes will appear here after participating in contests")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundStyle(themeManager.colors.textSecondary)
                             .multilineTextAlignment(.center)
                     }
                 }
@@ -114,23 +118,23 @@ struct RatingChart: View {
                 .chartXAxis {
                     AxisMarks(values: .automatic) { _ in
                         AxisGridLine()
-                            .foregroundStyle(.tertiary.opacity(0.5))
+                            .foregroundStyle(themeManager.colors.textSecondary.opacity(0.3))
                         AxisTick()
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(themeManager.colors.textSecondary)
                         AxisValueLabel()
-                            .foregroundStyle(.secondary)
-                            .font(.caption)
+                            .foregroundStyle(themeManager.colors.textSecondary)
+                            .font(.system(size: 12, weight: .medium))
                     }
                 }
                 .chartYAxis {
                     AxisMarks(values: .automatic) { _ in
                         AxisGridLine()
-                            .foregroundStyle(.tertiary.opacity(0.5))
+                            .foregroundStyle(themeManager.colors.textSecondary.opacity(0.3))
                         AxisTick()
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(themeManager.colors.textSecondary)
                         AxisValueLabel()
-                            .foregroundStyle(.secondary)
-                            .font(.caption)
+                            .foregroundStyle(themeManager.colors.textSecondary)
+                            .font(.system(size: 12, weight: .medium))
                     }
                 }
                 .chartBackground { _ in
@@ -138,8 +142,12 @@ struct RatingChart: View {
                 }
             }
         }
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
+        )
     }
 }
 
@@ -149,9 +157,9 @@ struct RatingStatsCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label("Statistics", systemImage: "chart.bar.fill")
-                .font(.headline.bold())
-                .foregroundStyle(.primary)
+            Text("Statistics")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(themeManager.colors.textPrimary)
             
             if let user = cfService.currentUser {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
@@ -192,20 +200,73 @@ struct RatingStatsCard: View {
                     }
                 }
             } else {
-                VStack(spacing: 16) {
+                VStack(spacing: 20) {
                     Image(systemName: "chart.bar")
-                        .font(.system(size: 50))
-                        .foregroundStyle(.tertiary)
+                        .font(.system(size: 48, weight: .light))
+                        .foregroundStyle(themeManager.colors.textSecondary)
                     
-                    Text("No user data available")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    VStack(spacing: 8) {
+                        Text("No User Data")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(themeManager.colors.textPrimary)
+                        
+                        Text("Enter your Codeforces handle to see statistics")
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundStyle(themeManager.colors.textSecondary)
+                            .multilineTextAlignment(.center)
+                    }
                 }
-                .frame(height: 120)
+                .frame(height: 200)
+                .frame(maxWidth: .infinity)
             }
         }
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
+        )
+    }
+}
+
+struct ModernStatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    let subtitle: String
+    @StateObject private var themeManager = ThemeManager.shared
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(color)
+                
+                Spacer()
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(value)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(themeManager.colors.textPrimary)
+                
+                Text(title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(themeManager.colors.textSecondary)
+                
+                Text(subtitle)
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundStyle(themeManager.colors.textSecondary)
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
+        )
     }
 }
 
@@ -215,96 +276,93 @@ struct ContestHistoryList: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label("Contest History", systemImage: "calendar")
-                .font(.headline.bold())
-                .foregroundStyle(.primary)
+            Text("Recent Contests")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(themeManager.colors.textPrimary)
             
             if cfService.ratingHistory.isEmpty {
-                VStack(spacing: 16) {
-                    Image(systemName: "calendar.badge.clock")
-                        .font(.system(size: 50))
-                        .foregroundStyle(.tertiary)
+                VStack(spacing: 20) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 48, weight: .light))
+                        .foregroundStyle(themeManager.colors.textSecondary)
                     
                     VStack(spacing: 8) {
                         Text("No Contest History")
-                            .font(.headline)
-                            .foregroundStyle(.primary)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(themeManager.colors.textPrimary)
                         
-                        Text("Your contest participation history will appear here")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        Text("Participate in contests to see your history here")
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundStyle(themeManager.colors.textSecondary)
                             .multilineTextAlignment(.center)
                     }
                 }
+                .frame(height: 200)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 40)
             } else {
-                LazyVStack(spacing: 8) {
-                    ForEach(cfService.ratingHistory.prefix(5).reversed()) { change in
-                        ContestHistoryRow(change: change)
-                    }
-                    
-                    if cfService.ratingHistory.count > 5 {
-                        Button("View All \(cfService.ratingHistory.count) Contests") {
-                            // Handle view all action
-                        }
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(themeManager.colors.accent)
-                        .padding(.top, 8)
+                LazyVStack(spacing: 12) {
+                    ForEach(cfService.ratingHistory.prefix(10)) { change in
+                        ContestHistoryCard(change: change)
                     }
                 }
             }
         }
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
+        )
     }
 }
 
-struct ContestHistoryRow: View {
+struct ContestHistoryCard: View {
     let change: CFRatingChange
     @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 16) {
             // Contest info
             VStack(alignment: .leading, spacing: 4) {
                 Text(change.contestName)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(themeManager.colors.textPrimary)
+                    .lineLimit(1)
                 
-                HStack(spacing: 12) {
-                    Label("Rank #\(change.rank)", systemImage: "number")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    
-                    Text(change.updateDate.formatted(date: .abbreviated, time: .omitted))
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
+                Text(change.updateDate.formatted(date: .abbreviated, time: .omitted))
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundStyle(themeManager.colors.textSecondary)
             }
             
             Spacer()
             
             // Rating change
             VStack(alignment: .trailing, spacing: 4) {
-                HStack(spacing: 4) {
-                    Image(systemName: change.delta >= 0 ? "arrow.up" : "arrow.down")
-                        .font(.caption.weight(.bold))
+                HStack(spacing: 8) {
+                    Text("\(change.oldRating)")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(themeManager.colors.textSecondary)
                     
-                    Text(change.deltaString)
-                        .font(.subheadline.weight(.bold))
+                    Image(systemName: change.delta > 0 ? "arrow.up" : "arrow.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(change.delta > 0 ? .green : .red)
+                    
+                    Text("\(change.newRating)")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(themeManager.colors.textPrimary)
                 }
-                .foregroundStyle(change.delta >= 0 ? .green : .red)
                 
-                Text("\(change.oldRating) → \(change.newRating)")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                Text(change.deltaString)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(change.delta > 0 ? .green : .red)
             }
         }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
+        )
     }
 }
 
