@@ -103,4 +103,14 @@ class ColorThemeManager: ObservableObject {
     func nextTheme() {
         currentThemeIndex = (currentThemeIndex + 1) % themes.count
     }
-} 
+    
+    func setTheme(index: Int) {
+        guard index >= 0 && index < themes.count else { return }
+        currentThemeIndex = index
+    }
+    
+    func getTheme(at index: Int) -> ColorTheme? {
+        guard index >= 0 && index < themes.count else { return nil }
+        return themes[index]
+    }
+}

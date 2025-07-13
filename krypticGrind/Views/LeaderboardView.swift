@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LeaderboardView: View {
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @StateObject private var leaderboardManager = LeaderboardManager.shared
     @State private var showingAddHandle = false
     @State private var searchText = ""
@@ -18,7 +18,7 @@ struct LeaderboardView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                themeManager.colors.background
+                colorThemeManager.current.background
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
@@ -37,7 +37,7 @@ struct LeaderboardView: View {
             .navigationTitle("Leaderboard")
             .navigationBarTitleDisplayMode(.inline)
         }
-        .tint(themeManager.colors.accent)
+        .tint(colorThemeManager.current.accent)
         .sheet(isPresented: $showingAddHandle) {
             AddHandleSheet()
         }
@@ -49,7 +49,7 @@ struct LeaderboardView: View {
 
 struct LeaderboardList: View {
     let handles: [LeaderboardHandle]
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var sortedHandles: [LeaderboardHandle] {
         handles.sorted { handle1, handle2 in
@@ -77,7 +77,7 @@ struct LeaderboardList: View {
 struct LeaderboardCard: View {
     let handle: LeaderboardHandle
     let rank: Int
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @StateObject private var leaderboardManager = LeaderboardManager.shared
     
     private var rankColor: Color {
@@ -85,7 +85,7 @@ struct LeaderboardCard: View {
         case 1: return .yellow
         case 2: return .gray
         case 3: return .orange
-        default: return themeManager.colors.accent
+        default: return colorThemeManager.current.accent
         }
     }
     
@@ -109,12 +109,12 @@ struct LeaderboardCard: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(handle.handle)
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(themeManager.colors.textPrimary)
+                            .foregroundStyle(colorThemeManager.current.text)
                         
                         if let firstName = handle.firstName {
                             Text(firstName)
                                 .font(.system(size: 14, weight: .regular))
-                                .foregroundStyle(themeManager.colors.textSecondary)
+                                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                         }
                     }
                 }
@@ -133,7 +133,7 @@ struct LeaderboardCard: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                        .foregroundStyle(themeManager.colors.textSecondary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                         .font(.system(size: 18))
                 }
             }
@@ -182,7 +182,7 @@ struct StatItem: View {
     let value: String
     let icon: String
     let color: Color
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 8) {
@@ -192,11 +192,11 @@ struct StatItem: View {
             
             Text(value)
                 .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(themeManager.colors.textPrimary)
+                .foregroundStyle(colorThemeManager.current.text)
             
             Text(title)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(themeManager.colors.textSecondary)
+                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
@@ -209,7 +209,7 @@ struct StatItem: View {
 }
 
 struct EmptyLeaderboardView: View {
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @Binding var showingAddHandle: Bool
     
     var body: some View {
@@ -218,16 +218,16 @@ struct EmptyLeaderboardView: View {
             
             Image(systemName: "trophy")
                 .font(.system(size: 48, weight: .light))
-                .foregroundStyle(themeManager.colors.textSecondary)
+                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
             
             VStack(spacing: 8) {
                 Text("No Handles Added")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(themeManager.colors.textPrimary)
+                    .foregroundStyle(colorThemeManager.current.text)
                 
                 Text("Add Codeforces handles to start tracking your leaderboard")
                     .font(.system(size: 16, weight: .regular))
-                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                     .multilineTextAlignment(.center)
             }
             
@@ -244,7 +244,7 @@ struct EmptyLeaderboardView: View {
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(themeManager.colors.accent)
+                        .fill(colorThemeManager.current.accent)
                 )
             }
             .buttonStyle(.plain)
@@ -257,16 +257,16 @@ struct EmptyLeaderboardView: View {
 
 struct SearchBar: View {
     @Binding var searchText: String
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(themeManager.colors.textSecondary)
+                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                 .font(.system(size: 16, weight: .medium))
             
             TextField("Search handles...", text: $searchText)
-                .foregroundStyle(themeManager.colors.textPrimary)
+                .foregroundStyle(colorThemeManager.current.text)
                 .font(.system(size: 16, weight: .regular))
             
             if !searchText.isEmpty {
@@ -274,7 +274,7 @@ struct SearchBar: View {
                     searchText = ""
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(themeManager.colors.textSecondary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                         .font(.system(size: 16))
                 }
             }
@@ -291,7 +291,7 @@ struct SearchBar: View {
 
 struct AddHandleSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @StateObject private var leaderboardManager = LeaderboardManager.shared
     @State private var handleText = ""
     @State private var isLoading = false
@@ -300,7 +300,7 @@ struct AddHandleSheet: View {
     var body: some View {
         NavigationView {
             ZStack {
-                themeManager.colors.background
+                colorThemeManager.current.background
                     .ignoresSafeArea()
                 
                 VStack(spacing: 20) {
@@ -365,7 +365,7 @@ struct AddHandleSheet: View {
                     Button("Add") {
                         addHandle()
                     }
-                    .foregroundStyle(themeManager.colors.accent)
+                    .foregroundStyle(colorThemeManager.current.accent)
                     .disabled(handleText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
                 }
             }

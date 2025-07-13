@@ -10,13 +10,13 @@ import ActivityKit
 
 struct ContestListView: View {
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var showingFinishedContests = false
     
     var body: some View {
         NavigationStack {
             ZStack {
-                themeManager.colors.background
+                colorThemeManager.current.background
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
@@ -35,7 +35,7 @@ struct ContestListView: View {
             .navigationTitle("Contests")
             .navigationBarTitleDisplayMode(.inline)
         }
-        .tint(themeManager.colors.accent)
+        .tint(colorThemeManager.current.accent)
         .task {
             await cfService.fetchContests()
         }
@@ -47,7 +47,7 @@ struct ContestListView: View {
 
 struct ContestToggle: View {
     @Binding var showingFinished: Bool
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         HStack(spacing: 0) {
@@ -56,13 +56,13 @@ struct ContestToggle: View {
             }) {
                 Text("Upcoming")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(showingFinished ? themeManager.colors.textSecondary : themeManager.colors.textPrimary)
+                    .foregroundStyle(showingFinished ? colorThemeManager.current.text.opacity(0.6) : colorThemeManager.current.text)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(showingFinished ? themeManager.colors.surface.opacity(0.9) : themeManager.colors.accent)
-                            .shadow(color: showingFinished ? Color.black.opacity(0.05) : themeManager.colors.accent.opacity(0.3), radius: 8, y: 2)
+                            .fill(showingFinished ? colorThemeManager.current.tabBar.opacity(0.9) : colorThemeManager.current.accent)
+                            .shadow(color: showingFinished ? Color.black.opacity(0.05) : colorThemeManager.current.accent.opacity(0.3), radius: 8, y: 2)
                     )
             }
             
@@ -71,20 +71,20 @@ struct ContestToggle: View {
             }) {
                 Text("Recent")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(showingFinished ? themeManager.colors.textPrimary : themeManager.colors.textSecondary)
+                    .foregroundStyle(showingFinished ? colorThemeManager.current.text : colorThemeManager.current.text.opacity(0.6))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(showingFinished ? themeManager.colors.accent : themeManager.colors.surface.opacity(0.9))
-                            .shadow(color: showingFinished ? themeManager.colors.accent.opacity(0.3) : Color.black.opacity(0.05), radius: 8, y: 2)
+                            .fill(showingFinished ? colorThemeManager.current.accent : colorThemeManager.current.tabBar.opacity(0.9))
+                            .shadow(color: showingFinished ? colorThemeManager.current.accent.opacity(0.3) : Color.black.opacity(0.05), radius: 8, y: 2)
                     )
             }
         }
         .padding(4)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(themeManager.colors.surface.opacity(0.9))
+                .fill(colorThemeManager.current.tabBar.opacity(0.9))
                 .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
         )
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: showingFinished)
@@ -93,7 +93,7 @@ struct ContestToggle: View {
 
 struct UpcomingContestsList: View {
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         ScrollView {
@@ -121,7 +121,7 @@ struct UpcomingContestsList: View {
                 // Loading indicator
                 if cfService.isLoading {
                     ProgressView("Loading contests...")
-                        .foregroundStyle(themeManager.colors.textSecondary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                         .padding()
                 }
             }
@@ -178,7 +178,7 @@ struct FinishedContestsList: View {
 
 struct UpcomingContestCard: View {
     let contest: CFContest
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var showingDetails = false
     @State private var showLiveActivityError = false
     
@@ -188,7 +188,7 @@ struct UpcomingContestCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(contest.name)
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(themeManager.colors.textPrimary)
+                    .foregroundStyle(colorThemeManager.current.text)
                     .lineLimit(2)
                 
                 HStack(spacing: 12) {
@@ -205,19 +205,19 @@ struct UpcomingContestCard: View {
                 DetailItem(
                     icon: "calendar",
                     text: contest.startDate?.formatted(date: .abbreviated, time: .shortened) ?? "TBD",
-                    color: themeManager.colors.textSecondary
+                    color: colorThemeManager.current.text.opacity(0.6)
                 )
                 
                 DetailItem(
                     icon: "clock",
                     text: contest.duration,
-                    color: themeManager.colors.textSecondary
+                    color: colorThemeManager.current.text.opacity(0.6)
                 )
                 
                 DetailItem(
                     icon: "person.3",
                     text: contest.type.capitalized,
-                    color: themeManager.colors.textSecondary
+                    color: colorThemeManager.current.text.opacity(0.6)
                 )
             }
             
@@ -226,7 +226,7 @@ struct UpcomingContestCard: View {
                 ActionButton(
                     title: "Register",
                     icon: "arrow.right.circle.fill",
-                    color: themeManager.colors.accent
+                    color: colorThemeManager.current.accent
                 ) {
                     if let url = URL(string: "https://codeforces.com/contest/\(contest.id)/register") {
                         UIApplication.shared.open(url)
@@ -236,7 +236,7 @@ struct UpcomingContestCard: View {
                 ActionButton(
                     title: "Notify",
                     icon: "bell.fill",
-                    color: themeManager.colors.warning
+                    color: Color.orange
                 ) {
                     NotificationManager.shared.scheduleNotification(
                         title: "Contest Reminder",
@@ -271,7 +271,7 @@ struct UpcomingContestCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(themeManager.colors.surface.opacity(0.9))
+                .fill(colorThemeManager.current.tabBar.opacity(0.9))
                 .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
         )
         .alert("Live Activity Not Supported", isPresented: $showLiveActivityError) {
@@ -291,46 +291,46 @@ struct UpcomingContestCard: View {
 
 struct ContestTypeBadge: View {
     let type: String
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         Text(type.capitalized)
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(themeManager.colors.textPrimary)
+            .foregroundStyle(colorThemeManager.current.text)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(themeManager.colors.accent)
+                    .fill(colorThemeManager.current.accent)
             )
     }
 }
 
 struct ContestCountryBadge: View {
     let country: String
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         Text(country)
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(themeManager.colors.textPrimary)
+            .foregroundStyle(colorThemeManager.current.text)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(themeManager.colors.textSecondary)
+                    .fill(colorThemeManager.current.text.opacity(0.6))
             )
     }
 }
 
 struct ContestPhaseBadge: View {
     let phase: String
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         Text(phaseDisplayText)
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(themeManager.colors.textPrimary)
+            .foregroundStyle(colorThemeManager.current.text)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(
@@ -352,12 +352,12 @@ struct ContestPhaseBadge: View {
     
     private var phaseColor: Color {
         switch phase {
-        case "BEFORE": return themeManager.colors.accent
-        case "CODING": return themeManager.colors.success
-        case "PENDING_SYSTEM_TEST": return themeManager.colors.warning
-        case "SYSTEM_TEST": return themeManager.colors.warning
-        case "FINISHED": return themeManager.colors.textSecondary
-        default: return themeManager.colors.textSecondary
+        case "BEFORE": return colorThemeManager.current.accent
+        case "CODING": return Color.green
+        case "PENDING_SYSTEM_TEST": return Color.orange
+        case "SYSTEM_TEST": return Color.orange
+        case "FINISHED": return colorThemeManager.current.text.opacity(0.6)
+        default: return colorThemeManager.current.text.opacity(0.6)
         }
     }
 }
@@ -367,7 +367,7 @@ struct ActionButton: View {
     let icon: String
     let color: Color
     let action: () -> Void
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         Button(action: action) {
@@ -378,7 +378,7 @@ struct ActionButton: View {
                 Text(title)
                     .font(.system(size: 14, weight: .semibold))
             }
-            .foregroundStyle(themeManager.colors.textPrimary)
+            .foregroundStyle(colorThemeManager.current.text)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(
@@ -413,7 +413,7 @@ struct ContestInfoCard: View {
     let value: String
     let icon: String
     let color: Color
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 8) {
@@ -428,22 +428,22 @@ struct ContestInfoCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(themeManager.colors.textPrimary)
+                    .foregroundStyle(colorThemeManager.current.text)
                 
                 Text(title)
                     .font(.caption)
-                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding()
-        .background(themeManager.colors.textSecondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+        .background(colorThemeManager.current.text.opacity(0.6).opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
     }
 }
 
 struct FinishedContestCard: View {
     let contest: CFContest
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -451,13 +451,13 @@ struct FinishedContestCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(contest.name)
                         .font(.headline.bold())
-                        .foregroundStyle(themeManager.colors.textPrimary)
+                        .foregroundStyle(colorThemeManager.current.text)
                         .lineLimit(2)
                     
                     if let startDate = contest.startDate {
                         Text("Held on \(startDate.formatted())")
                             .font(.subheadline)
-                            .foregroundStyle(themeManager.colors.textSecondary)
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                     }
                 }
                 
@@ -467,8 +467,8 @@ struct FinishedContestCard: View {
                     .font(.caption.bold())
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(themeManager.colors.textSecondary.opacity(0.2))
-                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .background(colorThemeManager.current.text.opacity(0.6).opacity(0.2))
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                     .cornerRadius(6)
             }
             
@@ -494,12 +494,12 @@ struct FinishedContestCard: View {
                 }) {
                     Label("View", systemImage: "link")
                         .font(.caption.bold())
-                        .foregroundStyle(themeManager.colors.accent)
+                        .foregroundStyle(colorThemeManager.current.accent)
                 }
             }
         }
         .padding()
-        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -507,22 +507,22 @@ struct ContestInfoItem: View {
     let title: String
     let value: String
     let icon: String
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.caption)
-                .foregroundStyle(themeManager.colors.textSecondary)
+                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.caption)
-                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                 
                 Text(value)
                     .font(.caption.bold())
-                    .foregroundStyle(themeManager.colors.textPrimary)
+                    .foregroundStyle(colorThemeManager.current.text)
             }
         }
     }
@@ -530,24 +530,24 @@ struct ContestInfoItem: View {
 
 struct EmptyContestsView: View {
     let isUpcoming: Bool
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: isUpcoming ? "calendar" : "checkmark.circle")
                 .font(.system(size: 50))
-                .foregroundStyle(themeManager.colors.textSecondary)
+                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
             
             Text(isUpcoming ? "No upcoming contests" : "Loading recent contests...")
                 .font(.title3.bold())
-                .foregroundStyle(themeManager.colors.textPrimary)
+                .foregroundStyle(colorThemeManager.current.text)
             
             Text(isUpcoming ? 
                  "Check back later for new contests" : 
                  "Please wait while we fetch contest data"
             )
                 .font(.subheadline)
-                .foregroundStyle(themeManager.colors.textSecondary)
+                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -558,12 +558,12 @@ struct EmptyContestsView: View {
 struct ContestDetailSheet: View {
     let contest: CFContest
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         NavigationView {
             ZStack {
-                themeManager.colors.background
+                colorThemeManager.current.background
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -572,7 +572,7 @@ struct ContestDetailSheet: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(contest.name)
                                 .font(.title2.bold())
-                                .foregroundStyle(themeManager.colors.textPrimary)
+                                .foregroundStyle(colorThemeManager.current.text)
                             
                             HStack {
                                 Text(contest.phaseDisplayText)
@@ -587,13 +587,13 @@ struct ContestDetailSheet: View {
                             }
                         }
                         .padding()
-                        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
+                        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
                         
                         // Contest Details
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Details")
                                 .font(.headline.bold())
-                                .foregroundStyle(themeManager.colors.textPrimary)
+                                .foregroundStyle(colorThemeManager.current.text)
                             
                             if let startDate = contest.startDate {
                                 InfoRow(title: "Start Time", value: startDate.formatted())
@@ -615,21 +615,21 @@ struct ContestDetailSheet: View {
                             }
                         }
                         .padding()
-                        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
+                        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
                         
                         // Description
                         if let description = contest.description, !description.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Description")
                                     .font(.headline.bold())
-                                    .foregroundStyle(themeManager.colors.textPrimary)
+                                    .foregroundStyle(colorThemeManager.current.text)
                                 
                                 Text(description)
                                     .font(.body)
-                                    .foregroundStyle(themeManager.colors.textSecondary)
+                                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                             }
                             .padding()
-                            .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
+                            .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
                         }
                         
                         // Action Button
@@ -640,10 +640,10 @@ struct ContestDetailSheet: View {
                         }) {
                             Label("Open in Codeforces", systemImage: "link")
                                 .font(.headline.bold())
-                                .foregroundStyle(themeManager.colors.textPrimary)
+                                .foregroundStyle(colorThemeManager.current.text)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(themeManager.colors.accent)
+                                .background(colorThemeManager.current.accent)
                                 .cornerRadius(12)
                         }
                         .padding()
@@ -657,7 +657,7 @@ struct ContestDetailSheet: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundStyle(themeManager.colors.accent)
+                    .foregroundStyle(colorThemeManager.current.accent)
                 }
             }
         }
@@ -689,7 +689,7 @@ struct ErrorRetryView: View {
     let message: String
     let isLoading: Bool
     let onRetry: () -> Void
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 16) {
@@ -722,7 +722,7 @@ struct ErrorRetryView: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(themeManager.colors.accent)
+                .background(colorThemeManager.current.accent)
                 .cornerRadius(12)
             }
             .disabled(isLoading)

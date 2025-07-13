@@ -11,7 +11,7 @@ struct HandleInputSheet: View {
     @Binding var handleInput: String
     let onSubmit: () -> Void
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @Environment(\.dismiss) private var dismiss
     @FocusState private var isTextFieldFocused: Bool
     @State private var localInput: String = ""
@@ -133,33 +133,33 @@ struct HandleInputSheet: View {
 }
 
 struct ThemedTextFieldStyle: TextFieldStyle {
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
             .padding()
-            .background(themeManager.colors.surface)
+            .background(colorThemeManager.current.tabBar)
             .cornerRadius(12)
-            .foregroundColor(themeManager.colors.textPrimary)
+            .foregroundColor(colorThemeManager.current.text)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(themeManager.colors.accent.opacity(0.3), lineWidth: 1)
+                    .stroke(colorThemeManager.current.accent.opacity(0.3), lineWidth: 1)
             )
     }
 }
 
 struct KrypticTextFieldStyle: TextFieldStyle {
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
             .padding()
-            .background(themeManager.colors.surface)
+            .background(colorThemeManager.current.tabBar)
             .cornerRadius(12)
-            .foregroundColor(themeManager.colors.textPrimary)
+            .foregroundColor(colorThemeManager.current.text)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(themeManager.colors.accent.opacity(0.3), lineWidth: 1)
+                    .stroke(colorThemeManager.current.accent.opacity(0.3), lineWidth: 1)
             )
     }
 }
@@ -207,7 +207,7 @@ struct SettingsRow<Content: View>: View {
 struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var showingHandleChange = false
     @State private var showingThemeSelector = false
     @State private var showingAppearanceSettings = false
@@ -294,7 +294,7 @@ struct SettingsSheet: View {
                 // Appearance Section
                     SectionHeader(title: "Appearance")
                     VStack(spacing: 12) {
-                        SettingsRow(icon: "paintbrush.fill", title: "Theme", value: themeManager.currentTheme.displayName) {
+                        SettingsRow(icon: "paintbrush.fill", title: "Theme", value: "Current Theme") {
                             Button("Change") { showingThemeSelector = true }
                         .buttonStyle(.bordered)
                         }
@@ -367,7 +367,7 @@ struct HandleChangeSheet: View {
     let currentHandle: String
     let onSubmit: (String) -> Void
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @Environment(\.dismiss) private var dismiss
     @FocusState private var isTextFieldFocused: Bool
     @State private var newHandle: String = ""

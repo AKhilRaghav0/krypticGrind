@@ -13,17 +13,17 @@ struct CustomTopBar: View {
     let onProfile: () -> Void
     let onReload: () -> Void
     let accent: Color
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         ZStack {
             // Minimal, flat background
-            themeManager.colors.surface
+            colorThemeManager.current.tabBar
                 .ignoresSafeArea(edges: .top)
             HStack {
                 Button(action: onProfile) {
                     Circle()
-                        .fill(themeManager.colors.textSecondary.opacity(0.13))
+                        .fill(colorThemeManager.current.text.opacity(0.13))
                         .frame(width: 36, height: 36)
                         .overlay(
                             Image(systemName: "person.crop.circle")
@@ -34,11 +34,11 @@ struct CustomTopBar: View {
                 Spacer()
                 Text(title)
                     .font(.custom("TTPhobosTrial-Bold", size: 20))
-                    .foregroundColor(themeManager.colors.textPrimary)
+                    .foregroundColor(colorThemeManager.current.text)
                 Spacer()
                 Button(action: onReload) {
                     Circle()
-                        .fill(themeManager.colors.textSecondary.opacity(0.13))
+                        .fill(colorThemeManager.current.text.opacity(0.13))
                         .frame(width: 36, height: 36)
                         .overlay(
                             Image(systemName: "arrow.clockwise")
@@ -57,33 +57,33 @@ struct CustomTopBar: View {
 
 struct HomeView: View {
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var showingSettingsSheet = false
     
     var body: some View {
         NavigationStack {
             ZStack {
-                themeManager.colors.background
+                colorThemeManager.current.background
                     .ignoresSafeArea()
                 VStack(spacing: 32) {
                     Spacer().frame(height: 12)
                     // Title
                     Text("KrypticGrind")
                         .font(.custom("TTPhobosTrial-Bold", size: 32))
-                        .foregroundColor(themeManager.colors.textPrimary)
+                        .foregroundColor(colorThemeManager.current.text)
                         .padding(.top, 8)
                     // Next Contest Card
                     if let nextContest = cfService.nextContest {
-                        ContestNextUpCard(contest: nextContest, accent: themeManager.colors.accent)
+                        ContestNextUpCard(contest: nextContest, accent: colorThemeManager.current.accent)
                             .padding(.horizontal, 20)
                     } else {
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(themeManager.colors.surface.opacity(0.7))
+                            .fill(colorThemeManager.current.tabBar.opacity(0.7))
                             .frame(height: 120)
                             .overlay(
                                 Text("No upcoming contests")
                                     .font(.custom("TTPhobosTrial-Bold", size: 20))
-                                    .foregroundColor(themeManager.colors.textPrimary.opacity(0.5))
+                                    .foregroundColor(colorThemeManager.current.text.opacity(0.5))
                             )
                             .padding(.horizontal, 20)
                     }
@@ -97,7 +97,7 @@ struct HomeView: View {
                     Button(action: { showingSettingsSheet = true }) {
                         Image(systemName: "person.crop.circle")
                             .font(.title3)
-                            .foregroundColor(themeManager.colors.accent)
+                            .foregroundColor(colorThemeManager.current.accent)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -106,7 +106,7 @@ struct HomeView: View {
                     }) {
                         Image(systemName: "arrow.clockwise")
                             .font(.title3)
-                            .foregroundColor(themeManager.colors.accent)
+                            .foregroundColor(colorThemeManager.current.accent)
                     }
                 }
             }
@@ -116,14 +116,14 @@ struct HomeView: View {
                     .presentationDragIndicator(.visible)
             }
         }
-        .tint(themeManager.colors.accent)
+        .tint(colorThemeManager.current.accent)
     }
 }
 
 // MARK: - Modern User Profile Card
 struct ModernUserProfileCard: View {
     let user: CFUser
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 0) {
@@ -135,10 +135,10 @@ struct ModernUserProfileCard: View {
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Circle()
-                        .fill(themeManager.colors.textSecondary.opacity(0.2))
+                        .fill(colorThemeManager.current.text.opacity(0.6).opacity(0.2))
                         .overlay {
                             Image(systemName: "person.fill")
-                                .foregroundStyle(themeManager.colors.textSecondary)
+                                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                         }
                 }
                 .frame(width: 64, height: 64)
@@ -147,11 +147,11 @@ struct ModernUserProfileCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(user.displayName)
                         .font(.title2.bold())
-                        .foregroundStyle(themeManager.colors.textPrimary)
+                        .foregroundStyle(colorThemeManager.current.text)
                     
                     Text("@\(user.handle)")
                         .font(.subheadline)
-                        .foregroundStyle(themeManager.colors.textSecondary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                     
                     HStack(spacing: 8) {
                         Text(user.rank)
@@ -172,7 +172,7 @@ struct ModernUserProfileCard: View {
             .padding(.bottom, 12)
             
             Divider()
-                .background(themeManager.colors.divider)
+                .background(colorThemeManager.current.text.opacity(0.2))
                 .padding(.horizontal, 16)
             
             // Rating stats
@@ -184,7 +184,7 @@ struct ModernUserProfileCard: View {
                 )
                 
                 Divider()
-                    .background(themeManager.colors.divider)
+                    .background(colorThemeManager.current.text.opacity(0.2))
                     .frame(height: 40)
                 
                 StatColumn(
@@ -194,19 +194,19 @@ struct ModernUserProfileCard: View {
                 )
                 
                 Divider()
-                    .background(themeManager.colors.divider)
+                    .background(colorThemeManager.current.text.opacity(0.2))
                     .frame(height: 40)
                 
                 StatColumn(
                     title: "Contribution",
                     value: "\(user.contribution)",
-                    color: user.contribution >= 0 ? themeManager.colors.success : themeManager.colors.error
+                    color: user.contribution >= 0 ? Color.green : Color.red
                 )
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
         }
-        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -214,13 +214,13 @@ struct StatColumn: View {
     let title: String
     let value: String
     let color: Color
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 4) {
             Text(title)
                 .font(.caption)
-                .foregroundStyle(themeManager.colors.textSecondary)
+                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
             
             Text(value)
                 .font(.title3.bold())
@@ -233,7 +233,7 @@ struct StatColumn: View {
 // MARK: - Modern Stats Grid
 struct ModernStatsGrid: View {
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         LazyVGrid(columns: [
@@ -245,7 +245,7 @@ struct ModernStatsGrid: View {
                 title: "Contests",
                 value: "\(cfService.ratingHistory.count)",
                 icon: "trophy.fill",
-                color: themeManager.colors.warning,
+                color: Color.orange,
                 subtitle: "participated"
             )
             
@@ -253,7 +253,7 @@ struct ModernStatsGrid: View {
                 title: "Submissions",
                 value: "\(cfService.recentSubmissions.count)",
                 icon: "doc.text.fill",
-                color: themeManager.colors.accent,
+                color: colorThemeManager.current.accent,
                 subtitle: "total"
             )
             
@@ -261,55 +261,17 @@ struct ModernStatsGrid: View {
                 title: "Accepted",
                 value: "\(cfService.recentSubmissions.acceptedSubmissions().count)",
                 icon: "checkmark.circle.fill",
-                color: themeManager.colors.success,
+                color: Color.green,
                 subtitle: "solved"
             )
         }
     }
 }
 
-// MARK: - Modern Stat Card
-struct ModernStatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    let subtitle: String
-    @StateObject private var themeManager = ThemeManager.shared
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(color)
-                
-                Spacer()
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(value)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(themeManager.colors.textPrimary)
-                
-                Text(title)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(themeManager.colors.textSecondary)
-                
-                Text(subtitle)
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(themeManager.colors.textSecondary.opacity(0.7))
-            }
-        }
-        .padding(16)
-        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
-    }
-}
-
 // MARK: - Modern Progress Card
 struct ModernProgressCard: View {
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         let todaysSubmissions = cfService.recentSubmissions.todaysSubmissions()
@@ -322,11 +284,11 @@ struct ModernProgressCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Today's Progress")
                         .font(.headline)
-                        .foregroundStyle(themeManager.colors.textPrimary)
+                        .foregroundStyle(colorThemeManager.current.text)
                     
                     Text("\(todaysAccepted.count) of \(dailyGoal) problems solved")
                         .font(.subheadline)
-                        .foregroundStyle(themeManager.colors.textSecondary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                 }
                 
                 Spacer()
@@ -334,7 +296,7 @@ struct ModernProgressCard: View {
                 if progress >= 1.0 {
                     Image(systemName: "star.fill")
                         .font(.title2)
-                        .foregroundStyle(themeManager.colors.warning)
+                        .foregroundStyle(Color.orange)
                         .scaleEffect(1.1)
                         .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: progress)
                 }
@@ -345,55 +307,55 @@ struct ModernProgressCard: View {
                 HStack {
                     Text("\(Int(progress * 100))%")
                         .font(.caption.bold())
-                        .foregroundStyle(themeManager.colors.textSecondary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                     Spacer()
                 }
             }
             .progressViewStyle(.linear)
-            .tint(themeManager.colors.accent)
+            .tint(colorThemeManager.current.accent)
             .scaleEffect(y: 1.5)
             
             HStack {
                 Label("\(todaysSubmissions.count) submissions today", systemImage: "paperplane.fill")
                     .font(.caption)
-                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                 
                 Spacer()
                 
                 if progress >= 1.0 {
                     Text("Goal achieved! 🎉")
                         .font(.caption.bold())
-                        .foregroundStyle(themeManager.colors.success)
+                        .foregroundStyle(Color.green)
                 } else {
                     Text("\(dailyGoal - todaysAccepted.count) more to go")
                         .font(.caption)
-                        .foregroundStyle(themeManager.colors.warning)
+                        .foregroundStyle(Color.orange)
                 }
             }
         }
         .padding(16)
-        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
 // MARK: - Modern Activity Card
 struct ModernActivityCard: View {
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Recent Activity")
                     .font(.headline)
-                    .foregroundStyle(themeManager.colors.textPrimary)
+                    .foregroundStyle(colorThemeManager.current.text)
                 
                 Spacer()
                 
                 NavigationLink(destination: SubmissionsView()) {
                     Text("View All")
                         .font(.subheadline)
-                        .foregroundStyle(themeManager.colors.accent)
+                        .foregroundStyle(colorThemeManager.current.accent)
                 }
             }
             
@@ -404,13 +366,13 @@ struct ModernActivityCard: View {
             }
         }
         .padding(16)
-        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
 struct ModernSubmissionRow: View {
     let submission: CFSubmission
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         HStack(spacing: 12) {
@@ -422,12 +384,12 @@ struct ModernSubmissionRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(submission.problem.name)
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(themeManager.colors.textPrimary)
+                    .foregroundStyle(colorThemeManager.current.text)
                     .lineLimit(1)
                 
                 Text("\(submission.problem.index) • \(submission.programmingLanguage)")
                     .font(.caption)
-                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
             }
             
             Spacer()
@@ -439,7 +401,7 @@ struct ModernSubmissionRow: View {
                 
                 Text(submission.submissionDate.timeAgo())
                     .font(.caption)
-                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
             }
         }
         .padding(.vertical, 4)
@@ -449,23 +411,23 @@ struct ModernSubmissionRow: View {
 // MARK: - Welcome Card
 struct WelcomeCard: View {
     @State private var showingHandleInput = false
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "lock.shield.fill")
                 .font(.system(size: 60))
-                .foregroundColor(themeManager.colors.accent)
-                .shadow(color: themeManager.colors.accent.opacity(0.6), radius: 10)
+                .foregroundColor(colorThemeManager.current.accent)
+                .shadow(color: colorThemeManager.current.accent.opacity(0.6), radius: 10)
             
             Text("Welcome to KrypticGrind")
                 .font(.largeTitle.bold())
-                .foregroundColor(themeManager.colors.textPrimary)
+                .foregroundColor(colorThemeManager.current.text)
                 .multilineTextAlignment(.center)
             
             Text("Track your Codeforces journey with style. Enter your handle to get started.")
                 .font(.body)
-                .foregroundColor(themeManager.colors.textSecondary)
+                .foregroundColor(colorThemeManager.current.text.opacity(0.6))
                 .multilineTextAlignment(.center)
             
             Button(action: {
@@ -473,16 +435,16 @@ struct WelcomeCard: View {
             }) {
                 Text("Get Started")
                     .font(.headline.bold())
-                    .foregroundColor(themeManager.colors.textPrimary)
+                    .foregroundColor(colorThemeManager.current.text)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(themeManager.colors.accent)
+                    .background(colorThemeManager.current.accent)
                     .cornerRadius(12)
-                    .shadow(color: themeManager.colors.accent.opacity(0.6), radius: 10)
+                    .shadow(color: colorThemeManager.current.accent.opacity(0.6), radius: 10)
             }
         }
         .padding(30)
-        .background(themeManager.colors.surface)
+        .background(colorThemeManager.current.tabBar)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
         .sheet(isPresented: $showingHandleInput) {
@@ -499,22 +461,22 @@ struct ErrorRetryHomeView: View {
     let message: String
     let isLoading: Bool
     let onRetry: () -> Void
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.title3)
-                .foregroundColor(themeManager.colors.warning)
+                .foregroundColor(Color.orange)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text("Connection Issue")
                     .font(.subheadline.bold())
-                    .foregroundColor(themeManager.colors.textPrimary)
+                    .foregroundColor(colorThemeManager.current.text)
                 
                 Text(message)
                     .font(.caption)
-                    .foregroundColor(themeManager.colors.textSecondary)
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
                     .lineLimit(2)
             }
             
@@ -524,16 +486,16 @@ struct ErrorRetryHomeView: View {
                 if isLoading {
                     ProgressView()
                         .scaleEffect(0.7)
-                        .progressViewStyle(CircularProgressViewStyle(tint: themeManager.colors.textPrimary))
+                        .progressViewStyle(CircularProgressViewStyle(tint: colorThemeManager.current.text))
                 } else {
                     Image(systemName: "arrow.clockwise")
-                        .foregroundColor(themeManager.colors.accent)
+                        .foregroundColor(colorThemeManager.current.accent)
                 }
             }
             .disabled(isLoading)
         }
         .padding()
-        .background(themeManager.colors.surface)
+        .background(colorThemeManager.current.tabBar)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
@@ -541,7 +503,7 @@ struct ErrorRetryHomeView: View {
 
 // MARK: - Modern Loading View
 struct ModernLoadingView: View {
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 16) {
@@ -550,11 +512,11 @@ struct ModernLoadingView: View {
             
             Text("Loading your data...")
                 .font(.subheadline)
-                .foregroundStyle(themeManager.colors.textSecondary)
+                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
-        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -563,22 +525,22 @@ struct ErrorBannerView: View {
     let message: String
     let isLoading: Bool
     let onRetry: () -> Void
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(themeManager.colors.error)
+                .foregroundStyle(Color.red)
                 .font(.title3)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text("Error")
                     .font(.subheadline.bold())
-                    .foregroundStyle(themeManager.colors.textPrimary)
+                    .foregroundStyle(colorThemeManager.current.text)
                 
                 Text(message)
                     .font(.caption)
-                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                     .lineLimit(2)
             }
             
@@ -592,10 +554,10 @@ struct ErrorBannerView: View {
             .disabled(isLoading)
         }
         .padding()
-        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 12))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(themeManager.colors.error.opacity(0.3), lineWidth: 1)
+                .stroke(Color.red.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -603,37 +565,37 @@ struct ErrorBannerView: View {
 // MARK: - Modern Welcome Card
 struct ModernWelcomeCard: View {
     let action: () -> Void
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "star.circle.fill")
                 .font(.system(size: 60))
-                .foregroundStyle(themeManager.colors.accent.gradient)
+                .foregroundStyle(colorThemeManager.current.accent.gradient)
             
             VStack(spacing: 8) {
                 Text("Welcome to KrypticGrind")
                     .font(.title2.bold())
-                    .foregroundStyle(themeManager.colors.textPrimary)
+                    .foregroundStyle(colorThemeManager.current.text)
                 
                 Text("Track your competitive programming journey")
                     .font(.subheadline)
-                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                     .multilineTextAlignment(.center)
             }
             
             Button(action: action) {
                 Text("Get Started")
                     .font(.headline.bold())
-                    .foregroundStyle(themeManager.colors.textPrimary)
+                    .foregroundStyle(colorThemeManager.current.text)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(themeManager.colors.accent.gradient)
+                    .background(colorThemeManager.current.accent.gradient)
                     .cornerRadius(12)
             }
         }
         .padding(24)
-        .background(themeManager.colors.surface, in: RoundedRectangle(cornerRadius: 16))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -641,7 +603,7 @@ struct ModernWelcomeCard: View {
 struct ContestNextUpCard: View {
     let contest: CFContest
     let accent: Color
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -650,19 +612,19 @@ struct ContestNextUpCard: View {
                 .foregroundColor(accent)
             Text(contest.name)
                 .font(.custom("TTPhobosTrial-Bold", size: 22))
-                .foregroundColor(themeManager.colors.textPrimary)
+                .foregroundColor(colorThemeManager.current.text)
             HStack {
                 Image(systemName: "calendar")
                     .foregroundColor(accent)
                 Text(contest.startDate?.formatted(date: .abbreviated, time: .shortened) ?? "TBD")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(themeManager.colors.textSecondary)
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
                 Spacer()
                 if let url = URL(string: contest.contestUrl) {
                     Link(destination: url) {
                         Text("Details")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(themeManager.colors.textPrimary)
+                            .foregroundColor(colorThemeManager.current.text)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                             .background(accent)
@@ -674,7 +636,7 @@ struct ContestNextUpCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(themeManager.colors.surface.opacity(0.9))
+                .fill(colorThemeManager.current.tabBar.opacity(0.9))
                 .shadow(color: accent.opacity(0.08), radius: 8, y: 2)
         )
     }

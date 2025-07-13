@@ -4,8 +4,7 @@ import Charts
 
 struct ContentView: View {
     @State private var selectedTab: MainTab = .home
-    @StateObject private var themeManager = ThemeManager.shared
-    @StateObject private var colorThemeManager = ColorThemeManager()
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -55,7 +54,6 @@ struct ContentView: View {
             }
             .allowsHitTesting(true)
         }
-        .preferredColorScheme(themeManager.colorScheme)
         .tint(colorThemeManager.current.accent)
     }
 }

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ReviewLaterView: View {
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @StateObject private var problemDataManager = ProblemDataManager.shared
     @StateObject private var cfService = CFService.shared
     @State private var searchText = ""
@@ -34,7 +34,7 @@ struct ReviewLaterView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                themeManager.colors.background
+                colorThemeManager.current.background
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
@@ -49,7 +49,7 @@ struct ReviewLaterView: View {
                     }
                 }
             }
-            .background(themeManager.colors.background)
+            .background(colorThemeManager.current.background)
             .navigationTitle("Review Later")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
@@ -65,7 +65,7 @@ struct ReviewLaterView: View {
 
 struct ReviewLaterSearchBar: View {
     @Binding var searchText: String
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         HStack(spacing: 12) {
@@ -93,7 +93,7 @@ struct ReviewLaterSearchBar: View {
 
 struct ReviewLaterList: View {
     let reviewLaterProblems: [ProblemReviewLater]
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @StateObject private var cfService = CFService.shared
     @StateObject private var problemDataManager = ProblemDataManager.shared
     
@@ -114,7 +114,7 @@ struct ReviewLaterList: View {
 struct ReviewLaterListCard: View {
     let submission: CFSubmission
     let reviewLater: ProblemReviewLater
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @StateObject private var problemDataManager = ProblemDataManager.shared
     @State private var showingProblemDetails = false
     
@@ -215,7 +215,7 @@ struct ReviewLaterListCard: View {
                 }) {
                     Label("View Problem", systemImage: "safari")
                         .font(.caption.weight(.medium))
-                        .foregroundStyle(themeManager.colors.accent)
+                        .foregroundStyle(colorThemeManager.current.accent)
                 }
                 
                 Button(action: {
@@ -247,7 +247,7 @@ struct ReviewLaterListCard: View {
 
 struct EmptyReviewLaterView: View {
     let searchText: String
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 24) {
@@ -297,6 +297,165 @@ struct EmptyReviewLaterView: View {
             return "Mark problems as 'Review Later' from your submissions to see them here. Great for revisiting challenging problems or studying solutions."
         } else {
             return "No problems match your search. Try different keywords or clear the search."
+        }
+    }
+}
+
+struct ProblemDetailSheet: View {
+    let submission: CFSubmission
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                colorThemeManager.current.background
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        // Problem Header
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(submission.problem.name)
+                                .font(.title2.bold())
+                                .foregroundStyle(colorThemeManager.current.text)
+                            
+                            HStack(spacing: 8) {
+                                Text(submission.problem.index)
+                                    .font(.subheadline.weight(.semibold))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(colorThemeManager.current.accent.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
+                                    .foregroundStyle(colorThemeManager.current.accent)
+                                
+                                if let rating = submission.problem.rating {
+                                    Text("\(rating)")
+                                        .font(.subheadline.weight(.semibold))
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color.ratingColor(for: rating).opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
+                                        .foregroundStyle(Color.ratingColor(for: rating))
+                                }
+                                
+                                Spacer()
+                            }
+                        }
+                        .padding()
+                        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
+                        
+                        // Submission Details
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Submission Details")
+                                .font(.headline.bold())
+                                .foregroundStyle(colorThemeManager.current.text)
+                            
+                            VStack(spacing: 12) {
+                                DetailRow(
+                                    icon: "checkmark.circle",
+                                    title: "Verdict",
+                                    value: submission.verdictDisplayText,
+                                    color: Color.verdictColor(for: submission.verdict ?? "")
+                                )
+                                
+                                DetailRow(
+                                    icon: "chevron.left.forwardslash.chevron.right",
+                                    title: "Language",
+                                    value: submission.programmingLanguage,
+                                    color: colorThemeManager.current.accent
+                                )
+                                
+                                DetailRow(
+                                    icon: "clock",
+                                    title: "Submission Time",
+                                    value: submission.submissionDate.formatted(),
+                                    color: colorThemeManager.current.text.opacity(0.6)
+                                )
+                                
+                                if submission.memoryConsumedBytes > 0 {
+                                    DetailRow(
+                                        icon: "memorychip",
+                                        title: "Memory Used",
+                                        value: "\(submission.memoryConsumedBytes / 1024) KB",
+                                        color: colorThemeManager.current.accent
+                                    )
+                                }
+                                
+                                if submission.timeConsumedMillis > 0 {
+                                    DetailRow(
+                                        icon: "timer",
+                                        title: "Time Used",
+                                        value: "\(submission.timeConsumedMillis) ms",
+                                        color: Color.orange
+                                    )
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
+                        
+                        // Problem Tags
+                        if !submission.problem.tags.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Tags")
+                                    .font(.headline.bold())
+                                    .foregroundStyle(colorThemeManager.current.text)
+                                
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))], spacing: 8) {
+                                    ForEach(submission.problem.tags, id: \.self) { tag in
+                                        Text(tag)
+                                            .font(.caption.weight(.medium))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(colorThemeManager.current.accent.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
+                                            .foregroundStyle(colorThemeManager.current.accent)
+                                    }
+                                }
+                            }
+                            .padding()
+                            .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
+                        }
+                    }
+                    .padding()
+                }
+            }
+            .navigationTitle("Problem Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct DetailRow: View {
+    let icon: String
+    let title: String
+    let value: String
+    let color: Color
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.subheadline)
+                .foregroundStyle(color)
+                .frame(width: 20)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+                
+                Text(value)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(colorThemeManager.current.text)
+            }
+            
+            Spacer()
         }
     }
 }

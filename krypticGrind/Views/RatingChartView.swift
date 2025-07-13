@@ -10,12 +10,12 @@ import Charts
 
 struct RatingChartView: View {
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         NavigationStack {
             ZStack {
-                themeManager.colors.background
+                colorThemeManager.current.background
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -36,7 +36,7 @@ struct RatingChartView: View {
             .navigationTitle("Rating History")
             .navigationBarTitleDisplayMode(.inline)
         }
-        .tint(themeManager.colors.accent)
+        .tint(colorThemeManager.current.accent)
         .task {
             if let handle = UserDefaults.standard.savedHandle {
                 await cfService.fetchRatingHistory(handle: handle)
@@ -47,14 +47,14 @@ struct RatingChartView: View {
 
 struct RatingChart: View {
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Rating Progress")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(themeManager.colors.textPrimary)
+                    .foregroundStyle(colorThemeManager.current.text)
                 
                 Spacer()
                 
@@ -68,16 +68,16 @@ struct RatingChart: View {
                 VStack(spacing: 20) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
                         .font(.system(size: 48, weight: .light))
-                        .foregroundStyle(themeManager.colors.textSecondary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                     
                     VStack(spacing: 8) {
                         Text("No Contest History")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(themeManager.colors.textPrimary)
+                            .foregroundStyle(colorThemeManager.current.text)
                         
                         Text("Your rating changes will appear here after participating in contests")
                             .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(themeManager.colors.textSecondary)
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                             .multilineTextAlignment(.center)
                     }
                 }
@@ -90,7 +90,7 @@ struct RatingChart: View {
                             x: .value("Date", change.updateDate),
                             y: .value("Rating", change.newRating)
                         )
-                        .foregroundStyle(themeManager.colors.accent.gradient)
+                        .foregroundStyle(colorThemeManager.current.accent.gradient)
                         .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round))
                         
                         AreaMark(
@@ -99,7 +99,7 @@ struct RatingChart: View {
                         )
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [themeManager.colors.accent.opacity(0.3), themeManager.colors.accent.opacity(0.05)],
+                                colors: [colorThemeManager.current.accent.opacity(0.3), colorThemeManager.current.accent.opacity(0.05)],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
@@ -109,7 +109,7 @@ struct RatingChart: View {
                             x: .value("Date", change.updateDate),
                             y: .value("Rating", change.newRating)
                         )
-                        .foregroundStyle(themeManager.colors.accent)
+                        .foregroundStyle(colorThemeManager.current.accent)
                         .symbolSize(25)
                     }
                 }
@@ -118,22 +118,22 @@ struct RatingChart: View {
                 .chartXAxis {
                     AxisMarks(values: .automatic) { _ in
                         AxisGridLine()
-                            .foregroundStyle(themeManager.colors.textSecondary.opacity(0.3))
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6).opacity(0.3))
                         AxisTick()
-                            .foregroundStyle(themeManager.colors.textSecondary)
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                         AxisValueLabel()
-                            .foregroundStyle(themeManager.colors.textSecondary)
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                             .font(.system(size: 12, weight: .medium))
                     }
                 }
                 .chartYAxis {
                     AxisMarks(values: .automatic) { _ in
                         AxisGridLine()
-                            .foregroundStyle(themeManager.colors.textSecondary.opacity(0.3))
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6).opacity(0.3))
                         AxisTick()
-                            .foregroundStyle(themeManager.colors.textSecondary)
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                         AxisValueLabel()
-                            .foregroundStyle(themeManager.colors.textSecondary)
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                             .font(.system(size: 12, weight: .medium))
                     }
                 }
@@ -145,7 +145,7 @@ struct RatingChart: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground).opacity(0.9))
+                .fill(colorThemeManager.current.tabBar.opacity(0.9))
                 .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
         )
     }
@@ -153,13 +153,13 @@ struct RatingChart: View {
 
 struct RatingStatsCard: View {
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Statistics")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(themeManager.colors.textPrimary)
+                .foregroundStyle(colorThemeManager.current.text)
             
             if let user = cfService.currentUser {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
@@ -184,7 +184,7 @@ struct RatingStatsCard: View {
                             title: "Contests",
                             value: "\(cfService.ratingHistory.count)",
                             icon: "calendar",
-                            color: themeManager.colors.accent,
+                            color: colorThemeManager.current.accent,
                             subtitle: "participated"
                         )
                         
@@ -193,7 +193,7 @@ struct RatingStatsCard: View {
                                 title: "Best Gain",
                                 value: bestChange.deltaString,
                                 icon: "arrow.up.circle.fill",
-                                color: .green,
+                                color: Color.green,
                                 subtitle: "in one contest"
                             )
                         }
@@ -203,16 +203,16 @@ struct RatingStatsCard: View {
                 VStack(spacing: 20) {
                     Image(systemName: "chart.bar")
                         .font(.system(size: 48, weight: .light))
-                        .foregroundStyle(themeManager.colors.textSecondary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                     
                     VStack(spacing: 8) {
                         Text("No User Data")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(themeManager.colors.textPrimary)
+                            .foregroundStyle(colorThemeManager.current.text)
                         
                         Text("Enter your Codeforces handle to see statistics")
                             .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(themeManager.colors.textSecondary)
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                             .multilineTextAlignment(.center)
                     }
                 }
@@ -235,7 +235,7 @@ struct ModernStatCard: View {
     let icon: String
     let color: Color
     let subtitle: String
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -250,15 +250,15 @@ struct ModernStatCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(themeManager.colors.textPrimary)
+                    .foregroundStyle(colorThemeManager.current.text)
                 
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                 
                 Text(subtitle)
                     .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
             }
         }
         .padding(16)
@@ -272,28 +272,28 @@ struct ModernStatCard: View {
 
 struct ContestHistoryList: View {
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Recent Contests")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(themeManager.colors.textPrimary)
+                .foregroundStyle(colorThemeManager.current.text)
             
             if cfService.ratingHistory.isEmpty {
                 VStack(spacing: 20) {
                     Image(systemName: "calendar")
                         .font(.system(size: 48, weight: .light))
-                        .foregroundStyle(themeManager.colors.textSecondary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                     
                     VStack(spacing: 8) {
                         Text("No Contest History")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(themeManager.colors.textPrimary)
+                            .foregroundStyle(colorThemeManager.current.text)
                         
                         Text("Participate in contests to see your history here")
                             .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(themeManager.colors.textSecondary)
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                             .multilineTextAlignment(.center)
                     }
                 }
@@ -318,7 +318,7 @@ struct ContestHistoryList: View {
 
 struct ContestHistoryCard: View {
     let change: CFRatingChange
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         HStack(spacing: 16) {
@@ -326,12 +326,12 @@ struct ContestHistoryCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(change.contestName)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(themeManager.colors.textPrimary)
+                    .foregroundStyle(colorThemeManager.current.text)
                     .lineLimit(1)
                 
                 Text(change.updateDate.formatted(date: .abbreviated, time: .omitted))
                     .font(.system(size: 14, weight: .regular))
-                    .foregroundStyle(themeManager.colors.textSecondary)
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
             }
             
             Spacer()
@@ -341,7 +341,7 @@ struct ContestHistoryCard: View {
                 HStack(spacing: 8) {
                     Text("\(change.oldRating)")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(themeManager.colors.textSecondary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                     
                     Image(systemName: change.delta > 0 ? "arrow.up" : "arrow.down")
                         .font(.system(size: 12, weight: .semibold))
@@ -349,7 +349,7 @@ struct ContestHistoryCard: View {
                     
                     Text("\(change.newRating)")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(themeManager.colors.textPrimary)
+                        .foregroundStyle(colorThemeManager.current.text)
                 }
                 
                 Text(change.deltaString)

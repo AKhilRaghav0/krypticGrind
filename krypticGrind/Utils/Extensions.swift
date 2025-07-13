@@ -111,25 +111,26 @@ extension Color {
     
     static func ratingColor(for rating: Int) -> Color {
         switch rating {
-        case 1200..<1400: return .cfGreen
-        case 1400..<1600: return .cfCyan
-        case 1600..<1900: return .cfBlue
-        case 1900..<2100: return .cfPurple
-        case 2100..<2300: return .cfOrange
-        case 2300..<2400: return .cfRed
-        case 2400...: return .cfRed
-        default: return .cfGray
+        case 0..<1200: return .gray
+        case 1200..<1400: return .green
+        case 1400..<1600: return .cyan
+        case 1600..<1900: return .blue
+        case 1900..<2100: return .purple
+        case 2100..<2300: return .orange
+        case 2300..<2400: return .red
+        case 2400...: return .red
+        default: return .gray
         }
     }
     
     static func verdictColor(for verdict: String) -> Color {
         switch verdict {
-        case "OK": return .acGreen
-        case "WRONG_ANSWER": return .waRed
-        case "TIME_LIMIT_EXCEEDED": return .tleOrange
-        case "MEMORY_LIMIT_EXCEEDED": return .mleOrange
-        case "RUNTIME_ERROR": return .rtePurple
-        case "COMPILATION_ERROR": return .ceGray
+        case "OK": return .green
+        case "WRONG_ANSWER": return .red
+        case "TIME_LIMIT_EXCEEDED": return .orange
+        case "MEMORY_LIMIT_EXCEEDED": return .orange
+        case "RUNTIME_ERROR": return .purple
+        case "COMPILATION_ERROR": return .gray
         default: return .blue
         }
     }
