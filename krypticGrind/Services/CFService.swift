@@ -35,7 +35,6 @@ class NetworkMonitor: ObservableObject {
 }
 
 // MARK: - API Service for Codeforces
-@MainActor
 class CFService: ObservableObject {
     static let shared = CFService()
     
@@ -45,7 +44,10 @@ class CFService: ObservableObject {
         "https://codeforces.ml/api", // Alternative mirror (if available)
         "https://cf.likianta.com/api" // Another potential mirror
     ]
-    private let session = URLSession.shared
+    
+    // Background queue for network operations
+    private let backgroundQueue = DispatchQueue(label: "com.krypticgrind.cfservice", qos: .userInitiated)
+    private let session: URLSession
     private let logger = Logger(subsystem: "com.akhilraghav.krypticGrind", category: "CFService")
     private let networkMonitor = NetworkMonitor.shared
     
@@ -66,8 +68,16 @@ class CFService: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     private init() {
+        // Configure URLSession for background operations
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 60
+        config.waitsForConnectivity = true
+        self.session = URLSession(configuration: config)
+        
         // Monitor network changes
         networkMonitor.$isConnected
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] isConnected in
                 if !isConnected {
                     self?.error = "No internet connection detected"
@@ -78,13 +88,18 @@ class CFService: ObservableObject {
             .store(in: &cancellables)
     }
     
-    // MARK: - User Info (improved)
+    // MARK: - User Info (improved with background threading)
     func fetchUserInfo(handle: String) async {
         logger.info("🔍 Fetching user info for handle: \(handle)")
-        isLoading = true
-        error = nil
+        
+        // Update UI on main thread
+        await MainActor.run {
+            isLoading = true
+            error = nil
+        }
         
         do {
+            // Perform network request on background queue
             let apiResponse = try await performAPIRequest(
                 url: "\(baseURL)/user.info?handles=\(handle)",
                 responseType: CFUserResponse.self
@@ -92,30 +107,39 @@ class CFService: ObservableObject {
             
             logger.info("✅ API Response Status: \(apiResponse.status)")
             
-            if apiResponse.status == "OK", let user = apiResponse.result.first {
-                currentUser = user
-                UserDefaults.standard.set(handle, forKey: "saved_handle")
-                logger.info("🎉 Successfully fetched user: \(user.handle) (Rating: \(user.rating))")
-            } else {
-                let errorMsg = apiResponse.status == "FAILED" ? "User '\(handle)' not found" : "API returned error status: \(apiResponse.status)"
-                logger.error("❌ \(errorMsg)")
-                error = errorMsg
+            // Update UI on main thread
+            await MainActor.run {
+                if apiResponse.status == "OK", let user = apiResponse.result.first {
+                    currentUser = user
+                    UserDefaults.standard.set(handle, forKey: "saved_handle")
+                    logger.info("🎉 Successfully fetched user: \(user.handle) (Rating: \(user.rating))")
+                } else {
+                    let errorMsg = apiResponse.status == "FAILED" ? "User '\(handle)' not found" : "API returned error status: \(apiResponse.status)"
+                    logger.error("❌ \(errorMsg)")
+                    error = errorMsg
+                }
             }
         } catch {
             let errorMsg = "Failed to fetch user info: \(error.localizedDescription)"
             logger.error("💥 \(errorMsg)")
             
-            if error.localizedDescription.contains("not found") || error.localizedDescription.contains("404") {
-                self.error = "User '\(handle)' not found. Please check the handle."
-            } else {
-                self.error = "Network error. Please check your connection and try again."
+            // Update UI on main thread
+            await MainActor.run {
+                if error.localizedDescription.contains("not found") || error.localizedDescription.contains("404") {
+                    self.error = "User '\(handle)' not found. Please check the handle."
+                } else {
+                    self.error = "Network error. Please check your connection and try again."
+                }
             }
         }
         
-        isLoading = false
+        // Update loading state on main thread
+        await MainActor.run {
+            isLoading = false
+        }
     }
     
-    // MARK: - Rating History
+    // MARK: - Rating History (with background threading)
     func fetchRatingHistory(handle: String) async {
         logger.info("📈 Fetching rating history for: \(handle)")
         
@@ -123,6 +147,7 @@ class CFService: ObservableObject {
             let url = URL(string: "\(baseURL)/user.rating?handle=\(handle)")!
             logger.debug("📡 Rating API Request: \(url.absoluteString)")
             
+            // Perform network request on background queue
             let (data, response) = try await session.data(from: url)
             
             if let httpResponse = response as? HTTPURLResponse {
@@ -132,20 +157,27 @@ class CFService: ObservableObject {
             let apiResponse = try JSONDecoder().decode(CFRatingResponse.self, from: data)
             logger.info("✅ Rating API Status: \(apiResponse.status)")
             
-            if apiResponse.status == "OK" {
-                self.ratingHistory = apiResponse.result.sorted { $0.ratingUpdateTimeSeconds < $1.ratingUpdateTimeSeconds }
-                logger.info("📈 Loaded \(self.ratingHistory.count) rating changes")
-            } else {
-                logger.warning("⚠️ Rating API returned non-OK status")
+            // Update UI on main thread
+            await MainActor.run {
+                if apiResponse.status == "OK" {
+                    self.ratingHistory = apiResponse.result.sorted { $0.ratingUpdateTimeSeconds < $1.ratingUpdateTimeSeconds }
+                    logger.info("📈 Loaded \(self.ratingHistory.count) rating changes")
+                } else {
+                    logger.warning("⚠️ Rating API returned non-OK status")
+                }
             }
         } catch {
             let errorMsg = "Failed to fetch rating history: \(error.localizedDescription)"
             logger.error("💥 \(errorMsg)")
-            self.error = errorMsg
+            
+            // Update UI on main thread
+            await MainActor.run {
+                self.error = errorMsg
+            }
         }
     }
     
-    // MARK: - User Submissions
+    // MARK: - User Submissions (with background threading)
     func fetchUserSubmissions(handle: String, count: Int = 50) async {
         logger.info("📝 Fetching \(count) submissions for: \(handle)")
         
@@ -153,6 +185,7 @@ class CFService: ObservableObject {
             let url = URL(string: "\(baseURL)/user.status?handle=\(handle)&from=1&count=\(count)")!
             logger.debug("📡 Submissions API Request: \(url.absoluteString)")
             
+            // Perform network request on background queue
             let (data, response) = try await session.data(from: url)
             
             if let httpResponse = response as? HTTPURLResponse {
@@ -162,24 +195,35 @@ class CFService: ObservableObject {
             let apiResponse = try JSONDecoder().decode(CFSubmissionsResponse.self, from: data)
             logger.info("✅ Submissions API Status: \(apiResponse.status)")
             
-            if apiResponse.status == "OK" {
-                self.recentSubmissions = apiResponse.result.sorted { $0.creationTimeSeconds > $1.creationTimeSeconds }
-                logger.info("📝 Loaded \(self.recentSubmissions.count) submissions")
-            } else {
-                logger.warning("⚠️ Submissions API returned non-OK status")
+            // Update UI on main thread
+            await MainActor.run {
+                if apiResponse.status == "OK" {
+                    self.recentSubmissions = apiResponse.result.sorted { $0.creationTimeSeconds > $1.creationTimeSeconds }
+                    logger.info("📝 Loaded \(self.recentSubmissions.count) submissions")
+                } else {
+                    logger.warning("⚠️ Submissions API returned non-OK status")
+                }
             }
         } catch {
             let errorMsg = "Failed to fetch submissions: \(error.localizedDescription)"
             logger.error("💥 \(errorMsg)")
-            self.error = errorMsg
+            
+            // Update UI on main thread
+            await MainActor.run {
+                self.error = errorMsg
+            }
         }
     }
     
     // MARK: - Contest List (with fallback and retry)
     func fetchContests() async {
         logger.info("🏆 Fetching contests list")
-        isLoading = true
-        error = nil
+        
+        // Update UI on main thread
+        await MainActor.run {
+            isLoading = true
+            error = nil
+        }
         
         do {
             // Try the standard API first with more robust retry logic
@@ -189,30 +233,35 @@ class CFService: ObservableObject {
                 retries: 3
             )
             
-            if apiResponse.status == "OK" {
-                let upcoming = apiResponse.result
-                    .filter { $0.isUpcoming }
-                    .sorted { 
-                        guard let start1 = $0.startTimeSeconds, let start2 = $1.startTimeSeconds else { 
-                            return false 
+            // Update UI on main thread
+            await MainActor.run {
+                if apiResponse.status == "OK" {
+                    let upcoming = apiResponse.result
+                        .filter { $0.isUpcoming }
+                        .sorted { 
+                            guard let start1 = $0.startTimeSeconds, let start2 = $1.startTimeSeconds else { 
+                                return false 
+                            }
+                            return start1 < start2 
                         }
-                        return start1 < start2 
+                        .prefix(10)
+                        .map { $0 }
+                    
+                    self.upcomingContests = upcoming
+                    logger.info("🏆 Loaded \(self.upcomingContests.count) upcoming contests")
+                    
+                    // Cache successful result
+                    if let encoded = try? JSONEncoder().encode(upcoming) {
+                        UserDefaults.standard.set(encoded, forKey: "cached_contests")
+                        UserDefaults.standard.set(Date(), forKey: "contests_cache_time")
                     }
-                    .prefix(10)
-                    .map { $0 }
-                
-                self.upcomingContests = upcoming
-                logger.info("🏆 Loaded \(self.upcomingContests.count) upcoming contests")
-                
-                // Cache successful result
-                if let encoded = try? JSONEncoder().encode(upcoming) {
-                    UserDefaults.standard.set(encoded, forKey: "cached_contests")
-                    UserDefaults.standard.set(Date(), forKey: "contests_cache_time")
+                } else {
+                    logger.warning("⚠️ Contests API returned status: \(apiResponse.status)")
+                    Task {
+                        await loadCachedContestsIfAvailable()
+                    }
+                    self.error = "Contests API returned error status. Showing cached data if available."
                 }
-            } else {
-                logger.warning("⚠️ Contests API returned status: \(apiResponse.status)")
-                await loadCachedContestsIfAvailable()
-                self.error = "Contests API returned error status. Showing cached data if available."
             }
         } catch {
             let errorMsg = "Failed to fetch contests: \(error.localizedDescription)"
@@ -221,23 +270,29 @@ class CFService: ObservableObject {
             // Try to load cached data first
             await loadCachedContestsIfAvailable()
             
-            // More specific error handling
-            if error.localizedDescription.contains("cancelled") {
-                logger.error("🚫 Request was cancelled - possibly due to timeout or network issue")
-                self.error = "Network request cancelled. Tap to retry or check your internet connection."
-            } else if error.localizedDescription.contains("timeout") {
-                logger.error("⏰ Request timed out")
-                self.error = "Request timed out. Codeforces servers might be slow. Tap to retry."
-            } else if (error as? URLError)?.code == .notConnectedToInternet {
-                self.error = "No internet connection. Please check your network and tap to retry."
-            } else if (error as? URLError)?.code == .cannotConnectToHost {
-                self.error = "Cannot connect to Codeforces. Server might be down. Tap to retry."
-            } else {
-                self.error = "Unable to fetch contests. Tap to retry or check later."
+            // Update UI on main thread
+            await MainActor.run {
+                // More specific error handling
+                if errorMsg.contains("cancelled") {
+                    logger.error("🚫 Request was cancelled - possibly due to timeout or network issue")
+                    self.error = "Network request cancelled. Tap to retry or check your internet connection."
+                } else if errorMsg.contains("timeout") {
+                    logger.error("⏰ Request timed out")
+                    self.error = "Request timed out. Codeforces servers might be slow. Tap to retry."
+                } else if (error as? URLError)?.code == .notConnectedToInternet {
+                    self.error = "No internet connection. Please check your network and tap to retry."
+                } else if (error as? URLError)?.code == .cannotConnectToHost {
+                    self.error = "Cannot connect to Codeforces. Server might be down. Tap to retry."
+                } else {
+                    self.error = "Unable to fetch contests. Tap to retry or check later."
+                }
             }
         }
         
-        isLoading = false
+        // Update loading state on main thread
+        await MainActor.run {
+            isLoading = false
+        }
     }
     
     // MARK: - Cache Helper
@@ -259,50 +314,76 @@ class CFService: ObservableObject {
         
         do {
             let cachedContests = try JSONDecoder().decode([CFContest].self, from: cachedData)
-            upcomingContests = cachedContests.filter { $0.isUpcoming }
-            self.upcomingContests = cachedContests.filter { $0.isUpcoming }
-                       logger.info("📦 Loaded \(self.upcomingContests.count) cached contests from \(cachedTime)")
+            
+            // Update UI on main thread
+            await MainActor.run {
+                self.upcomingContests = cachedContests.filter { $0.isUpcoming }
+                logger.info("📦 Loaded \(self.upcomingContests.count) cached contests from \(cachedTime)")
+            }
         } catch {
             logger.error("📦 Failed to decode cached contests: \(error)")
         }
     }
     
-    // MARK: - Problem Set
+    // MARK: - Problem Set (with background threading)
     func fetchProblems() async {
         do {
             let url = URL(string: "\(baseURL)/problemset.problems")!
-            let (data, _) = try await session.data(from: url)
             
+            // Perform network request on background queue
+            let (data, _) = try await session.data(from: url)
             let response = try JSONDecoder().decode(CFProblemsetResponse.self, from: data)
             
-            if response.status == "OK" {
-                problems = response.result.problems
+            // Update UI on main thread
+            await MainActor.run {
+                if response.status == "OK" {
+                    problems = response.result.problems
+                }
             }
         } catch {
-            self.error = "Failed to fetch problems: \(error.localizedDescription)"
+            // Update UI on main thread
+            await MainActor.run {
+                self.error = "Failed to fetch problems: \(error.localizedDescription)"
+            }
         }
     }
     
-    // MARK: - Fetch All User Data
+    // MARK: - Fetch All User Data (optimized with concurrent operations)
     func fetchAllUserData(handle: String) async {
-        isLoading = true
+        // Update loading state on main thread
+        await MainActor.run {
+            isLoading = true
+        }
         
+        // First fetch user info
         await fetchUserInfo(handle: handle)
         
+        // If user exists, fetch all other data concurrently
         if currentUser != nil {
             await withTaskGroup(of: Void.self) { group in
-                group.addTask { await self.fetchRatingHistory(handle: handle) }
-                group.addTask { await self.fetchUserSubmissions(handle: handle) }
-                group.addTask { await self.fetchContests() }
+                group.addTask { 
+                    await self.fetchRatingHistory(handle: handle) 
+                }
+                group.addTask { 
+                    await self.fetchUserSubmissions(handle: handle, count: 100) 
+                }
+                group.addTask { 
+                    await self.fetchContests() 
+                }
             }
         }
         
-        isLoading = false
+        // Update loading state on main thread
+        await MainActor.run {
+            isLoading = false
+        }
     }
     
-    // MARK: - Refresh Data
+    // MARK: - Refresh Data (with concurrent operations)
     func refreshData() async {
         guard let handle = UserDefaults.standard.string(forKey: "saved_handle") else { return }
+        
+        // Use the optimized concurrent method
         await fetchAllUserData(handle: handle)
     }
     
@@ -338,6 +419,59 @@ class CFService: ObservableObject {
         }
         
         return verdictCounts
+    }
+    
+    // MARK: - Async Analytics (for heavy computation)
+    func getTagStatisticsAsync() async -> [String: Int] {
+        return await Task.detached(priority: .userInitiated) {
+            var tagCounts: [String: Int] = [:]
+            
+            for submission in self.recentSubmissions where submission.isAccepted {
+                for tag in submission.problem.tags {
+                    tagCounts[tag, default: 0] += 1
+                }
+            }
+            
+            return tagCounts
+        }.value
+    }
+    
+    func getLanguageStatisticsAsync() async -> [String: Int] {
+        return await Task.detached(priority: .userInitiated) {
+            var langCounts: [String: Int] = [:]
+            
+            for submission in self.recentSubmissions {
+                langCounts[submission.programmingLanguage, default: 0] += 1
+            }
+            
+            return langCounts
+        }.value
+    }
+    
+    func getVerdictStatisticsAsync() async -> [String: Int] {
+        return await Task.detached(priority: .userInitiated) {
+            var verdictCounts: [String: Int] = [:]
+            
+            for submission in self.recentSubmissions {
+                let verdict = submission.verdictDisplayText
+                verdictCounts[verdict, default: 0] += 1
+            }
+            
+            return verdictCounts
+        }.value
+    }
+    
+    func getDifficultyStatisticsAsync() async -> [String: Int] {
+        return await Task.detached(priority: .userInitiated) {
+            var difficultyCounts: [String: Int] = [:]
+            
+            for submission in self.recentSubmissions where submission.isAccepted {
+                let difficulty = submission.problem.difficulty
+                difficultyCounts[difficulty, default: 0] += 1
+            }
+            
+            return difficultyCounts
+        }.value
     }
     
     // MARK: - Goal Tracking
@@ -555,5 +689,44 @@ extension CFService {
         }
         
         throw lastError ?? URLError(.unknown)
+    }
+}
+
+// MARK: - Background Data Processing
+extension CFService {
+    private func processSubmissionsData(_ submissions: [CFSubmission]) async -> [CFSubmission] {
+        return await withTaskGroup(of: [CFSubmission].self) { group in
+            // Split submissions into chunks for parallel processing
+            let chunkSize = max(1, submissions.count / 4)
+            let chunks = submissions.chunked(into: chunkSize)
+            
+            for chunk in chunks {
+                group.addTask {
+                    // Perform any heavy processing on background queue
+                    return chunk.sorted { $0.creationTimeSeconds > $1.creationTimeSeconds }
+                }
+            }
+            
+            var result: [CFSubmission] = []
+            for await processedChunk in group {
+                result.append(contentsOf: processedChunk)
+            }
+            
+            return result.sorted { $0.creationTimeSeconds > $1.creationTimeSeconds }
+        }
+    }
+}
+
+// MARK: - Memory Management
+extension CFService {
+    func clearCache() {
+        Task { @MainActor in
+            recentSubmissions.removeAll()
+            ratingHistory.removeAll()
+            upcomingContests.removeAll()
+            problems.removeAll()
+            currentUser = nil
+            error = nil
+        }
     }
 }

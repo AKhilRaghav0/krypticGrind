@@ -143,6 +143,10 @@ class GeminiService: ObservableObject {
     private let apiKey = "AIzaSyAc7AWHChXO40dNnjw2wvwCndXrd-hwQPI"
     private let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
     
+    // Background queue for AI processing
+    private let backgroundQueue = DispatchQueue(label: "com.krypticgrind.gemini", qos: .userInitiated)
+    private let session: URLSession
+    
     @Published var isLoading = false
     @Published var suggestions: [AISuggestion] = []
     @Published var error: String?
@@ -169,28 +173,48 @@ class GeminiService: ObservableObject {
         }
     }
     
-    private init() {}
+    private init() {
+        // Configure URLSession for background operations
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 60
+        config.waitsForConnectivity = true
+        self.session = URLSession(configuration: config)
+    }
     
-    // MARK: - Generate AI Suggestions
+    // MARK: - Generate AI Suggestions (with background threading)
     func generateSuggestions(
         userStats: UserStats,
         submissions: [CFSubmission],
         user: CFUser?
     ) async {
-        isLoading = true
-        error = nil
-        
-        do {
-            let prompt = createPrompt(userStats: userStats, submissions: submissions, user: user)
-            let response = try await callGeminiAPI(prompt: prompt)
-            let parsedSuggestions = parseSuggestions(from: response)
-            
-            self.suggestions = parsedSuggestions
-        } catch {
-            self.error = "Failed to generate suggestions: \(error.localizedDescription)"
+        // Update UI on main thread
+        await MainActor.run {
+            isLoading = true
+            error = nil
         }
         
-        isLoading = false
+        do {
+            // Heavy processing on background queue
+            let prompt = await createPrompt(userStats: userStats, submissions: submissions, user: user)
+            let response = try await callGeminiAPI(prompt: prompt)
+            let parsedSuggestions = await parseSuggestions(from: response)
+            
+            // Update UI on main thread
+            await MainActor.run {
+                self.suggestions = parsedSuggestions
+            }
+        } catch {
+            // Update UI on main thread
+            await MainActor.run {
+                self.error = "Failed to generate suggestions: \(error.localizedDescription)"
+            }
+        }
+        
+        // Update loading state on main thread
+        await MainActor.run {
+            isLoading = false
+        }
     }
     
     // MARK: - Create Intelligent Prompt
@@ -693,6 +717,65 @@ class GeminiService: ObservableObject {
             }
         }
         task.resume()
+    }
+    
+    // MARK: - Async version for better performance
+    func getPersonalizedPracticeSuggestionAsync(problemsSummary: String) async throws -> String {
+        return try await withCheckedThrowingContinuation { continuation in
+            Task {
+                let prompt = "Here are my 10 most recent competitive programming problems and their results. Based on this, give me only the single most important, actionable topic or area to focus on. Respond with just the topic or advice, no extra explanation or generic statements.\n\n" + problemsSummary
+                
+                let request = GeminiRequest(
+                    contents: [
+                        .init(parts: [.init(text: prompt)])
+                    ],
+                    generationConfig: .init(temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: 60)
+                )
+                
+                guard let url = URL(string: self.baseURL + "?key=" + self.apiKey) else {
+                    continuation.resume(throwing: NSError(domain: "GeminiService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"]))
+                    return
+                }
+                
+                var urlRequest = URLRequest(url: url)
+                urlRequest.httpMethod = "POST"
+                urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                
+                do {
+                    urlRequest.httpBody = try JSONEncoder().encode(request)
+                } catch {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                
+                let task = self.session.dataTask(with: urlRequest) { data, response, error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                        return
+                    }
+                    
+                    guard let data = data else {
+                        continuation.resume(throwing: NSError(domain: "GeminiService", code: 2, userInfo: [NSLocalizedDescriptionKey: "No data received"]))
+                        return
+                    }
+                    
+                    do {
+                        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
+                        var suggestion = geminiResponse.candidates.first?.content.parts.first?.text ?? "No suggestion available."
+                        
+                        // Post-process: Only keep the first actionable sentence or phrase
+                        if let firstLine = suggestion.components(separatedBy: .newlines).first(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) {
+                            suggestion = firstLine
+                        }
+                        
+                        continuation.resume(returning: suggestion)
+                    } catch {
+                        continuation.resume(throwing: error)
+                    }
+                }
+                task.resume()
+            }
+        }
     }
 }
 

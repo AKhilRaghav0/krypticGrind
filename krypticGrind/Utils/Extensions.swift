@@ -334,6 +334,15 @@ extension Array where Element == CFSubmission {
     }
 }
 
+// MARK: - Array Extensions for Threading
+extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        return stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
+        }
+    }
+}
+
 // MARK: - Theme System
 enum AppTheme: String, CaseIterable, Identifiable {
     case classic = "classic"

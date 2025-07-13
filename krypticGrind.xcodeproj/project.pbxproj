@@ -34,6 +34,7 @@
 		E97245C32E1373CC00AE9379 /* AppIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97245C22E1373CC00AE9379 /* AppIntent.swift */; };
 		E97245C52E1373D000AE9379 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E97245C42E1373D000AE9379 /* Assets.xcassets */; };
 		E97245C92E1373D000AE9379 /* ContestLiveActivityWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E97245B52E1373CB00AE9379 /* ContestLiveActivityWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E985BEFE2E23B44A00E4C261 /* UberTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E985BEFD2E23B44A00E4C261 /* UberTheme.swift */; };
 		E985EAEB2E231F3F00C54711 /* ColorPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = E985EAEA2E231F3F00C54711 /* ColorPalette.swift */; };
 		E985EAED2E231F5800C54711 /* CustomTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E985EAEC2E231F5800C54711 /* CustomTabBar.swift */; };
 		E9B5AE132E2257CF00D264FA /* IconSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B5AE112E2257CE00D264FA /* IconSystem.swift */; };
@@ -105,6 +106,7 @@
 		E97245C42E1373D000AE9379 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E97245C62E1373D000AE9379 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E97245D02E1373E000AE9379 /* LiveActivityAttributes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LiveActivityAttributes.swift; sourceTree = "<group>"; };
+		E985BEFD2E23B44A00E4C261 /* UberTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UberTheme.swift; sourceTree = "<group>"; };
 		E985EAEA2E231F3F00C54711 /* ColorPalette.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ColorPalette.swift; sourceTree = "<group>"; };
 		E985EAEC2E231F5800C54711 /* CustomTabBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomTabBar.swift; sourceTree = "<group>"; };
 		E9B5AE112E2257CE00D264FA /* IconSystem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IconSystem.swift; sourceTree = "<group>"; };
@@ -185,6 +187,7 @@
 		E953DE5A2E1160AD00CA247C /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				E985BEFD2E23B44A00E4C261 /* UberTheme.swift */,
 				E985EAEA2E231F3F00C54711 /* ColorPalette.swift */,
 				E9B5AE122E2257CF00D264FA /* FontExtension.swift */,
 				E9B5AE112E2257CE00D264FA /* IconSystem.swift */,
@@ -369,6 +372,7 @@
 				E9BE03B12E13905B00FF868F /* LiveActivityAttributes.swift in Sources */,
 				E9BE03B62E13BADF00FF868F /* ProblemNote.swift in Sources */,
 				E953DE6D2E1160AD00CA247C /* HomeView.swift in Sources */,
+				E985BEFE2E23B44A00E4C261 /* UberTheme.swift in Sources */,
 				E93A8F5F2E1352DB00873483 /* AISuggestionsView.swift in Sources */,
 				E937A1322E1203EF00E3FCB5 /* ThemeSelectorSheet.swift in Sources */,
 				E9B5AE162E22581800D264FA /* FontTestView.swift in Sources */,

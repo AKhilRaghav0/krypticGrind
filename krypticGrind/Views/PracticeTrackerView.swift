@@ -145,23 +145,8 @@ struct AnalysisChart: View {
     @StateObject private var cfService = CFService.shared
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     
-    var chartData: [(String, Int)] {
-        switch analysisType {
-        case .tags:
-            return Array(cfService.getTagStatistics()
-                .sorted { $0.value > $1.value }
-                .prefix(10))
-        case .languages:
-            return Array(cfService.getLanguageStatistics()
-                .sorted { $0.value > $1.value }
-                .prefix(8))
-        case .verdicts:
-            return Array(cfService.getVerdictStatistics()
-                .sorted { $0.value > $1.value })
-        case .difficulty:
-            return getDifficultyStatistics()
-        }
-    }
+    @State private var chartData: [(String, Int)] = []
+    @State private var isLoadingData = true
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -169,7 +154,11 @@ struct AnalysisChart: View {
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(colorThemeManager.current.text)
             
-            if chartData.isEmpty {
+            if isLoadingData {
+                ProgressView()
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .foregroundStyle(colorThemeManager.current.text)
+            } else if chartData.isEmpty {
                 EmptyChartView(analysisType: analysisType)
             } else {
                 switch analysisType {
@@ -188,20 +177,37 @@ struct AnalysisChart: View {
                 .fill(Color(.systemBackground).opacity(0.9))
                 .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
         )
+        .task {
+            await loadChartData()
+        }
     }
     
-    private func getDifficultyStatistics() -> [(String, Int)] {
-        var difficultyCounts: [String: Int] = [:]
+    private func loadChartData() async {
+        isLoadingData = true
         
-        for submission in cfService.recentSubmissions where submission.isAccepted {
-            let difficulty = submission.problem.difficulty
-            difficultyCounts[difficulty, default: 0] += 1
+        let data: [String: Int]
+        
+        switch analysisType {
+        case .tags:
+            data = await cfService.getTagStatisticsAsync()
+        case .languages:
+            data = await cfService.getLanguageStatisticsAsync()
+        case .verdicts:
+            data = await cfService.getVerdictStatisticsAsync()
+        case .difficulty:
+            data = await cfService.getDifficultyStatisticsAsync()
         }
         
-        let difficultyOrder = ["Unrated", "Beginner", "Easy", "Medium", "Hard", "Expert"]
-        return difficultyOrder.compactMap { difficulty in
-            guard let count = difficultyCounts[difficulty], count > 0 else { return nil }
-            return (difficulty, count)
+        await MainActor.run {
+            switch analysisType {
+            case .tags:
+                chartData = Array(data.sorted { $0.value > $1.value }.prefix(10))
+            case .languages:
+                chartData = Array(data.sorted { $0.value > $1.value }.prefix(8))
+            case .verdicts, .difficulty:
+                chartData = Array(data.sorted { $0.value > $1.value })
+            }
+            isLoadingData = false
         }
     }
 }
@@ -503,17 +509,18 @@ struct RecommendationsCard: View {
             isFetchingProblems = false
             isLoadingGemini = true
             let problemsSummary = cfService.recentProblemsSummary(count: 10)
-            GeminiService.shared.getPersonalizedPracticeSuggestion(problemsSummary: problemsSummary) { result in
-                DispatchQueue.main.async {
-                    isLoadingGemini = false
-                    switch result {
-                    case .success(let suggestion):
-                        withAnimation {
-                            geminiSuggestion = suggestion
-                        }
-                    case .failure:
-                        geminiError = "Could not fetch AI suggestion."
+            do {
+                let suggestion = try await GeminiService.shared.getPersonalizedPracticeSuggestionAsync(problemsSummary: problemsSummary)
+                await MainActor.run {
+                    withAnimation {
+                        geminiSuggestion = suggestion
                     }
+                    isLoadingGemini = false
+                }
+            } catch {
+                await MainActor.run {
+                    geminiError = "Could not fetch AI suggestion."
+                    isLoadingGemini = false
                 }
             }
         }
