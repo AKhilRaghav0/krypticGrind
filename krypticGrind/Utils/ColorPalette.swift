@@ -88,13 +88,13 @@ class ColorThemeManager: ObservableObject {
         // Palette 7 (Cyberpunk)
         ColorTheme(
             name: "Cyberpunk",
-            background: Color(hex: "#0A0A0F"), // Deep black-blue
-            tabBar: Color(hex: "#16161A"),    // Surface card
-            accent: Color(hex: "#7F5AF0"),    // Cyberpunk violet
-            text: Color(hex: "#F8F8F2"),      // Off-white
-            secondary: Color(hex: "#94A1B2"), // Muted text
-            error: Color(hex: "#EF4565"),     // Error/alert
-            link: Color(hex: "#00BFFF")       // Link color
+            background: Color(hex: "#0A0A0F"), // Deep black-blue       // #0A0A0F
+            tabBar: Color(hex: "#16161A"),    // Surface card            // #16161A
+            accent: Color(hex: "#7F5AF0"),    // Cyberpunk violet        // #7F5AF0
+            text: Color(hex: "#F8F8F2"),      // Off-white                // #F8F8F2
+            secondary: Color(hex: "#94A1B2"), // Muted text                // #94A1B2
+            error: Color(hex: "#EF4565"),     // Error/alert              // #EF4565
+            link: Color(hex: "#00BFFF")       // Link color                // #00BFFF
         )
     ]
 

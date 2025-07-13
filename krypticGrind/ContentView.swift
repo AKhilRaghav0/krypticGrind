@@ -29,7 +29,7 @@ struct ContentView: View {
 
             CustomTabBar(selectedTab: $selectedTab)
                 .environmentObject(colorThemeManager)
-                .padding(.bottom, 8)
+                .padding(.bottom, 0.02)
 
             // Floating color palette button
             HStack {
