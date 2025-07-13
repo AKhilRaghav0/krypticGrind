@@ -1141,34 +1141,7 @@ struct EmptyTopicProgressionView: View {
     }
 }
 
-// MARK: - Reusable SearchBar
-struct SearchBar: View {
-    @Binding var searchText: String
-    @StateObject private var themeManager = ThemeManager.shared
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-                .font(.subheadline)
-            
-            TextField("Search topics...", text: $searchText)
-                .foregroundStyle(.primary)
-            
-            if !searchText.isEmpty {
-                Button(action: {
-                    searchText = ""
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.tertiary)
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-    }
-}
+
 
 // Remove PracticeAndLeaderboardView struct from this file to avoid redeclaration error.
 

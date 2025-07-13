@@ -334,23 +334,7 @@ struct VerdictBadge: View {
     }
 }
 
-struct DetailItem: View {
-    let icon: String
-    let text: String
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(color)
-            
-            Text(text)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(color)
-        }
-    }
-}
+
 
 struct EmptySubmissionsView: View {
     let filter: SubmissionsView.SubmissionFilter

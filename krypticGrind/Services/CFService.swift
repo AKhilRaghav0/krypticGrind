@@ -58,6 +58,11 @@ class CFService: ObservableObject {
     @Published var upcomingContests: [CFContest] = []
     @Published var problems: [CFProblem] = []
     
+    // Computed property for next contest
+    var nextContest: CFContest? {
+        return upcomingContests.first
+    }
+    
     private var cancellables = Set<AnyCancellable>()
     
     private init() {

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ActivityKit
 
 struct ContestListView: View {
     @StateObject private var cfService = CFService.shared

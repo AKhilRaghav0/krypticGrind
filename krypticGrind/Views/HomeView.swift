@@ -48,8 +48,8 @@ struct CustomTopBar: View {
             .padding(.horizontal, 16)
             .frame(height: 48)
         }
-        .frame(height: 48 + (UIApplication.shared.windows.first?.safeAreaInsets.top ?? 20))
-        .padding(.top, UIApplication.shared.windows.first?.safeAreaInsets.top ?? 20)
+        .frame(height: 48 + 20) // Fixed safe area inset
+        .padding(.top, 20) // Fixed safe area inset
     }
 }
 
@@ -68,7 +68,7 @@ struct HomeView: View {
                     // Title
                     Text("KrypticGrind")
                         .font(.custom("TTPhobosTrial-Bold", size: 32))
-                        .foregroundColor(themeManager.colors.text)
+                        .foregroundColor(themeManager.colors.textPrimary)
                         .padding(.top, 8)
                     // Next Contest Card
                     if let nextContest = cfService.nextContest {
@@ -81,7 +81,7 @@ struct HomeView: View {
                             .overlay(
                                 Text("No upcoming contests")
                                     .font(.custom("TTPhobosTrial-Bold", size: 20))
-                                    .foregroundColor(themeManager.colors.text.opacity(0.5))
+                                    .foregroundColor(themeManager.colors.textPrimary.opacity(0.5))
                             )
                             .padding(.horizontal, 20)
                     }
@@ -235,68 +235,30 @@ struct ModernStatsGrid: View {
                 title: "Contests",
                 value: "\(cfService.ratingHistory.count)",
                 icon: "trophy.fill",
-                color: .orange
+                color: .orange,
+                subtitle: "participated"
             )
             
             ModernStatCard(
                 title: "Submissions",
                 value: "\(cfService.recentSubmissions.count)",
                 icon: "doc.text.fill",
-                color: .blue
+                color: .blue,
+                subtitle: "total"
             )
             
             ModernStatCard(
                 title: "Accepted",
                 value: "\(cfService.recentSubmissions.acceptedSubmissions().count)",
                 icon: "checkmark.circle.fill",
-                color: .green
+                color: .green,
+                subtitle: "solved"
             )
         }
     }
 }
 
-struct ModernStatCard: View {
-    let title: String
-    let value: String
-    let subtitle: String?
-    let icon: String
-    let color: Color
-    
-    init(title: String, value: String, icon: String, color: Color, subtitle: String? = nil) {
-        self.title = title
-        self.value = value
-        self.subtitle = subtitle
-        self.icon = icon
-        self.color = color
-    }
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundStyle(color)
-                .scaleEffect(1.1)
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: value)
-            
-            Text(value)
-                .font(.title3.bold())
-                .foregroundStyle(.primary)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
-            if let subtitle = subtitle {
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-    }
-}
+
 
 // MARK: - Modern Progress Card
 struct ModernProgressCard: View {
@@ -639,11 +601,11 @@ struct ContestNextUpCard: View {
             HStack {
                 Image(systemName: "calendar")
                     .foregroundColor(accent)
-                Text(contest.dateFormatted)
+                Text(contest.startDate?.formatted(date: .abbreviated, time: .shortened) ?? "TBD")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.secondary)
                 Spacer()
-                if let url = contest.url {
+                if let url = URL(string: contest.contestUrl) {
                     Link(destination: url) {
                         Text("Details")
                             .font(.system(size: 16, weight: .semibold))
