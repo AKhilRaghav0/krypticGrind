@@ -329,6 +329,7 @@ struct OnboardingPageView: View {
         }
     }
     
+    /// Initiates staggered animations for the onboarding page icon and text elements by resetting their states and animating them into view with spring effects.
     private func startAnimations() {
         // Reset all states
         iconScale = 0.5

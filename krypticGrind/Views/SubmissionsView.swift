@@ -110,7 +110,9 @@ struct SubmissionsView: View {
         }
     }
     
-    // Async filtering to prevent UI hangs
+    /// Asynchronously filters the list of Codeforces submissions based on the selected filter and search text, updating the displayed submissions and loading state.
+    /// 
+    /// Applies the selected filter (all, accepted, wrong answer, or today's submissions) and further narrows results by matching the search text against the problem name, index, or programming language. Updates the filtered submissions list and manages the loading indicator accordingly.
     @MainActor
     private func filterSubmissions() async {
         isLoading = true

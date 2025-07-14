@@ -167,6 +167,8 @@ class GeminiService: ObservableObject {
         return [:]
     }
     
+    /// Saves the tag cache to UserDefaults by encoding it as JSON data.
+    /// - Parameter cache: A dictionary mapping tag strings to their cache entries.
     private func saveTagCache(_ cache: [String: TagCacheEntry]) {
         if let data = try? JSONEncoder().encode(cache) {
             UserDefaults.standard.set(data, forKey: tagCacheKey)
@@ -182,7 +184,13 @@ class GeminiService: ObservableObject {
         self.session = URLSession(configuration: config)
     }
     
-    // MARK: - Generate AI Suggestions (with background threading)
+    /// Generates AI-driven competitive programming suggestions based on user statistics and recent submissions.
+    /// - Parameters:
+    ///   - userStats: The user's competitive programming statistics.
+    ///   - submissions: The user's recent Codeforces submissions.
+    ///   - user: Optional Codeforces user profile.
+    /// 
+    /// This method asynchronously analyzes user data, constructs a prompt, calls the Gemini API, parses the response into actionable suggestions, and updates the published suggestions or error state accordingly. UI state changes are performed on the main actor.
     func generateSuggestions(
         userStats: UserStats,
         submissions: [CFSubmission],
@@ -678,7 +686,10 @@ class GeminiService: ObservableObject {
         task.resume()
     }
     
-    // MARK: - Personalized Practice Suggestion for RecommendationsCard
+    /// Requests a personalized practice suggestion from the Gemini API based on a summary of recent problems.
+    /// - Parameters:
+    ///   - problemsSummary: A summary of the user's 10 most recent competitive programming problems and results.
+    ///   - completion: Completion handler returning either the most important actionable topic or advice as a string, or an error.
     func getPersonalizedPracticeSuggestion(problemsSummary: String, completion: @escaping (Result<String, Error>) -> Void) {
         let prompt = "Here are my 10 most recent competitive programming problems and their results. Based on this, give me only the single most important, actionable topic or area to focus on. Respond with just the topic or advice, no extra explanation or generic statements.\n\n" + problemsSummary
         let request = GeminiRequest(
@@ -719,7 +730,10 @@ class GeminiService: ObservableObject {
         task.resume()
     }
     
-    // MARK: - Async version for better performance
+    /// Asynchronously retrieves a personalized practice suggestion from the Gemini API based on a summary of recent problems.
+    /// - Parameter problemsSummary: A string summarizing the user's 10 most recent competitive programming problems and results.
+    /// - Returns: The most important actionable topic or advice as determined by the Gemini model.
+    /// - Throws: An error if the network request fails, the response cannot be decoded, or the API returns invalid data.
     func getPersonalizedPracticeSuggestionAsync(problemsSummary: String) async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
             Task {

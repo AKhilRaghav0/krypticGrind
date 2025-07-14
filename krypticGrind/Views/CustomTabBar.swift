@@ -140,6 +140,12 @@ struct CustomTabBar: View {
         .animation(.easeInOut, value: selectedTab)
     }
 
+    /// Creates a tab button with an icon, highlighting it if active and updating the selected tab when tapped.
+    /// - Parameters:
+    ///   - tab: The tab represented by this button.
+    ///   - icon: The SF Symbol name for the tab icon.
+    ///   - theme: The color theme used for styling.
+    ///   - width: The width of the button.
     @ViewBuilder
     func tabButton(_ tab: MainTab, icon: String, theme: ColorTheme, width: CGFloat) -> some View {
         let isActive = selectedTab == tab
@@ -155,16 +161,22 @@ struct CustomTabBar: View {
 // Glassmorphism BlurView
 struct BlurView: UIViewRepresentable {
     var style: UIBlurEffect.Style
+    /// Creates and returns a `UIVisualEffectView` configured with the specified blur style.
+    /// - Returns: A `UIVisualEffectView` applying the given `UIBlurEffect.Style`.
     func makeUIView(context: Context) -> UIVisualEffectView {
         UIVisualEffectView(effect: UIBlurEffect(style: style))
     }
-    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {}
+    /// Updates the visual effect view. No dynamic updates are performed in this implementation.
+func updateUIView(_ uiView: UIVisualEffectView, context: Context) {}
 }
 
 struct RoundedCorner: Shape {
     var radius: CGFloat = 18.0
     var corners: UIRectCorner = .allCorners
 
+    /// Returns a path for a rectangle with specified corners rounded to the given radius.
+    /// - Parameter rect: The rectangle in which to draw the shape.
+    /// - Returns: A path representing the rectangle with selected corners rounded.
     func path(in rect: CGRect) -> Path {
         let path = UIBezierPath(
             roundedRect: rect,
@@ -181,6 +193,9 @@ struct AsymmetricRoundedRectangle: Shape {
     var bottomLeft: CGFloat
     var bottomRight: CGFloat
 
+    /// Creates a path for a rectangle with individually specified corner radii.
+    /// - Parameter rect: The rectangle in which to draw the shape.
+    /// - Returns: A `Path` representing a rectangle with asymmetric rounded corners.
     func path(in rect: CGRect) -> Path {
         let path = UIBezierPath()
         let width = rect.size.width

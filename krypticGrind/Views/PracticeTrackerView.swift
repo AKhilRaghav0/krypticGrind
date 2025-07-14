@@ -182,6 +182,8 @@ struct AnalysisChart: View {
         }
     }
     
+    /// Asynchronously loads and processes chart data for the selected analysis type.
+    /// - Note: Fetches relevant statistics from the service based on the current analysis type and updates the chart data on the main thread. Limits the number of displayed items for tags and languages.
     private func loadChartData() async {
         isLoadingData = true
         
@@ -497,6 +499,9 @@ struct RecommendationsCard: View {
         }
     }
 
+    /// Fetches the latest user submissions and requests a personalized practice suggestion from the AI service.
+    /// 
+    /// Initiates asynchronous loading of recent submissions and then retrieves an AI-generated suggestion based on the user's recent problem history. Updates loading and error states accordingly. If a suggestion is already loading or present, the function does nothing.
     private func fetchAndSuggest() {
         guard !isLoadingGemini && geminiSuggestion == nil else { return }
         isFetchingProblems = true
@@ -601,6 +606,8 @@ struct ProgressInsightsCard: View {
         .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
     }
     
+    /// Returns the programming language with the highest submission count from the user's statistics.
+    /// - Returns: The name of the most used language, or "None" if no data is available.
     private func getMostUsedLanguage() -> String {
         let langStats = cfService.getLanguageStatistics()
         return langStats.max(by: { $0.value < $1.value })?.key ?? "None"
