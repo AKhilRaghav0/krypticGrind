@@ -59,40 +59,83 @@ struct HomeView: View {
     @StateObject private var cfService = CFService.shared
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var showingSettingsSheet = false
+    @State private var scrollOffset: CGFloat = 0
     
     var body: some View {
         NavigationStack {
             ZStack {
                 colorThemeManager.current.background
                     .ignoresSafeArea()
-                VStack(spacing: 32) {
-                    Spacer().frame(height: 12)
-                    // Title
-                    Text("KrypticGrind")
-                        .font(.custom("TTPhobosTrial-Bold", size: 32))
-                        .foregroundColor(colorThemeManager.current.text)
-                        .padding(.top, 8)
-                    
-                    // Streak Section
-                    StreakCard()
+                
+                // Sticky title bar when scrolled
+                if scrollOffset < -50 {
+                    VStack {
+                        HStack {
+                            Text("KrypticGrind")
+                                .font(.custom("TTPhobosTrial-Bold", size: 24))
+                                .foregroundColor(colorThemeManager.current.text)
+                            Spacer()
+                        }
                         .padding(.horizontal, 20)
-                    
-                    // Next Contest Card
-                    if let nextContest = cfService.nextContest {
-                        ContestNextUpCard(contest: nextContest, accent: colorThemeManager.current.accent)
-                            .padding(.horizontal, 20)
-                    } else {
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(colorThemeManager.current.tabBar.opacity(0.7))
-                            .frame(height: 120)
-                            .overlay(
-                                Text("No upcoming contests")
-                                    .font(.custom("TTPhobosTrial-Bold", size: 20))
-                                    .foregroundColor(colorThemeManager.current.text.opacity(0.5))
-                            )
-                            .padding(.horizontal, 20)
+                        .padding(.top, 50)
+                        .background(
+                            colorThemeManager.current.background.opacity(0.95)
+                                .blur(radius: 10)
+                        )
+                        Spacer()
                     }
-                    Spacer()
+                    .transition(.opacity)
+                    .animation(.easeInOut(duration: 0.3), value: scrollOffset < -50)
+                }
+                
+                ScrollView {
+                    VStack(spacing: 32) {
+                        Spacer().frame(height: 12)
+                        
+                        // Main Title
+                        Text("KrypticGrind")
+                            .font(.custom("TTPhobosTrial-Bold", size: 32))
+                            .foregroundColor(colorThemeManager.current.text)
+                            .padding(.top, 8)
+                        
+                        // Streak Section
+                        StreakCard()
+                            .padding(.horizontal, 20)
+                        
+                        // AI Suggestions Card
+                        if let user = cfService.currentUser {
+                            AISuggestionsCard(user: user)
+                                .padding(.horizontal, 20)
+                        }
+                        
+                        // Next Contest Card
+                        if let nextContest = cfService.nextContest {
+                            ContestNextUpCard(contest: nextContest, accent: colorThemeManager.current.accent)
+                                .padding(.horizontal, 20)
+                        } else {
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .fill(colorThemeManager.current.tabBar.opacity(0.7))
+                                .frame(height: 120)
+                                .overlay(
+                                    Text("No upcoming contests")
+                                        .font(.custom("TTPhobosTrial-Bold", size: 20))
+                                        .foregroundColor(colorThemeManager.current.text.opacity(0.5))
+                                )
+                                .padding(.horizontal, 20)
+                        }
+                        
+                        Spacer().frame(height: 50)
+                    }
+                    .background(
+                        GeometryReader { geometry in
+                            Color.clear
+                                .preference(key: ScrollOffsetPreferenceKey.self, value: geometry.frame(in: .named("scroll")).minY)
+                        }
+                    )
+                }
+                .coordinateSpace(name: "scroll")
+                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                    scrollOffset = value
                 }
             }
             .navigationTitle("")
@@ -116,7 +159,7 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showingSettingsSheet) {
-                SettingsSheet()
+                ThemeSelectorSheet()
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
@@ -778,6 +821,7 @@ struct StreakCard: View {
             return Color.gold
         }
     }
+    }
     
     private func calculateCurrentStreak() -> Int {
         let calendar = Calendar.current
@@ -817,6 +861,7 @@ struct StreakCard: View {
         
         return streak
     }
+    }
 }
 
 // MARK: - Fire Icon Component
@@ -827,9 +872,9 @@ struct FireIcon: View {
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
-        Image(systemName: "flame.fill")
-            .font(.system(size: 24, weight: .bold))
-            .foregroundColor(isActive ? fireColor : colorThemeManager.current.text.opacity(0.2))
+        Text("🔥")
+            .font(.system(size: 24))
+            .opacity(isActive ? 1.0 : 0.3)
             .scaleEffect(isActive ? 1.0 : 0.8)
             .animation(.easeInOut(duration: 0.3), value: isActive)
     }
@@ -855,6 +900,243 @@ struct FireIcon: View {
 // MARK: - Color Extensions
 extension Color {
     static let gold = Color(red: 1.0, green: 0.84, blue: 0.0)
+}
+
+// MARK: - AI Suggestions Card
+struct AISuggestionsCard: View {
+    let user: CFUser
+    @StateObject private var geminiService = GeminiService.shared
+    @StateObject private var cfService = CFService.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @State private var isExpanded = false
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        Text("🧠")
+                            .font(.title2)
+                        Text("AI Coach")
+                            .font(.custom("TTPhobosTrial-Bold", size: 18))
+                            .foregroundColor(colorThemeManager.current.text)
+                    }
+                    
+                    Text("Personalized recommendations")
+                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                }
+                
+                Spacer()
+                
+                if !geminiService.isLoading {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            isExpanded.toggle()
+                        }
+                    }) {
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(colorThemeManager.current.accent)
+                    }
+                }
+            }
+            
+            // Content
+            if geminiService.isLoading {
+                HStack(spacing: 12) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .tint(colorThemeManager.current.accent)
+                    Text("AI is analyzing your performance...")
+                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 8)
+            } else if let error = geminiService.error {
+                VStack(spacing: 8) {
+                    Text("⚠️ Unable to get suggestions")
+                        .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                        .foregroundColor(.orange)
+                    
+                    Text(error)
+                        .font(.custom("TTPhobosTrial-Regular", size: 12))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                        .multilineTextAlignment(.center)
+                }
+            } else if geminiService.suggestions.isEmpty {
+                VStack(spacing: 12) {
+                    Text("✨ Get started with AI coaching")
+                        .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                        .foregroundColor(colorThemeManager.current.text)
+                    
+                    Button(action: {
+                        Task {
+                            await generateSuggestions()
+                        }
+                    }) {
+                        Text("Generate Suggestions")
+                            .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(colorThemeManager.current.accent)
+                            )
+                    }
+                }
+            } else {
+                VStack(spacing: 12) {
+                    // Show first suggestion always
+                    if let firstSuggestion = geminiService.suggestions.first {
+                        SuggestionRow(suggestion: firstSuggestion, isCompact: !isExpanded)
+                    }
+                    
+                    // Show additional suggestions if expanded
+                    if isExpanded {
+                        ForEach(Array(geminiService.suggestions.dropFirst().prefix(2)), id: \.id) { suggestion in
+                            SuggestionRow(suggestion: suggestion, isCompact: false)
+                        }
+                        
+                        NavigationLink(destination: AISuggestionsView()) {
+                            HStack {
+                                Text("View all suggestions")
+                                    .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                                    .foregroundColor(colorThemeManager.current.accent)
+                                Spacer()
+                                Image(systemName: "arrow.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundColor(colorThemeManager.current.accent)
+                            }
+                            .padding(.vertical, 8)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(colorThemeManager.current.tabBar.opacity(0.9))
+                .shadow(color: colorThemeManager.current.accent.opacity(0.08), radius: 8, y: 2)
+        )
+        .onAppear {
+            if geminiService.suggestions.isEmpty {
+                Task {
+                    await generateSuggestions()
+                }
+            }
+        }
+    }
+    
+    private func generateSuggestions() async {
+        let userStats = UserStats(
+            totalSubmissions: cfService.recentSubmissions.count,
+            acceptedSubmissions: cfService.recentSubmissions.filter { $0.isAccepted }.count,
+            acceptanceRate: cfService.recentSubmissions.isEmpty ? 0 : Double(cfService.recentSubmissions.filter { $0.isAccepted }.count) / Double(cfService.recentSubmissions.count) * 100,
+            mostUsedLanguage: cfService.recentSubmissions.first?.programmingLanguage ?? "Unknown",
+            currentStreak: calculateCurrentStreak(),
+            weeklySubmissions: cfService.recentSubmissions.filter { $0.submissionDate > Date().addingTimeInterval(-7*24*60*60) }.count,
+            topTopics: Array(Dictionary(grouping: cfService.recentSubmissions.filter { $0.isAccepted }) { $0.problem.tags.first ?? "unknown" }.sorted { $0.value.count > $1.value.count }.prefix(3).map { $0.key }),
+            recentPerformance: "Recent performance analysis"
+        )
+        
+        await geminiService.generateSuggestions(
+            userStats: userStats,
+            submissions: cfService.recentSubmissions,
+            user: user
+        )
+    }
+    
+    private func calculateCurrentStreak() -> Int {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        let acceptedSubmissions = cfService.recentSubmissions
+            .filter { $0.isAccepted }
+            .sorted { $0.submissionDate > $1.submissionDate }
+        
+        var streak = 0
+        var currentDate = today
+        
+        for _ in 0..<30 { // Check last 30 days
+            let hasSubmissionThisDay = acceptedSubmissions.contains { submission in
+                calendar.isDate(submission.submissionDate, inSameDayAs: currentDate)
+            }
+            
+            if hasSubmissionThisDay {
+                streak += 1
+                currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate)!
+            } else {
+                break
+            }
+        }
+        
+        return streak
+    }
+}
+
+// MARK: - Suggestion Row
+struct SuggestionRow: View {
+    let suggestion: AISuggestion
+    let isCompact: Bool
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Priority indicator
+            Circle()
+                .fill(priorityColor)
+                .frame(width: 8, height: 8)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(suggestion.title)
+                    .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                    .foregroundColor(colorThemeManager.current.text)
+                    .lineLimit(1)
+                
+                if !isCompact {
+                    Text(suggestion.description)
+                        .font(.custom("TTPhobosTrial-Regular", size: 12))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                        .lineLimit(2)
+                }
+            }
+            
+            Spacer()
+            
+            if let url = suggestion.actionURL, let nsUrl = URL(string: url) {
+                Link(destination: nsUrl) {
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundColor(colorThemeManager.current.accent)
+                }
+            }
+        }
+        .padding(.vertical, isCompact ? 4 : 8)
+    }
+    
+    private var priorityColor: Color {
+        switch suggestion.priority {
+        case .high:
+            return .red
+        case .medium:
+            return .orange
+        case .low:
+            return .blue
+        }
+    }
+}
+
+// MARK: - Scroll Offset Preference Key
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
 }
 
 #Preview {

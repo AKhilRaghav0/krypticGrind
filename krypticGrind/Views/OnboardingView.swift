@@ -16,6 +16,7 @@ struct OnboardingView: View {
     @State private var showGetStarted = false
     @State private var animateContent = false
     @State private var dragOffset: CGFloat = 0
+    @State private var showHandleInput = false
     @Binding var isFirstLaunch: Bool
     
     let pages = [
@@ -136,10 +137,9 @@ struct OnboardingView: View {
                                 impactFeedback.impactOccurred()
                                 #endif
                                 
-                                // Delay to show animation, then dismiss
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                                    UserDefaults.standard.set(false, forKey: "isFirstLaunch")
-                                    isFirstLaunch = false
+                                // Show handle input sheet
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    showHandleInput = true
                                 }
                             }) {
                                 HStack(spacing: 12) {
@@ -166,6 +166,12 @@ struct OnboardingView: View {
                 }
                 .padding(.bottom, 60)
             }
+        }
+        .sheet(isPresented: $showHandleInput) {
+            HandleInputSheet(handleInput: .constant(""), onSubmit: {
+                UserDefaults.standard.set(false, forKey: "isFirstLaunch")
+                isFirstLaunch = false
+            })
         }
         .onAppear {
             withAnimation(.easeInOut(duration: 1.0)) {

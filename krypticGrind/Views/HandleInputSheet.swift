@@ -19,38 +19,132 @@ struct HandleInputSheet: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 32) {
-                VStack(spacing: 20) {
-                    Image(systemName: "person.circle.fill")
-                        .font(.system(size: 80))
-                        .foregroundStyle(.blue.gradient)
-                        .scaleEffect(isPresented ? 1.1 : 1.0)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPresented)
-                    
-                    VStack(spacing: 12) {
-                        Text("Enter Your Codeforces Handle")
-                            .font(.title2.bold())
-                            .foregroundStyle(.primary)
-                            .multilineTextAlignment(.center)
-                        
-                        Text("We'll fetch your profile and track your competitive programming journey")
-                            .font(.body)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                }
+            ZStack {
+                // Dungeon-style background
+                colorThemeManager.current.background
+                    .ignoresSafeArea()
                 
-                VStack(spacing: 20) {
-                    TextField("e.g., tourist", text: $localInput)
-                        .textFieldStyle(.roundedBorder)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                        .focused($isTextFieldFocused)
-                        .onSubmit {
-                            if !localInput.isEmpty && !cfService.isLoading {
-                                submitHandle()
+                VStack(spacing: 0) {
+                    Spacer().frame(height: 60)
+                    
+                    // Hero Section
+                    VStack(spacing: 32) {
+                        // Animated Title
+                        VStack(spacing: 16) {
+                            Text("⚔️")
+                                .font(.system(size: 80))
+                                .scaleEffect(isPresented ? 1.1 : 1.0)
+                                .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: isPresented)
+                            
+                            VStack(spacing: 8) {
+                                Text("Enter the Arena")
+                                    .font(.custom("TTPhobosTrial-Bold", size: 32))
+                                    .foregroundColor(colorThemeManager.current.text)
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("Connect your Codeforces profile to begin your quest")
+                                    .font(.custom("TTPhobosTrial-Regular", size: 16))
+                                    .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 32)
                             }
                         }
+                        
+                        // Input Section
+                        VStack(spacing: 24) {
+                            VStack(spacing: 12) {
+                                HStack {
+                                    Text("Codeforces Handle")
+                                        .font(.custom("TTPhobosTrial-DemiBold", size: 16))
+                                        .foregroundColor(colorThemeManager.current.text)
+                                    Spacer()
+                                }
+                                
+                                HStack(spacing: 12) {
+                                    Image(systemName: "person.circle.fill")
+                                        .font(.title2)
+                                        .foregroundColor(colorThemeManager.current.accent)
+                                    
+                                    TextField("Enter your handle", text: $localInput)
+                                        .font(.custom("TTPhobosTrial-Regular", size: 16))
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .autocapitalization(.none)
+                                        .disableAutocorrection(true)
+                                        .foregroundColor(colorThemeManager.current.text)
+                                        .focused($isTextFieldFocused)
+                                        .onSubmit {
+                                            if !localInput.isEmpty && !cfService.isLoading {
+                                                submitHandle()
+                                            }
+                                        }
+                                }
+                                .padding(16)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .fill(colorThemeManager.current.tabBar.opacity(0.8))
+                                        .stroke(colorThemeManager.current.accent.opacity(0.3), lineWidth: 1)
+                                )
+                            }
+                            
+                            // Action Button
+                            Button(action: submitHandle) {
+                                HStack(spacing: 12) {
+                                    if cfService.isLoading {
+                                        ProgressView()
+                                            .scaleEffect(0.8)
+                                            .tint(.white)
+                                    } else {
+                                        Image(systemName: "checkmark.shield.fill")
+                                            .font(.title2)
+                                    }
+                                    
+                                    Text(cfService.isLoading ? "Validating..." : "Start Quest")
+                                        .font(.custom("TTPhobosTrial-Bold", size: 18))
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .fill(
+                                            localInput.isEmpty || cfService.isLoading ? 
+                                            colorThemeManager.current.text.opacity(0.3) : 
+                                            colorThemeManager.current.accent
+                                        )
+                                )
+                            }
+                            .disabled(localInput.isEmpty || cfService.isLoading)
+                        }
+                        .padding(.horizontal, 32)
+                        
+                        // Helper Text
+                        VStack(spacing: 8) {
+                            Text("💡 Example: tourist, Benq, Errichto")
+                                .font(.custom("TTPhobosTrial-Regular", size: 14))
+                                .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                            
+                            Text("We'll fetch your submissions and stats to power AI recommendations")
+                                .font(.custom("TTPhobosTrial-Regular", size: 12))
+                                .foregroundColor(colorThemeManager.current.text.opacity(0.5))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 40)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // Skip Option
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Text("Skip for now")
+                            .font(.custom("TTPhobosTrial-Regular", size: 16))
+                            .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                            .underline()
+                    }
+                    .padding(.bottom, 40)
+                }
+            }
                         .onChange(of: localInput) { newValue in
                             handleInput = newValue
                         }
