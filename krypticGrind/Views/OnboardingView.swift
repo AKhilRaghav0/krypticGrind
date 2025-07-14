@@ -6,150 +6,190 @@
 //
 
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 
 struct OnboardingView: View {
-    @StateObject private var colorThemeManager = ColorThemeManager()
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var currentPage = 0
     @State private var showGetStarted = false
+    @State private var animateContent = false
+    @State private var dragOffset: CGFloat = 0
     @Binding var isFirstLaunch: Bool
     
     let pages = [
         OnboardingPage(
             title: "Welcome to KrypticGrind",
             subtitle: "Your Ultimate Competitive Programming Companion",
-            description: "Master algorithmic thinking and climb the ratings ladder with AI-powered insights and comprehensive tracking.",
+            description: "Master algorithmic thinking and climb the ratings ladder with AI-powered insights and comprehensive tracking. Start your journey to coding excellence.",
             systemImage: "star.fill",
-            accentColor: Color.blue
+            accentColor: Color.blue,
+            gradientColors: [Color.blue, Color.purple]
         ),
         OnboardingPage(
             title: "Track Your Progress",
             subtitle: "Real-time Performance Analytics",
-            description: "Monitor your Codeforces submissions, analyze your strengths and weaknesses, and track your rating growth over time.",
+            description: "Monitor your Codeforces submissions, analyze your strengths and weaknesses, and track your rating growth over time with beautiful visualizations.",
             systemImage: "chart.line.uptrend.xyaxis",
-            accentColor: Color.green
+            accentColor: Color.green,
+            gradientColors: [Color.green, Color.mint]
         ),
         OnboardingPage(
             title: "AI-Powered Learning",
             subtitle: "Personalized Practice Suggestions",
-            description: "Get intelligent recommendations on topics to focus on, problems to solve, and strategies to improve based on your coding patterns.",
+            description: "Get intelligent recommendations on topics to focus on, problems to solve, and strategies to improve based on your unique coding patterns and performance.",
             systemImage: "brain.head.profile",
-            accentColor: Color.purple
+            accentColor: Color.purple,
+            gradientColors: [Color.purple, Color.pink]
         ),
         OnboardingPage(
             title: "Contest & Community",
             subtitle: "Stay Competition Ready",
-            description: "Never miss upcoming contests, compare with friends on leaderboards, and maintain your solving streak with daily goals.",
+            description: "Never miss upcoming contests, compare with friends on leaderboards, and maintain your solving streak with daily goals and achievements.",
             systemImage: "trophy.fill",
-            accentColor: Color.orange
+            accentColor: Color.orange,
+            gradientColors: [Color.orange, Color.red]
         ),
         OnboardingPage(
             title: "Smart Problem Management",
             subtitle: "Organize Your Learning",
-            description: "Save problems for later review, take notes on solutions, and build your personal library of solved problems with insights.",
+            description: "Save problems for later review, take notes on solutions, and build your personal library of solved problems with detailed insights and progress tracking.",
             systemImage: "bookmark.fill",
-            accentColor: Color.indigo
+            accentColor: Color.indigo,
+            gradientColors: [Color.indigo, Color.blue]
         )
     ]
     
     var body: some View {
         ZStack {
-            // Animated background gradient
-            LinearGradient(
-                colors: [
-                    colorThemeManager.current.accent.opacity(0.1),
-                    colorThemeManager.current.background,
-                    colorThemeManager.current.accent.opacity(0.05)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            // Simple background
+            colorThemeManager.current.background
             .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Content
+                // Enhanced content with gesture support
                 TabView(selection: $currentPage) {
                     ForEach(Array(pages.enumerated()), id: \.offset) { index, page in
-                        OnboardingPageView(page: page, colorThemeManager: colorThemeManager)
+                        OnboardingPageView(page: page, isActive: currentPage == index)
+                            .environmentObject(colorThemeManager)
                             .tag(index)
                     }
                 }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                #if os(iOS)
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                #endif
                 .animation(.easeInOut(duration: 0.5), value: currentPage)
-                
-                // Bottom Controls
-                VStack(spacing: 24) {
-                    // Page Indicator
-                    HStack(spacing: 8) {
-                        ForEach(0..<pages.count, id: \.self) { index in
-                            Circle()
-                                .fill(index == currentPage ? colorThemeManager.current.accent : colorThemeManager.current.text.opacity(0.3))
-                                .frame(width: 8, height: 8)
-                                .scaleEffect(index == currentPage ? 1.2 : 1.0)
-                                .animation(.spring(response: 0.3), value: currentPage)
+                .gesture(
+                    DragGesture()
+                        .onChanged { gesture in
+                            dragOffset = gesture.translation.width
                         }
-                    }
-                    
-                    // Navigation Buttons
-                    HStack {
-                        if currentPage > 0 {
-                            Button("Previous") {
-                                withAnimation(.easeInOut(duration: 0.3)) {
+                        .onEnded { gesture in
+                            let threshold: CGFloat = 50
+                            let translationX = gesture.translation.width
+                            if translationX > threshold && currentPage > 0 {
+                                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                                     currentPage -= 1
                                 }
-                            }
-                            .foregroundStyle(colorThemeManager.current.text.opacity(0.7))
-                            .font(.system(size: 16, weight: .medium))
-                        }
-                        
-                        Spacer()
-                        
-                        if currentPage < pages.count - 1 {
-                            Button("Next") {
-                                withAnimation(.easeInOut(duration: 0.3)) {
+                            } else if translationX < -threshold && currentPage < pages.count - 1 {
+                                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                                     currentPage += 1
                                 }
                             }
-                            .foregroundStyle(colorThemeManager.current.accent)
-                            .font(.system(size: 16, weight: .semibold))
-                        } else {
-                            Button("Get Started") {
-                                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                            dragOffset = 0
+                        }
+                )
+                
+                // Enhanced bottom controls with better spacing
+                VStack(spacing: 32) {
+                    // Improved page indicator with progress animation
+                    HStack(spacing: 8) {
+                        ForEach(0..<pages.count, id: \.self) { index in
+                            if index == currentPage {
+                                Capsule()
+                                    .fill(pages[currentPage].accentColor)
+                                    .frame(width: 32, height: 8)
+                                    .shadow(color: pages[currentPage].accentColor.opacity(0.6), radius: 4, y: 2)
+                            } else {
+                                Circle()
+                                    .fill(colorThemeManager.current.text.opacity(0.3))
+                                    .frame(width: 8, height: 8)
+                            }
+                        }
+                    }
+                    .animation(.spring(response: 0.6, dampingFraction: 0.8), value: currentPage)
+                    
+                    // Simple navigation - only button on last screen
+                    HStack {
+                        Spacer()
+                        
+                        if currentPage == pages.count - 1 {
+                            Button(action: {
+                                withAnimation(.spring(response: 0.8, dampingFraction: 0.9)) {
                                     showGetStarted = true
                                 }
                                 
+                                // Haptic feedback
+                                #if os(iOS)
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                                impactFeedback.impactOccurred()
+                                #endif
+                                
                                 // Delay to show animation, then dismiss
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                                     UserDefaults.standard.set(false, forKey: "isFirstLaunch")
                                     isFirstLaunch = false
                                 }
+                            }) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "rocket.fill")
+                                        .font(.system(size: 18, weight: .bold))
+                                    Text("Get Started")
+                                        .font(.custom("TTPhobosTrial-Bold", size: 18))
+                                }
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 36)
+                                .padding(.vertical, 16)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                        .fill(pages[currentPage].accentColor)
+                                )
+                                .scaleEffect(showGetStarted ? 1.05 : 1.0)
+                                .opacity(showGetStarted ? 0.9 : 1.0)
                             }
-                            .padding(.horizontal, 32)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 25, style: .continuous)
-                                    .fill(colorThemeManager.current.accent)
-                                    .shadow(color: colorThemeManager.current.accent.opacity(0.3), radius: 10, y: 5)
-                            )
-                            .foregroundStyle(.white)
-                            .font(.system(size: 18, weight: .bold))
-                            .scaleEffect(showGetStarted ? 1.1 : 1.0)
-                            .opacity(showGetStarted ? 0.8 : 1.0)
                         }
+                        
+                        Spacer()
                     }
                     .padding(.horizontal, 32)
                 }
-                .padding(.bottom, 50)
+                .padding(.bottom, 60)
             }
         }
         .onAppear {
-            // Auto-advance pages with a slower interval for reading
-            Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { timer in
+            withAnimation(.easeInOut(duration: 1.0)) {
+                animateContent = true
+            }
+            
+            // Auto-advance pages with a longer interval for better reading
+            Timer.scheduledTimer(withTimeInterval: 15.0, repeats: true) { timer in
                 if currentPage < pages.count - 1 {
-                    withAnimation(.easeInOut(duration: 0.5)) {
+                    withAnimation(.spring(response: 0.8, dampingFraction: 0.8)) {
                         currentPage += 1
                     }
                 } else {
                     timer.invalidate()
+                }
+            }
+        }
+        .onChange(of: currentPage) { _, _ in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                animateContent = false
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    animateContent = true
                 }
             }
         }
@@ -158,50 +198,156 @@ struct OnboardingView: View {
 
 struct OnboardingPageView: View {
     let page: OnboardingPage
-    let colorThemeManager: ColorThemeManager
+    let isActive: Bool
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @State private var iconScale: CGFloat = 0.5
+    @State private var contentOpacity: Double = 0
+    @State private var titleOffset: CGFloat = 50
+    @State private var subtitleOffset: CGFloat = 30
+    @State private var descriptionOffset: CGFloat = 20
     
     var body: some View {
-        VStack(spacing: 40) {
-            Spacer()
-            
-            // Icon
-            ZStack {
-                Circle()
-                    .fill(page.accentColor.opacity(0.1))
-                    .frame(width: 140, height: 140)
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                Spacer()
                 
-                Circle()
-                    .fill(page.accentColor.opacity(0.2))
-                    .frame(width: 100, height: 100)
+                // Enhanced icon with layered animation effects
+                ZStack {
+                    // Outer glow effect
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    page.accentColor.opacity(0.3),
+                                    page.accentColor.opacity(0.1),
+                                    Color.clear
+                                ],
+                                center: .center,
+                                startRadius: 60,
+                                endRadius: 120
+                            )
+                        )
+                        .frame(width: 200, height: 200)
+                        .scaleEffect(isActive ? 1.0 : 0.8)
+                    
+                    // Middle ring
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: page.gradientColors.map { $0.opacity(0.2) },
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 160, height: 160)
+                        .scaleEffect(iconScale)
+                    
+                    // Inner circle
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: page.gradientColors.map { $0.opacity(0.3) },
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 120, height: 120)
+                        .scaleEffect(iconScale * 0.8)
+                    
+                    // Icon with enhanced styling
+                    Image(systemName: page.systemImage)
+                        .font(.system(size: 56, weight: .bold, design: .rounded))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: page.gradientColors,
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .scaleEffect(iconScale)
+                        .shadow(color: page.accentColor.opacity(0.3), radius: 8, y: 4)
+                }
+                .frame(height: 240)
                 
-                Image(systemName: page.systemImage)
-                    .font(.system(size: 50, weight: .bold))
-                    .foregroundStyle(page.accentColor)
+                Spacer().frame(height: 40)
+                
+                // Enhanced content with staggered animations
+                VStack(spacing: 24) {
+                    // Title with custom font and better spacing
+                    Text(page.title)
+                        .font(.custom("TTPhobosTrial-Bold", size: 36))
+                        .foregroundStyle(colorThemeManager.current.text)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(3)
+                        .lineSpacing(4)
+                        .offset(y: titleOffset)
+                        .opacity(contentOpacity)
+                        .padding(.horizontal, 24)
+                    
+                    // Subtitle with accent styling
+                    Text(page.subtitle)
+                        .font(.custom("TTPhobosTrial-DemiBold", size: 20))
+                        .foregroundStyle(page.accentColor)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .lineSpacing(2)
+                        .offset(y: subtitleOffset)
+                        .opacity(contentOpacity)
+                        .padding(.horizontal, 32)
+                    
+                    // Description with improved readability
+                    Text(page.description)
+                        .font(.custom("TTPhobosTrial-Regular", size: 17))
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .lineLimit(nil)
+                        .lineSpacing(6)
+                        .tracking(0.3)
+                        .offset(y: descriptionOffset)
+                        .opacity(contentOpacity)
+                        .padding(.horizontal, 40)
+                        .frame(maxHeight: 120)
+                }
+                
+                Spacer()
             }
-            
-            // Content
-            VStack(spacing: 16) {
-                Text(page.title)
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundStyle(colorThemeManager.current.text)
-                    .multilineTextAlignment(.center)
-                
-                Text(page.subtitle)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(page.accentColor)
-                    .multilineTextAlignment(.center)
-                
-                Text(page.description)
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundStyle(colorThemeManager.current.text.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .lineLimit(nil)
-                    .padding(.horizontal, 32)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .onAppear {
+                startAnimations()
             }
-            
-            Spacer()
+            .onChange(of: isActive) { _, newValue in
+                if newValue {
+                    startAnimations()
+                }
+            }
         }
-        .padding(.horizontal, 24)
+    }
+    
+    private func startAnimations() {
+        // Reset all states
+        iconScale = 0.5
+        contentOpacity = 0
+        titleOffset = 50
+        subtitleOffset = 30
+        descriptionOffset = 20
+        
+        // Staggered animation sequence
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.1)) {
+            iconScale = 1.0
+        }
+        
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.3)) {
+            titleOffset = 0
+            contentOpacity = 1.0
+        }
+        
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.5)) {
+            subtitleOffset = 0
+        }
+        
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.7)) {
+            descriptionOffset = 0
+        }
     }
 }
 
@@ -211,9 +357,12 @@ struct OnboardingPage {
     let description: String
     let systemImage: String
     let accentColor: Color
+    let gradientColors: [Color]
 }
 
 // MARK: - Preview
 #Preview {
     OnboardingView(isFirstLaunch: .constant(true))
+        .environmentObject(ColorThemeManager())
+        .preferredColorScheme(.dark)
 }

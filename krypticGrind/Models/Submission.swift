@@ -13,7 +13,7 @@ struct CFSubmissionsResponse: Codable {
     let result: [CFSubmission]
 }
 
-struct CFSubmission: Codable, Identifiable {
+struct CFSubmission: Codable, Identifiable, Equatable {
     var id: Int { creationTimeSeconds }
     let contestId: Int?
     let creationTimeSeconds: Int
@@ -26,6 +26,13 @@ struct CFSubmission: Codable, Identifiable {
     let passedTestCount: Int
     let timeConsumedMillis: Int
     let memoryConsumedBytes: Int
+    
+    // Equatable conformance
+    static func == (lhs: CFSubmission, rhs: CFSubmission) -> Bool {
+        return lhs.creationTimeSeconds == rhs.creationTimeSeconds &&
+               lhs.contestId == rhs.contestId &&
+               lhs.problem.problemId == rhs.problem.problemId
+    }
     
     // Computed properties
     var submissionDate: Date {
@@ -70,7 +77,7 @@ struct CFSubmission: Codable, Identifiable {
     }
 }
 
-struct CFProblem: Codable {
+struct CFProblem: Codable, Equatable {
     let contestId: Int?
     let problemsetName: String?
     let index: String
@@ -101,7 +108,7 @@ struct CFProblem: Codable {
     }
 }
 
-struct CFParty: Codable {
+struct CFParty: Codable, Equatable {
     let contestId: Int?
     let members: [CFMember]
     let participantType: String
@@ -112,7 +119,7 @@ struct CFParty: Codable {
     let startTimeSeconds: Int?
 }
 
-struct CFMember: Codable {
+struct CFMember: Codable, Equatable {
     let handle: String
     let name: String?
 }

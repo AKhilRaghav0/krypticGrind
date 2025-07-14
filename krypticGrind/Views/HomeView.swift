@@ -72,6 +72,11 @@ struct HomeView: View {
                         .font(.custom("TTPhobosTrial-Bold", size: 32))
                         .foregroundColor(colorThemeManager.current.text)
                         .padding(.top, 8)
+                    
+                    // Streak Section
+                    StreakCard()
+                        .padding(.horizontal, 20)
+                    
                     // Next Contest Card
                     if let nextContest = cfService.nextContest {
                         ContestNextUpCard(contest: nextContest, accent: colorThemeManager.current.accent)
@@ -640,6 +645,216 @@ struct ContestNextUpCard: View {
                 .shadow(color: accent.opacity(0.08), radius: 8, y: 2)
         )
     }
+}
+
+// MARK: - Streak Card
+struct StreakCard: View {
+    @StateObject private var cfService = CFService.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    private var currentStreak: Int {
+        calculateCurrentStreak()
+    }
+    
+    private var todaysSolved: Int {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
+        
+        return cfService.recentSubmissions.filter { submission in
+            let submissionDate = calendar.startOfDay(for: submission.submissionDate)
+            return submissionDate >= today && submissionDate < tomorrow && 
+                   (submission.verdict == "OK" || submission.verdict == "ACCEPTED")
+        }.count
+    }
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Daily Streak")
+                        .font(.custom("TTPhobosTrial-Bold", size: 18))
+                        .foregroundColor(colorThemeManager.current.accent)
+                    
+                    Text("\(currentStreak) day\(currentStreak == 1 ? "" : "s")")
+                        .font(.custom("TTPhobosTrial-Bold", size: 24))
+                        .foregroundColor(colorThemeManager.current.text)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Today")
+                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                    
+                    Text("\(todaysSolved) solved")
+                        .font(.custom("TTPhobosTrial-Bold", size: 16))
+                        .foregroundColor(todaysSolved > 0 ? Color.green : colorThemeManager.current.text.opacity(0.6))
+                }
+            }
+            
+            // Fire Icons Row
+            HStack(spacing: 12) {
+                ForEach(0..<5, id: \.self) { index in
+                    FireIcon(
+                        isActive: index < min(currentStreak, 5),
+                        index: index,
+                        totalStreak: currentStreak
+                    )
+                }
+            }
+            .padding(.vertical, 8)
+            
+            // Motivational Text
+            HStack {
+                Image(systemName: motivationalIcon)
+                    .foregroundColor(motivationalColor)
+                    .font(.system(size: 16, weight: .semibold))
+                
+                Text(motivationalText)
+                    .font(.custom("TTPhobosTrial-Regular", size: 14))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                
+                Spacer()
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(colorThemeManager.current.tabBar.opacity(0.9))
+                .shadow(color: colorThemeManager.current.accent.opacity(0.08), radius: 8, y: 2)
+        )
+    }
+    
+    private var motivationalText: String {
+        switch currentStreak {
+        case 0:
+            return todaysSolved > 0 ? "Great start! Keep going!" : "Start your streak by solving a problem today!"
+        case 1...2:
+            return "You're building momentum! 🚀"
+        case 3...6:
+            return "Fantastic streak! You're on fire! 🔥"
+        case 7...13:
+            return "Incredible consistency! A week strong! ⭐"
+        case 14...29:
+            return "Legendary dedication! Two weeks+! 👑"
+        default:
+            return "Unstoppable coding machine! 🏆"
+        }
+    }
+    
+    private var motivationalIcon: String {
+        switch currentStreak {
+        case 0:
+            return todaysSolved > 0 ? "bolt.circle.fill" : "target"
+        case 1...2:
+            return "arrow.up.circle.fill"
+        case 3...6:
+            return "flame.fill"
+        case 7...13:
+            return "star.fill"
+        case 14...29:
+            return "crown.fill"
+        default:
+            return "trophy.fill"
+        }
+    }
+    
+    private var motivationalColor: Color {
+        switch currentStreak {
+        case 0:
+            return todaysSolved > 0 ? Color.green : colorThemeManager.current.accent
+        case 1...2:
+            return Color.blue
+        case 3...6:
+            return Color.orange
+        case 7...13:
+            return Color.yellow
+        case 14...29:
+            return Color.purple
+        default:
+            return Color.gold
+        }
+    }
+    
+    private func calculateCurrentStreak() -> Int {
+        let calendar = Calendar.current
+        var streak = 0
+        var currentDate = calendar.startOfDay(for: Date())
+        
+        // Check if today has submissions first
+        let today = calendar.startOfDay(for: Date())
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
+        let hasTodaySubmission = cfService.recentSubmissions.contains { submission in
+            let submissionDate = calendar.startOfDay(for: submission.submissionDate)
+            return submissionDate >= today && submissionDate < tomorrow && 
+                   (submission.verdict == "OK" || submission.verdict == "ACCEPTED")
+        }
+        
+        if hasTodaySubmission {
+            streak = 1
+            currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate)!
+        }
+        
+        // Check previous days
+        for _ in 0..<29 {
+            let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
+            let hasSubmission = cfService.recentSubmissions.contains { submission in
+                let submissionDate = calendar.startOfDay(for: submission.submissionDate)
+                return submissionDate >= currentDate && submissionDate < nextDate && 
+                       (submission.verdict == "OK" || submission.verdict == "ACCEPTED")
+            }
+            
+            if hasSubmission {
+                streak += 1
+                currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate)!
+            } else {
+                break
+            }
+        }
+        
+        return streak
+    }
+}
+
+// MARK: - Fire Icon Component
+struct FireIcon: View {
+    let isActive: Bool
+    let index: Int
+    let totalStreak: Int
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        Image(systemName: "flame.fill")
+            .font(.system(size: 24, weight: .bold))
+            .foregroundColor(isActive ? fireColor : colorThemeManager.current.text.opacity(0.2))
+            .scaleEffect(isActive ? 1.0 : 0.8)
+            .animation(.easeInOut(duration: 0.3), value: isActive)
+    }
+    
+    private var fireColor: Color {
+        switch index {
+        case 0:
+            return Color.orange
+        case 1:
+            return Color.red
+        case 2:
+            return Color.pink
+        case 3:
+            return Color.purple
+        case 4:
+            return Color.blue
+        default:
+            return Color.orange
+        }
+    }
+}
+
+// MARK: - Color Extensions
+extension Color {
+    static let gold = Color(red: 1.0, green: 0.84, blue: 0.0)
 }
 
 #Preview {

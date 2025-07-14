@@ -30,7 +30,7 @@ struct ThemeSelectorSheet: View {
                         GridItem(.flexible(), spacing: 16)
                     ], spacing: 16) {
                         ForEach(Array(themeNames.enumerated()), id: \.offset) { index, name in
-                            ThemeCard(
+                            ThemeSelectorCard(
                                 themeName: name,
                                 isSelected: index == colorThemeManager.currentThemeIndex,
                                 action: {
@@ -60,7 +60,7 @@ struct ThemeSelectorSheet: View {
     }
 }
 
-struct ThemeCard: View {
+struct ThemeSelectorCard: View {
     let themeName: String
     let isSelected: Bool
     let action: () -> Void

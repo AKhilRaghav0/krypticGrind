@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SubmissionsView: View {
     @StateObject private var cfService = CFService.shared
-    @StateObject private var colorThemeManager = ColorThemeManager()
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var selectedFilter: SubmissionFilter = .all
     @State private var searchText = ""
     @State private var filteredSubmissions: [CFSubmission] = []
@@ -111,14 +111,15 @@ struct SubmissionsView: View {
     }
     
     // Async filtering to prevent UI hangs
+    @MainActor
     private func filterSubmissions() async {
         isLoading = true
         
-        let filtered = await Task.detached(priority: .userInitiated) {
-            var submissions = self.cfService.recentSubmissions
+        let filtered = await Task.detached(priority: .userInitiated) { [cfService, selectedFilter, searchText] in
+            var submissions = cfService.recentSubmissions
             
             // Apply filter
-            switch self.selectedFilter {
+            switch selectedFilter {
             case .all:
                 break
             case .accepted:
@@ -130,22 +131,19 @@ struct SubmissionsView: View {
             }
             
             // Apply search
-            if !self.searchText.isEmpty {
+            if !searchText.isEmpty {
                 submissions = submissions.filter { submission in
-                    submission.problem.name.localizedCaseInsensitiveContains(self.searchText) ||
-                    submission.problem.index.localizedCaseInsensitiveContains(self.searchText) ||
-                    submission.programmingLanguage.localizedCaseInsensitiveContains(self.searchText)
+                    submission.problem.name.localizedCaseInsensitiveContains(searchText) ||
+                    submission.problem.index.localizedCaseInsensitiveContains(searchText) ||
+                    submission.programmingLanguage.localizedCaseInsensitiveContains(searchText)
                 }
             }
             
             return submissions
         }.value
         
-        await MainActor.run {
-            filteredSubmissions = filtered
-            isLoading = false
-        }
-    }
+        filteredSubmissions = filtered
+        isLoading = false
     }
 }
 
