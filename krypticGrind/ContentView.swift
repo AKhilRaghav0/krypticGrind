@@ -244,6 +244,7 @@ struct DungeonHeader: View {
             .frame(height: 80)
             .padding(.horizontal, 4)
         }
+        .padding(.bottom, 12) // Add bottom padding to separate from content below
     }
 }
 
