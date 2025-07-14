@@ -192,10 +192,10 @@ struct ChampionCard: View {
     }
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             // Rank Icon
             Text(rankIcon)
-                .font(.system(size: rank == 1 ? 36 : 28))
+                .font(.system(size: rank == 1 ? 28 : 22))
             
             // Avatar
             Circle()
@@ -203,35 +203,35 @@ struct ChampionCard: View {
                 .overlay {
                     Image(systemName: rank == 1 ? "crown.fill" : "person.fill")
                         .foregroundColor(rank == 1 ? .yellow : colorThemeManager.current.text.opacity(0.6))
-                        .font(.system(size: rank == 1 ? 22 : 18))
+                        .font(.system(size: rank == 1 ? 18 : 14))
                 }
-            .frame(width: rank == 1 ? 64 : 54, height: rank == 1 ? 64 : 54)
+            .frame(width: rank == 1 ? 54 : 44, height: rank == 1 ? 54 : 44)
             .overlay(
                 Circle()
-                    .stroke(rankColor, lineWidth: rank == 1 ? 4 : 3)
+                    .stroke(rankColor, lineWidth: rank == 1 ? 3 : 2)
             )
-            .shadow(color: rankColor.opacity(0.3), radius: rank == 1 ? 8 : 6, x: 0, y: 2)
+            .shadow(color: rankColor.opacity(0.3), radius: rank == 1 ? 6 : 4, x: 0, y: 2)
             
             // Info
-            VStack(spacing: 6) {
+            VStack(spacing: 4) {
                 Text(champion.handle)
-                    .font(.custom("TTPhobosTrial-Bold", size: rank == 1 ? 18 : 16))
+                    .font(.custom("TTPhobosTrial-Bold", size: rank == 1 ? 16 : 14))
                     .foregroundColor(colorThemeManager.current.text)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.6)
                     .multilineTextAlignment(.center)
                 
                 Text("\(champion.rating)")
-                    .font(.custom("TTPhobosTrial-DemiBold", size: rank == 1 ? 16 : 14))
+                    .font(.custom("TTPhobosTrial-DemiBold", size: rank == 1 ? 14 : 12))
                     .foregroundColor(rankColor)
                     .multilineTextAlignment(.center)
                 
                 Text("\(champion.problemsSolved) solved")
-                    .font(.custom("TTPhobosTrial-Regular", size: rank == 1 ? 12 : 10))
+                    .font(.custom("TTPhobosTrial-Regular", size: rank == 1 ? 10 : 9))
                     .foregroundColor(colorThemeManager.current.text.opacity(0.6))
                     .multilineTextAlignment(.center)
             }
-            .padding(.horizontal, 8)
+            .padding(.horizontal, 6)
             
             // Podium Base with Smooth Curves
             RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -259,7 +259,7 @@ struct ChampionCard: View {
                 )
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
     }
 }
 
@@ -307,18 +307,18 @@ struct WarriorCard: View {
     }
     
     var body: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 16) {
             // Rank and Badge
-            VStack(spacing: 6) {
+            VStack(spacing: 4) {
                 Text(rankBadge)
-                    .font(.system(size: 24))
+                    .font(.system(size: 20))
                 
                 Text("#\(rank)")
-                    .font(.custom("TTPhobosTrial-Bold", size: 14))
+                    .font(.custom("TTPhobosTrial-Bold", size: 12))
                     .foregroundColor(colorThemeManager.current.accent)
                     .multilineTextAlignment(.center)
             }
-            .frame(width: 50)
+            .frame(minWidth: 40)
             
             // Avatar
             Circle()
@@ -326,54 +326,54 @@ struct WarriorCard: View {
                 .overlay {
                     Image(systemName: "person.fill")
                         .foregroundColor(colorThemeManager.current.text.opacity(0.6))
-                        .font(.system(size: 18))
+                        .font(.system(size: 16))
                 }
-            .frame(width: 48, height: 48)
+            .frame(width: 42, height: 42)
             .shadow(color: colorThemeManager.current.accent.opacity(0.2), radius: 4, x: 0, y: 2)
             
-            // Warrior Info
-            VStack(alignment: .leading, spacing: 10) {
+            // Warrior Info - Flexible layout
+            VStack(alignment: .leading, spacing: 8) {
                 Text(warrior.handle)
-                    .font(.custom("TTPhobosTrial-Bold", size: 18))
+                    .font(.custom("TTPhobosTrial-Bold", size: 16))
                     .foregroundColor(colorThemeManager.current.text)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.7)
                 
-                // Stats in responsive grid
-                LazyVGrid(columns: [
-                    GridItem(.adaptive(minimum: 90), spacing: 12)
-                ], alignment: .leading, spacing: 10) {
+                // Flexible stats layout
+                HStack(spacing: 16) {
                     // Rating Stat
-                    HStack(spacing: 6) {
+                    HStack(spacing: 4) {
                         Image(systemName: "star.fill")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: 10, weight: .medium))
                             .foregroundColor(Color.ratingColor(for: warrior.rating))
                         
                         Text("\(warrior.rating)")
-                            .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                            .font(.custom("TTPhobosTrial-DemiBold", size: 13))
                             .foregroundColor(Color.ratingColor(for: warrior.rating))
                             .lineLimit(1)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .layoutPriority(1)
                     
                     // Problems Solved Stat
-                    HStack(spacing: 6) {
+                    HStack(spacing: 4) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: 10, weight: .medium))
                             .foregroundColor(.green)
                         
                         Text("\(warrior.problemsSolved)")
-                            .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                            .font(.custom("TTPhobosTrial-DemiBold", size: 13))
                             .foregroundColor(.green)
                             .lineLimit(1)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .layoutPriority(1)
+                    
+                    Spacer()
                 }
             }
             
             Spacer()
             
-            // Actions
+            // Actions - More compact
             Menu {
                 Button("View Profile", action: {
                     // TODO: Navigate to profile
@@ -384,17 +384,17 @@ struct WarriorCard: View {
                 })
             } label: {
                 Image(systemName: "ellipsis")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(colorThemeManager.current.text.opacity(0.6))
-                    .frame(width: 32, height: 32)
+                    .frame(width: 28, height: 28)
                     .background(
                         Circle()
                             .fill(colorThemeManager.current.text.opacity(0.1))
                     )
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(colorThemeManager.current.background.opacity(0.7))

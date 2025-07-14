@@ -207,11 +207,13 @@ struct DungeonAnalyticsCard: View {
                         WeaponMasteryChart()
                     case .verdicts:
                         BattleResultsChart()
+                            .padding(.bottom, 8) // Extra padding for Battle Results
                     case .difficulty:
                         ChallengeLevelChart()
                     }
                 }
-                .frame(height: 200)
+                .frame(minHeight: 180)
+                .padding(.bottom, 4)
             }
         }
         .padding(20)
@@ -238,15 +240,16 @@ struct SkillTreeChart: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             ForEach(Array(tagData.enumerated()), id: \.offset) { index, data in
                 HStack(spacing: 12) {
                     Text(getSkillIcon(for: data.0))
-                        .font(.system(size: 16))
+                        .font(.system(size: 18))
+                        .frame(width: 24)
                     
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(data.0.capitalized)
-                            .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                            .font(.custom("TTPhobosTrial-DemiBold", size: 15))
                             .foregroundColor(colorThemeManager.current.text)
                         
                         Text("\(data.1) victories")
@@ -274,13 +277,14 @@ struct SkillTreeChart: View {
                     .frame(width: 60, height: 8)
                     
                     Text("\(data.1)")
-                        .font(.custom("TTPhobosTrial-Bold", size: 12))
+                        .font(.custom("TTPhobosTrial-Bold", size: 14))
                         .foregroundColor(getSkillColor(for: index))
-                        .frame(width: 24, alignment: .trailing)
+                        .frame(minWidth: 24, alignment: .trailing)
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, 6)
             }
         }
+        .padding(.vertical, 8)
     }
     
     private func getSkillIcon(for tag: String) -> String {
@@ -315,15 +319,16 @@ struct WeaponMasteryChart: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             ForEach(Array(languageData.enumerated()), id: \.offset) { index, data in
                 HStack(spacing: 12) {
                     Text(getWeaponIcon(for: data.0))
-                        .font(.system(size: 16))
+                        .font(.system(size: 18))
+                        .frame(width: 24)
                     
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(data.0)
-                            .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                            .font(.custom("TTPhobosTrial-DemiBold", size: 15))
                             .foregroundColor(colorThemeManager.current.text)
                         
                         Text("\(data.1) battles")
@@ -334,22 +339,23 @@ struct WeaponMasteryChart: View {
                     Spacer()
                     
                     // Mastery level
-                    HStack(spacing: 2) {
+                    HStack(spacing: 3) {
                         ForEach(0..<5, id: \.self) { level in
                             Circle()
                                 .fill(level < getMasteryLevel(count: data.1) ? colorThemeManager.current.accent : colorThemeManager.current.text.opacity(0.2))
-                                .frame(width: 6, height: 6)
+                                .frame(width: 7, height: 7)
                         }
                     }
                     
                     Text("\(data.1)")
-                        .font(.custom("TTPhobosTrial-Bold", size: 12))
+                        .font(.custom("TTPhobosTrial-Bold", size: 14))
                         .foregroundColor(colorThemeManager.current.accent)
-                        .frame(width: 24, alignment: .trailing)
+                        .frame(minWidth: 24, alignment: .trailing)
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, 6)
             }
         }
+        .padding(.vertical, 8)
     }
     
     private func getWeaponIcon(for language: String) -> String {
@@ -388,15 +394,16 @@ struct BattleResultsChart: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             ForEach(Array(verdictData.prefix(5).enumerated()), id: \.offset) { index, data in
                 HStack(spacing: 12) {
                     Text(getBattleIcon(for: data.0))
-                        .font(.system(size: 16))
+                        .font(.system(size: 18))
+                        .frame(width: 24)
                     
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(getBattleResult(for: data.0))
-                            .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                            .font(.custom("TTPhobosTrial-DemiBold", size: 15))
                             .foregroundColor(colorThemeManager.current.text)
                         
                         Text("\(data.1) battles")
@@ -407,13 +414,19 @@ struct BattleResultsChart: View {
                     Spacer()
                     
                     Text("\(data.1)")
-                        .font(.custom("TTPhobosTrial-Bold", size: 12))
+                        .font(.custom("TTPhobosTrial-Bold", size: 14))
                         .foregroundColor(getBattleColor(for: data.0))
-                        .frame(width: 32, alignment: .trailing)
+                        .frame(minWidth: 32, alignment: .trailing)
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, 6)
+                .padding(.horizontal, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(colorThemeManager.current.background.opacity(0.3))
+                )
             }
         }
+        .padding(.vertical, 8)
     }
     
     private func getBattleIcon(for verdict: String) -> String {
@@ -463,15 +476,16 @@ struct ChallengeLevelChart: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             ForEach(Array(difficultyData.enumerated()), id: \.offset) { index, data in
                 HStack(spacing: 12) {
                     Text(getDifficultyIcon(for: data.0))
-                        .font(.system(size: 16))
+                        .font(.system(size: 18))
+                        .frame(width: 24)
                     
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(data.0)
-                            .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                            .font(.custom("TTPhobosTrial-DemiBold", size: 15))
                             .foregroundColor(colorThemeManager.current.text)
                         
                         Text("\(data.1) attempts")
@@ -482,13 +496,14 @@ struct ChallengeLevelChart: View {
                     Spacer()
                     
                     Text("\(data.1)")
-                        .font(.custom("TTPhobosTrial-Bold", size: 12))
+                        .font(.custom("TTPhobosTrial-Bold", size: 14))
                         .foregroundColor(getDifficultyColor(for: data.0))
-                        .frame(width: 24, alignment: .trailing)
+                        .frame(minWidth: 24, alignment: .trailing)
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, 6)
             }
         }
+        .padding(.vertical, 8)
     }
     
     private func getDifficultyRange(rating: Int) -> String {
