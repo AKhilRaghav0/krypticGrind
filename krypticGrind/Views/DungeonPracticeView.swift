@@ -10,6 +10,7 @@ import Charts
 
 struct DungeonPracticeView: View {
     @StateObject private var cfService = CFService.shared
+    @StateObject private var geminiService = GeminiService.shared
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var selectedQuest: QuestType = .tags
     
@@ -38,6 +39,67 @@ struct DungeonPracticeView: View {
         }
     }
     
+    // MARK: - Computed Properties for Live Data
+    private var dailySolvedCount: Int {
+        let today = Calendar.current.startOfDay(for: Date())
+        return cfService.recentSubmissions.filter { submission in
+            submission.isAccepted && 
+            Calendar.current.startOfDay(for: submission.submissionDate) == today
+        }.count
+    }
+    
+    private var weeklySolvedCount: Int {
+        let weekAgo = Calendar.current.date(byAdding: .weekOfYear, value: -1, to: Date()) ?? Date()
+        return cfService.recentSubmissions.filter { submission in
+            submission.isAccepted && submission.submissionDate >= weekAgo
+        }.count
+    }
+    
+    private var currentStreak: Int {
+        let submissions = cfService.recentSubmissions
+            .filter { $0.isAccepted }
+            .sorted { $0.submissionDate > $1.submissionDate }
+        
+        var streak = 0
+        var currentDate = Calendar.current.startOfDay(for: Date())
+        
+        for submission in submissions {
+            let submissionDate = Calendar.current.startOfDay(for: submission.submissionDate)
+            if submissionDate == currentDate {
+                streak += 1
+                currentDate = Calendar.current.date(byAdding: .day, value: -1, to: currentDate)!
+            } else if submissionDate < currentDate {
+                break
+            }
+        }
+        
+        return streak
+    }
+    
+    private var weakestTopics: [String] {
+        let acceptedSubmissions = cfService.recentSubmissions.filter { $0.isAccepted }
+        let allTags = acceptedSubmissions.flatMap { $0.problem.tags }
+        let tagCounts = Dictionary(grouping: allTags, by: { $0 }).mapValues { $0.count }
+        
+        let sortedTags = tagCounts.sorted { $0.value < $1.value }
+        return Array(sortedTags.prefix(3).map { $0.key })
+    }
+    
+    private var recentDifficultyRange: String {
+        let recentSubmissions = cfService.recentSubmissions
+            .filter { $0.isAccepted }
+            .prefix(20)
+        
+        let ratings = recentSubmissions.compactMap { $0.problem.rating }
+        
+        if ratings.isEmpty { return "No rated problems" }
+        
+        let minRating = ratings.min() ?? 0
+        let maxRating = ratings.max() ?? 0
+        
+        return "\(minRating) - \(maxRating)"
+    }
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -54,15 +116,24 @@ struct DungeonPracticeView: View {
                     .padding(.horizontal, 20)
                 
                 // Current Objectives
-                CurrentObjectivesCard()
+                CurrentObjectivesCard(
+                    dailySolved: dailySolvedCount,
+                    weeklySolved: weeklySolvedCount,
+                    currentStreak: currentStreak
+                )
                     .padding(.horizontal, 20)
                 
                 // Skill Progression
-                SkillProgressionCard()
+                SkillProgressionCard(
+                    weakestTopics: weakestTopics,
+                    difficultyRange: recentDifficultyRange,
+                    cfService: cfService,
+                    geminiService: geminiService
+                )
                     .padding(.horizontal, 20)
                 
                 // Combat History
-                CombatHistoryCard()
+                CombatHistoryCard(cfService: cfService)
                     .padding(.horizontal, 20)
                 
                 Spacer().frame(height: 100)
@@ -72,6 +143,39 @@ struct DungeonPracticeView: View {
         .task {
             if let handle = UserDefaults.standard.savedHandle {
                 await cfService.fetchUserSubmissions(handle: handle, count: 200)
+                
+                // Also fetch user info if not available
+                if cfService.currentUser == nil {
+                    await cfService.fetchUserInfo(handle: handle)
+                }
+                
+                // Generate AI suggestions based on user data
+                if !cfService.recentSubmissions.isEmpty {
+                    let acceptedSubmissions = cfService.recentSubmissions.filter { $0.isAccepted }
+                    let totalSubmissions = cfService.recentSubmissions.count
+                    let acceptanceRate = totalSubmissions > 0 ? Double(acceptedSubmissions.count) / Double(totalSubmissions) * 100 : 0
+                    let mostUsedLanguage = Dictionary(grouping: cfService.recentSubmissions, by: { $0.programmingLanguage })
+                        .max(by: { $0.value.count < $1.value.count })?.key ?? "Unknown"
+                    let topTopics = Array(Dictionary(grouping: acceptedSubmissions) { $0.problem.tags.first ?? "unknown" }
+                        .sorted { $0.value.count > $1.value.count }
+                        .prefix(3)
+                        .map { $0.key })
+                    
+                    await geminiService.generateSuggestions(
+                        userStats: UserStats(
+                            totalSubmissions: totalSubmissions,
+                            acceptedSubmissions: acceptedSubmissions.count,
+                            acceptanceRate: acceptanceRate,
+                            mostUsedLanguage: mostUsedLanguage,
+                            currentStreak: currentStreak,
+                            weeklySubmissions: weeklySolvedCount,
+                            topTopics: topTopics,
+                            recentPerformance: "Recent performance analysis"
+                        ),
+                        submissions: cfService.recentSubmissions,
+                        user: cfService.currentUser
+                    )
+                }
             }
         }
     }
@@ -678,6 +782,9 @@ struct DungeonStatCard: View {
 
 // MARK: - Placeholder Cards (will be implemented based on existing logic)
 struct CurrentObjectivesCard: View {
+    let dailySolved: Int
+    let weeklySolved: Int
+    let currentStreak: Int
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
@@ -688,6 +795,22 @@ struct CurrentObjectivesCard: View {
                     .foregroundColor(colorThemeManager.current.text)
                 
                 Spacer()
+                
+                if currentStreak > 0 {
+                    HStack(spacing: 4) {
+                        Text("🔥")
+                            .font(.system(size: 14))
+                        Text("\(currentStreak)")
+                            .font(.custom("TTPhobosTrial-Bold", size: 14))
+                            .foregroundColor(colorThemeManager.current.accent)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(colorThemeManager.current.accent.opacity(0.1))
+                    )
+                }
             }
             
             VStack(spacing: 12) {
@@ -695,14 +818,27 @@ struct CurrentObjectivesCard: View {
                     icon: "🎯",
                     title: "Daily Quest",
                     description: "Solve 3 problems today",
-                    progress: 0.67
+                    progress: min(Double(dailySolved) / 3.0, 1.0),
+                    currentCount: dailySolved,
+                    targetCount: 3
                 )
                 
                 ObjectiveRow(
                     icon: "⚡",
                     title: "Weekly Challenge",
-                    description: "Master a new algorithm",
-                    progress: 0.3
+                    description: "Solve 15 problems this week",
+                    progress: min(Double(weeklySolved) / 15.0, 1.0),
+                    currentCount: weeklySolved,
+                    targetCount: 15
+                )
+                
+                ObjectiveRow(
+                    icon: "🔥",
+                    title: "Maintain Streak",
+                    description: "Keep solving daily",
+                    progress: currentStreak > 0 ? 1.0 : 0.0,
+                    currentCount: currentStreak,
+                    targetCount: nil
                 )
             }
         }
@@ -720,6 +856,8 @@ struct ObjectiveRow: View {
     let title: String
     let description: String
     let progress: Double
+    let currentCount: Int
+    let targetCount: Int?
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
@@ -728,9 +866,23 @@ struct ObjectiveRow: View {
                 .font(.system(size: 16))
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.custom("TTPhobosTrial-DemiBold", size: 14))
-                    .foregroundColor(colorThemeManager.current.text)
+                HStack {
+                    Text(title)
+                        .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                        .foregroundColor(colorThemeManager.current.text)
+                    
+                    Spacer()
+                    
+                    if let target = targetCount {
+                        Text("\(currentCount)/\(target)")
+                            .font(.custom("TTPhobosTrial-Bold", size: 12))
+                            .foregroundColor(colorThemeManager.current.accent)
+                    } else {
+                        Text("\(currentCount) days")
+                            .font(.custom("TTPhobosTrial-Bold", size: 12))
+                            .foregroundColor(colorThemeManager.current.accent)
+                    }
+                }
                 
                 Text(description)
                     .font(.custom("TTPhobosTrial-Regular", size: 12))
@@ -752,30 +904,150 @@ struct ObjectiveRow: View {
 }
 
 struct SkillProgressionCard: View {
+    let weakestTopics: [String]
+    let difficultyRange: String
+    let cfService: CFService
+    let geminiService: GeminiService
     @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @State private var aiSuggestion: String = ""
+    @State private var isLoadingSuggestion = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("🌟 Skill Progression")
-                .font(.custom("TTPhobosTrial-Bold", size: 18))
-                .foregroundColor(colorThemeManager.current.text)
+            HStack {
+                Text("🌟 Skill Progression")
+                    .font(.custom("TTPhobosTrial-Bold", size: 18))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                Spacer()
+                
+                Button(action: loadAISuggestion) {
+                    HStack(spacing: 4) {
+                        if isLoadingSuggestion {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                                .tint(colorThemeManager.current.accent)
+                        } else {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 12, weight: .bold))
+                        }
+                        Text("AI Insight")
+                            .font(.custom("TTPhobosTrial-DemiBold", size: 12))
+                    }
+                    .foregroundColor(colorThemeManager.current.accent)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(colorThemeManager.current.accent.opacity(0.1))
+                    )
+                }
+                .disabled(isLoadingSuggestion)
+            }
             
-            Text("Track your mastery across different skill trees")
-                .font(.custom("TTPhobosTrial-Regular", size: 14))
-                .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+            VStack(alignment: .leading, spacing: 12) {
+                // Weakness Analysis
+                if !weakestTopics.isEmpty {
+                    SkillMetric(
+                        icon: "🎯",
+                        title: "Focus Areas",
+                        value: weakestTopics.joined(separator: ", "),
+                        description: "Topics to improve"
+                    )
+                }
+                
+                // Difficulty Range
+                SkillMetric(
+                    icon: "📊",
+                    title: "Recent Range",
+                    value: difficultyRange,
+                    description: "Problem difficulty spread"
+                )
+                
+                // Total Solved
+                let totalSolved = cfService.recentSubmissions.filter { $0.isAccepted }.count
+                SkillMetric(
+                    icon: "✅",
+                    title: "Total Solved",
+                    value: "\(totalSolved)",
+                    description: "Accepted submissions"
+                )
+                
+                // AI Suggestion
+                if !aiSuggestion.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("🤖")
+                                .font(.system(size: 14))
+                            Text("AI Recommendation")
+                                .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                                .foregroundColor(colorThemeManager.current.text)
+                        }
+                        
+                        Text(aiSuggestion)
+                            .font(.custom("TTPhobosTrial-Regular", size: 13))
+                            .foregroundColor(colorThemeManager.current.text.opacity(0.8))
+                            .lineLimit(4)
+                            .multilineTextAlignment(.leading)
+                    }
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorThemeManager.current.accent.opacity(0.05))
+                            .stroke(colorThemeManager.current.accent.opacity(0.2), lineWidth: 1)
+                    )
+                }
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(colorThemeManager.current.tabBar.opacity(0.9))
                 .shadow(color: colorThemeManager.current.accent.opacity(0.08), radius: 8, y: 2)
         )
+        .onAppear {
+            if aiSuggestion.isEmpty {
+                loadAISuggestion()
+            }
+        }
+    }
+    
+    private func loadAISuggestion() {
+        guard !isLoadingSuggestion else { return }
+        
+        isLoadingSuggestion = true
+        
+        Task {
+            do {
+                // Create a summary of recent submissions for Gemini
+                let recentAccepted = cfService.recentSubmissions.filter { $0.isAccepted }.prefix(20)
+                let problemsSummary = recentAccepted.map { submission in
+                    "Problem: \(submission.problem.name), Rating: \(submission.problem.rating ?? 0), Tags: \(submission.problem.tags.joined(separator: ", "))"
+                }.joined(separator: "\n")
+                
+                let suggestion = try await geminiService.getPersonalizedPracticeSuggestionAsync(problemsSummary: problemsSummary)
+                
+                await MainActor.run {
+                    self.aiSuggestion = suggestion
+                    self.isLoadingSuggestion = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.aiSuggestion = "Focus on your weak areas: \(weakestTopics.joined(separator: ", ")). Practice problems in the \(difficultyRange) rating range."
+                    self.isLoadingSuggestion = false
+                }
+            }
+        }
     }
 }
 
 struct CombatHistoryCard: View {
+    let cfService: CFService
     @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var recentBattles: [CFSubmission] {
+        cfService.recentSubmissions.prefix(5).map { $0 }
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -793,9 +1065,17 @@ struct CombatHistoryCard: View {
                 }
             }
             
-            Text("Your latest battles and conquests")
-                .font(.custom("TTPhobosTrial-Regular", size: 14))
-                .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+            if recentBattles.isEmpty {
+                Text("No recent battles found. Start your coding journey!")
+                    .font(.custom("TTPhobosTrial-Regular", size: 14))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(recentBattles, id: \.id) { submission in
+                        BattleHistoryRow(submission: submission)
+                    }
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
@@ -804,6 +1084,107 @@ struct CombatHistoryCard: View {
                 .fill(colorThemeManager.current.tabBar.opacity(0.9))
                 .shadow(color: colorThemeManager.current.accent.opacity(0.08), radius: 8, y: 2)
         )
+    }
+}
+
+struct SkillMetric: View {
+    let icon: String
+    let title: String
+    let value: String
+    let description: String
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(icon)
+                .font(.system(size: 16))
+            
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text(title)
+                        .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                        .foregroundColor(colorThemeManager.current.text)
+                    
+                    Spacer()
+                    
+                    Text(value)
+                        .font(.custom("TTPhobosTrial-Bold", size: 13))
+                        .foregroundColor(colorThemeManager.current.accent)
+                        .lineLimit(1)
+                }
+                
+                Text(description)
+                    .font(.custom("TTPhobosTrial-Regular", size: 12))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+            }
+        }
+    }
+}
+
+struct BattleHistoryRow: View {
+    let submission: CFSubmission
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Status icon
+            Text(submission.isAccepted ? "✅" : "❌")
+                .font(.system(size: 14))
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(submission.problem.name)
+                    .font(.custom("TTPhobosTrial-DemiBold", size: 13))
+                    .foregroundColor(colorThemeManager.current.text)
+                    .lineLimit(1)
+                
+                HStack(spacing: 8) {
+                    if let rating = submission.problem.rating {
+                        Text("⭐ \(rating)")
+                            .font(.custom("TTPhobosTrial-Regular", size: 11))
+                            .foregroundColor(colorThemeManager.current.accent)
+                    }
+                    
+                    Text(timeAgoString(from: submission.submissionDate))
+                        .font(.custom("TTPhobosTrial-Regular", size: 11))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                }
+            }
+            
+            Spacer()
+            
+            // Verdict
+            Text(submission.verdict ?? "Unknown")
+                .font(.custom("TTPhobosTrial-Bold", size: 10))
+                .foregroundColor(submission.isAccepted ? .green : .red)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill((submission.isAccepted ? Color.green : Color.red).opacity(0.1))
+                )
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(colorThemeManager.current.background.opacity(0.3))
+        )
+    }
+    
+    private func timeAgoString(from date: Date) -> String {
+        let now = Date()
+        let timeInterval = now.timeIntervalSince(date)
+        
+        if timeInterval < 3600 { // Less than 1 hour
+            let minutes = Int(timeInterval / 60)
+            return "\(minutes)m ago"
+        } else if timeInterval < 86400 { // Less than 1 day
+            let hours = Int(timeInterval / 3600)
+            return "\(hours)h ago"
+        } else {
+            let days = Int(timeInterval / 86400)
+            return "\(days)d ago"
+        }
     }
 }
 

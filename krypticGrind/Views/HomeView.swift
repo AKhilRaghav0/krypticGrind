@@ -1037,17 +1037,33 @@ struct AISuggestionsCard: View {
                 }
             }
         }
+        .onChange(of: cfService.recentSubmissions) { _, _ in
+            // Refresh suggestions when new submission data is available
+            Task {
+                await generateSuggestions()
+            }
+        }
     }
     
     private func generateSuggestions() async {
+        let acceptedSubmissions = cfService.recentSubmissions.filter { $0.isAccepted }
+        let totalSubmissions = cfService.recentSubmissions.count
+        let acceptanceRate = totalSubmissions > 0 ? Double(acceptedSubmissions.count) / Double(totalSubmissions) * 100 : 0
+        let mostUsedLanguage = Dictionary(grouping: cfService.recentSubmissions, by: { $0.programmingLanguage })
+            .max(by: { $0.value.count < $1.value.count })?.key ?? "Unknown"
+        let topTopics = Array(Dictionary(grouping: acceptedSubmissions) { $0.problem.tags.first ?? "unknown" }
+            .sorted { $0.value.count > $1.value.count }
+            .prefix(3)
+            .map { $0.key })
+        
         let userStats = UserStats(
-            totalSubmissions: cfService.recentSubmissions.count,
-            acceptedSubmissions: cfService.recentSubmissions.filter { $0.isAccepted }.count,
-            acceptanceRate: cfService.recentSubmissions.isEmpty ? 0 : Double(cfService.recentSubmissions.filter { $0.isAccepted }.count) / Double(cfService.recentSubmissions.count) * 100,
-            mostUsedLanguage: cfService.recentSubmissions.first?.programmingLanguage ?? "Unknown",
+            totalSubmissions: totalSubmissions,
+            acceptedSubmissions: acceptedSubmissions.count,
+            acceptanceRate: acceptanceRate,
+            mostUsedLanguage: mostUsedLanguage,
             currentStreak: calculateCurrentStreak(),
             weeklySubmissions: cfService.recentSubmissions.filter { $0.submissionDate > Date().addingTimeInterval(-7*24*60*60) }.count,
-            topTopics: Array(Dictionary(grouping: cfService.recentSubmissions.filter { $0.isAccepted }) { $0.problem.tags.first ?? "unknown" }.sorted { $0.value.count > $1.value.count }.prefix(3).map { $0.key }),
+            topTopics: topTopics,
             recentPerformance: "Recent performance analysis"
         )
         
