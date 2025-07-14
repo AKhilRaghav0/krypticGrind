@@ -1,0 +1,4 @@
+Target dependency graph (2 targets)
+Target 'krypticGrind' in project 'krypticGrind'
+➜ Explicit dependency on target 'ContestLiveActivityWidgetExtension' in project 'krypticGrind'
+Target 'ContestLiveActivityWidgetExtension' in project 'krypticGrind' (no dependencies)

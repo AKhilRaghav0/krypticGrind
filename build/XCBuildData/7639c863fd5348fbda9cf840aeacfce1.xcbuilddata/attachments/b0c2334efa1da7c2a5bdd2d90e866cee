@@ -1,0 +1,58 @@
+{
+  "" : {
+    "diagnostics" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetExtension-master.dia",
+    "emit-module-dependencies" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetExtension-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetExtension-master-emit-module.dia",
+    "swift-dependencies" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetExtension-master.swiftdeps"
+  },
+  "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  },
+  "/Users/akhil/Documents/krypticGrind/ContestLiveActivityWidget/AppIntent.swift" : {
+    "const-values" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/AppIntent.swiftconstvalues",
+    "dependencies" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/AppIntent.d",
+    "diagnostics" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/AppIntent.dia",
+    "index-unit-output-path" : "/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/AppIntent.o",
+    "llvm-bc" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/AppIntent.bc",
+    "object" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/AppIntent.o",
+    "swift-dependencies" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/AppIntent.swiftdeps",
+    "swiftmodule" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/AppIntent~partial.swiftmodule"
+  },
+  "/Users/akhil/Documents/krypticGrind/ContestLiveActivityWidget/ContestLiveActivityWidgetBundle.swift" : {
+    "const-values" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetBundle.swiftconstvalues",
+    "dependencies" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetBundle.d",
+    "diagnostics" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetBundle.dia",
+    "index-unit-output-path" : "/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetBundle.o",
+    "llvm-bc" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetBundle.bc",
+    "object" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetBundle.o",
+    "swift-dependencies" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetBundle.swiftdeps",
+    "swiftmodule" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetBundle~partial.swiftmodule"
+  },
+  "/Users/akhil/Documents/krypticGrind/ContestLiveActivityWidget/ContestLiveActivityWidgetLiveActivity.swift" : {
+    "const-values" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetLiveActivity.swiftconstvalues",
+    "dependencies" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetLiveActivity.d",
+    "diagnostics" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetLiveActivity.dia",
+    "index-unit-output-path" : "/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetLiveActivity.o",
+    "llvm-bc" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetLiveActivity.bc",
+    "object" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetLiveActivity.o",
+    "swift-dependencies" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetLiveActivity.swiftdeps",
+    "swiftmodule" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/ContestLiveActivityWidgetLiveActivity~partial.swiftmodule"
+  },
+  "/Users/akhil/Documents/krypticGrind/krypticGrind/Models/LiveActivityAttributes.swift" : {
+    "const-values" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/LiveActivityAttributes.swiftconstvalues",
+    "dependencies" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/LiveActivityAttributes.d",
+    "diagnostics" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/LiveActivityAttributes.dia",
+    "index-unit-output-path" : "/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/LiveActivityAttributes.o",
+    "llvm-bc" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/LiveActivityAttributes.bc",
+    "object" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/LiveActivityAttributes.o",
+    "swift-dependencies" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/LiveActivityAttributes.swiftdeps",
+    "swiftmodule" : "/Users/akhil/Documents/krypticGrind/build/krypticGrind.build/Debug-iphoneos/ContestLiveActivityWidgetExtension.build/Objects-normal/arm64/LiveActivityAttributes~partial.swiftmodule"
+  }
+}

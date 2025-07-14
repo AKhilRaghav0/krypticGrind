@@ -350,21 +350,21 @@ struct ProblemDetailSheet: View {
                                 .foregroundStyle(colorThemeManager.current.text)
                             
                             VStack(spacing: 12) {
-                                DetailRow(
+                                ReviewDetailRow(
                                     icon: "checkmark.circle",
                                     title: "Verdict",
                                     value: submission.verdictDisplayText,
                                     color: Color.verdictColor(for: submission.verdict ?? "")
                                 )
                                 
-                                DetailRow(
+                                ReviewDetailRow(
                                     icon: "chevron.left.forwardslash.chevron.right",
                                     title: "Language",
                                     value: submission.programmingLanguage,
                                     color: colorThemeManager.current.accent
                                 )
                                 
-                                DetailRow(
+                                ReviewDetailRow(
                                     icon: "clock",
                                     title: "Submission Time",
                                     value: submission.submissionDate.formatted(),
@@ -372,7 +372,7 @@ struct ProblemDetailSheet: View {
                                 )
                                 
                                 if submission.memoryConsumedBytes > 0 {
-                                    DetailRow(
+                                    ReviewDetailRow(
                                         icon: "memorychip",
                                         title: "Memory Used",
                                         value: "\(submission.memoryConsumedBytes / 1024) KB",
@@ -381,7 +381,7 @@ struct ProblemDetailSheet: View {
                                 }
                                 
                                 if submission.timeConsumedMillis > 0 {
-                                    DetailRow(
+                                    ReviewDetailRow(
                                         icon: "timer",
                                         title: "Time Used",
                                         value: "\(submission.timeConsumedMillis) ms",
@@ -431,7 +431,7 @@ struct ProblemDetailSheet: View {
     }
 }
 
-struct DetailRow: View {
+struct ReviewDetailRow: View {
     let icon: String
     let title: String
     let value: String
