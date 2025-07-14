@@ -83,21 +83,114 @@ struct ContentView: View {
 
 // Merged Practice/Leaderboard tab
 struct PracticeAndLeaderboardView: View {
-    @State private var selected: Int = 0
+    @State private var selectedTab: DungeonTab = .practice
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    enum DungeonTab: String, CaseIterable {
+        case practice = "Training Grounds"
+        case leaderboard = "Hall of Fame"
+        
+        var icon: String {
+            switch self {
+            case .practice: return "⚔️"
+            case .leaderboard: return "👑"
+            }
+        }
+        
+        var dungeonTitle: String {
+            switch self {
+            case .practice: return "Training Grounds"
+            case .leaderboard: return "Hall of Fame"
+            }
+        }
+    }
+    
     var body: some View {
-        VStack {
-            Picker("Mode", selection: $selected) {
-                Text("Practice").tag(0)
-                Text("Leaderboard").tag(1)
+        NavigationStack {
+            ZStack {
+                colorThemeManager.current.background
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Dungeon Header
+                    DungeonHeader(selectedTab: $selectedTab)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                    
+                    // Content
+                    TabView(selection: $selectedTab) {
+                        DungeonPracticeView()
+                            .tag(DungeonTab.practice)
+                        
+                        DungeonLeaderboardView()
+                            .tag(DungeonTab.leaderboard)
+                    }
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                }
             }
-            .pickerStyle(.segmented)
-            .padding()
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .tint(colorThemeManager.current.accent)
+    }
+}
 
-            if selected == 0 {
-                PracticeTrackerView()
-            } else {
-                LeaderboardView()
+// MARK: - Dungeon Header
+struct DungeonHeader: View {
+    @Binding var selectedTab: PracticeAndLeaderboardView.DungeonTab
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            // Main Title
+            Text("The Dungeon")
+                .font(.custom("TTPhobosTrial-Bold", size: 28))
+                .foregroundColor(colorThemeManager.current.text)
+            
+            // Tab Selector
+            HStack(spacing: 0) {
+                ForEach(PracticeAndLeaderboardView.DungeonTab.allCases, id: \.self) { tab in
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            selectedTab = tab
+                        }
+                    }) {
+                        VStack(spacing: 8) {
+                            Text(tab.icon)
+                                .font(.system(size: 24))
+                            
+                            Text(tab.dungeonTitle)
+                                .font(.custom("TTPhobosTrial-DemiBold", size: 16))
+                                .foregroundColor(
+                                    selectedTab == tab ? 
+                                    colorThemeManager.current.text : 
+                                    colorThemeManager.current.text.opacity(0.6)
+                                )
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(
+                                    selectedTab == tab ? 
+                                    colorThemeManager.current.tabBar : 
+                                    Color.clear
+                                )
+                                .shadow(
+                                    color: selectedTab == tab ? colorThemeManager.current.accent.opacity(0.1) : Color.clear,
+                                    radius: selectedTab == tab ? 8 : 0,
+                                    y: selectedTab == tab ? 2 : 0
+                                )
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
             }
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(colorThemeManager.current.tabBar.opacity(0.3))
+                    .stroke(colorThemeManager.current.accent.opacity(0.2), lineWidth: 1)
+            )
         }
     }
 }

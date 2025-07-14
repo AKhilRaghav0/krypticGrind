@@ -16,7 +16,7 @@ struct CustomTabBar: View {
         (.submissions, "doc.text"),
         (.home, "house"),
         (.contests, "trophy"),
-        (.practice, "target")
+        (.practice, "shield")
     ]
 
     var body: some View {

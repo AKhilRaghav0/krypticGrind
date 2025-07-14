@@ -49,6 +49,8 @@
 		E9BE03BA2E13BCDF00FF868F /* ReviewLaterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9BE03B92E13BCDF00FF868F /* ReviewLaterView.swift */; };
 		E9CEE8442E24833A0071DD9F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CEE8422E2483390071DD9F /* OnboardingView.swift */; };
 		E9CEE8452E24833A0071DD9F /* ThemePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CEE8432E2483390071DD9F /* ThemePreviewView.swift */; };
+		E9F13FCB2E24B165004BB937 /* DungeonPracticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9F13FC92E24B165004BB937 /* DungeonPracticeView.swift */; };
+		E9F13FCC2E24B165004BB937 /* DungeonLeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9F13FCA2E24B165004BB937 /* DungeonLeaderboardView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -121,6 +123,8 @@
 		E9BE03B92E13BCDF00FF868F /* ReviewLaterView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReviewLaterView.swift; sourceTree = "<group>"; };
 		E9CEE8422E2483390071DD9F /* OnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		E9CEE8432E2483390071DD9F /* ThemePreviewView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThemePreviewView.swift; sourceTree = "<group>"; };
+		E9F13FC92E24B165004BB937 /* DungeonPracticeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DungeonPracticeView.swift; sourceTree = "<group>"; };
+		E9F13FCA2E24B165004BB937 /* DungeonLeaderboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DungeonLeaderboardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -204,6 +208,8 @@
 		E953DE5C2E1160AD00CA247C /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				E9F13FCA2E24B165004BB937 /* DungeonLeaderboardView.swift */,
+				E9F13FC92E24B165004BB937 /* DungeonPracticeView.swift */,
 				E9CEE8422E2483390071DD9F /* OnboardingView.swift */,
 				E9CEE8432E2483390071DD9F /* ThemePreviewView.swift */,
 				E985EAEC2E231F5800C54711 /* CustomTabBar.swift */,
@@ -383,7 +389,9 @@
 				E985BEFE2E23B44A00E4C261 /* UberTheme.swift in Sources */,
 				E93A8F5F2E1352DB00873483 /* AISuggestionsView.swift in Sources */,
 				E937A1322E1203EF00E3FCB5 /* ThemeSelectorSheet.swift in Sources */,
+				E9F13FCB2E24B165004BB937 /* DungeonPracticeView.swift in Sources */,
 				E9B5AE162E22581800D264FA /* FontTestView.swift in Sources */,
+				E9F13FCC2E24B165004BB937 /* DungeonLeaderboardView.swift in Sources */,
 				E953DE6E2E1160AD00CA247C /* SubmissionsView.swift in Sources */,
 				E953DE4E2E115DA400CA247C /* ContentView.swift in Sources */,
 				E953DE702E1160AD00CA247C /* CFService.swift in Sources */,
