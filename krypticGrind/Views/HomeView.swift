@@ -165,6 +165,15 @@ struct HomeView: View {
             }
         }
         .tint(colorThemeManager.current.accent)
+        .onAppear {
+            // Load saved handle if available
+            if let savedHandle = UserDefaults.standard.savedHandle,
+               cfService.currentUser == nil {
+                Task {
+                    await cfService.fetchAllUserData(handle: savedHandle)
+                }
+            }
+        }
     }
 }
 
@@ -821,7 +830,6 @@ struct StreakCard: View {
             return Color.gold
         }
     }
-    }
     
     private func calculateCurrentStreak() -> Int {
         let calendar = Calendar.current
@@ -860,7 +868,6 @@ struct StreakCard: View {
         }
         
         return streak
-    }
     }
 }
 

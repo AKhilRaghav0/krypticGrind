@@ -47,6 +47,8 @@
 		E9BE03B62E13BADF00FF868F /* ProblemNote.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9BE03B42E13BADF00FF868F /* ProblemNote.swift */; };
 		E9BE03B82E13BC1900FF868F /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9BE03B72E13BC1900FF868F /* LeaderboardView.swift */; };
 		E9BE03BA2E13BCDF00FF868F /* ReviewLaterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9BE03B92E13BCDF00FF868F /* ReviewLaterView.swift */; };
+		E9CEE8442E24833A0071DD9F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CEE8422E2483390071DD9F /* OnboardingView.swift */; };
+		E9CEE8452E24833A0071DD9F /* ThemePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CEE8432E2483390071DD9F /* ThemePreviewView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -117,6 +119,8 @@
 		E9BE03B42E13BADF00FF868F /* ProblemNote.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProblemNote.swift; sourceTree = "<group>"; };
 		E9BE03B72E13BC1900FF868F /* LeaderboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
 		E9BE03B92E13BCDF00FF868F /* ReviewLaterView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReviewLaterView.swift; sourceTree = "<group>"; };
+		E9CEE8422E2483390071DD9F /* OnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		E9CEE8432E2483390071DD9F /* ThemePreviewView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThemePreviewView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -200,6 +204,8 @@
 		E953DE5C2E1160AD00CA247C /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				E9CEE8422E2483390071DD9F /* OnboardingView.swift */,
+				E9CEE8432E2483390071DD9F /* ThemePreviewView.swift */,
 				E985EAEC2E231F5800C54711 /* CustomTabBar.swift */,
 				E9B5AE152E22581800D264FA /* FontTestView.swift */,
 				E9BE03B92E13BCDF00FF868F /* ReviewLaterView.swift */,
@@ -367,9 +373,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E9CEE8452E24833A0071DD9F /* ThemePreviewView.swift in Sources */,
 				E9B5AE142E2257CF00D264FA /* FontExtension.swift in Sources */,
 				E953DE6C2E1160AD00CA247C /* PracticeTrackerView.swift in Sources */,
 				E9BE03B12E13905B00FF868F /* LiveActivityAttributes.swift in Sources */,
+				E9CEE8442E24833A0071DD9F /* OnboardingView.swift in Sources */,
 				E9BE03B62E13BADF00FF868F /* ProblemNote.swift in Sources */,
 				E953DE6D2E1160AD00CA247C /* HomeView.swift in Sources */,
 				E985BEFE2E23B44A00E4C261 /* UberTheme.swift in Sources */,
