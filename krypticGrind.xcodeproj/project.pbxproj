@@ -41,6 +41,7 @@
 		E9B5AE142E2257CF00D264FA /* FontExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B5AE122E2257CF00D264FA /* FontExtension.swift */; };
 		E9B5AE162E22581800D264FA /* FontTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B5AE152E22581800D264FA /* FontTestView.swift */; };
 		E9B5AE182E22582A00D264FA /* Fonts in Resources */ = {isa = PBXBuildFile; fileRef = E9B5AE172E22582A00D264FA /* Fonts */; };
+		E9BCD8682E24F3E5006E5419 /* ContestAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9BCD8672E24F3E5006E5419 /* ContestAnalytics.swift */; };
 		E9BE03B12E13905B00FF868F /* LiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97245D02E1373E000AE9379 /* LiveActivityAttributes.swift */; };
 		E9BE03B22E13905C00FF868F /* LiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97245D02E1373E000AE9379 /* LiveActivityAttributes.swift */; };
 		E9BE03B52E13BADF00FF868F /* LeaderboardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9BE03B32E13BADF00FF868F /* LeaderboardManager.swift */; };
@@ -117,6 +118,7 @@
 		E9B5AE122E2257CF00D264FA /* FontExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FontExtension.swift; sourceTree = "<group>"; };
 		E9B5AE152E22581800D264FA /* FontTestView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FontTestView.swift; sourceTree = "<group>"; };
 		E9B5AE172E22582A00D264FA /* Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Fonts; sourceTree = "<group>"; };
+		E9BCD8672E24F3E5006E5419 /* ContestAnalytics.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContestAnalytics.swift; sourceTree = "<group>"; };
 		E9BE03B32E13BADF00FF868F /* LeaderboardManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LeaderboardManager.swift; sourceTree = "<group>"; };
 		E9BE03B42E13BADF00FF868F /* ProblemNote.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProblemNote.swift; sourceTree = "<group>"; };
 		E9BE03B72E13BC1900FF868F /* LeaderboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
@@ -241,6 +243,7 @@
 		E953DE652E1160AD00CA247C /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				E9BCD8672E24F3E5006E5419 /* ContestAnalytics.swift */,
 				E9BE03B32E13BADF00FF868F /* LeaderboardManager.swift */,
 				E9BE03B42E13BADF00FF868F /* ProblemNote.swift */,
 				E953DE662E1160AD00CA247C /* Submission.swift */,
@@ -394,6 +397,7 @@
 				E9F13FCC2E24B165004BB937 /* DungeonLeaderboardView.swift in Sources */,
 				E953DE6E2E1160AD00CA247C /* SubmissionsView.swift in Sources */,
 				E953DE4E2E115DA400CA247C /* ContentView.swift in Sources */,
+				E9BCD8682E24F3E5006E5419 /* ContestAnalytics.swift in Sources */,
 				E953DE702E1160AD00CA247C /* CFService.swift in Sources */,
 				E9B5AE132E2257CF00D264FA /* IconSystem.swift in Sources */,
 				E953DE732E1160AD00CA247C /* CFUser.swift in Sources */,

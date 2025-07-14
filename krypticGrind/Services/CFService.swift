@@ -348,6 +348,57 @@ class CFService: ObservableObject {
         }
     }
     
+    // MARK: - Contest Problems
+    func fetchContestProblems(contestId: Int) async -> [CFProblem] {
+        do {
+            // First try to get problems from contest standings
+            let url = URL(string: "\(baseURL)/contest.standings?contestId=\(contestId)&from=1&count=1&showUnofficial=false")!
+            
+            let (data, _) = try await session.data(from: url)
+            let response = try JSONDecoder().decode(CFContestStandingsResponse.self, from: data)
+            
+            if response.status == "OK" {
+                logger.info("✅ Successfully fetched \(response.result.problems.count) problems for contest \(contestId)")
+                return response.result.problems
+            } else {
+                logger.warning("⚠️ Contest standings API returned status \(response.status), trying fallback method")
+                return await fetchProblemsFromProblemset(contestId: contestId)
+            }
+        } catch {
+            logger.error("❌ Failed to fetch contest problems from standings: \(error.localizedDescription)")
+            
+            // Fallback: try to get problems from general problemset by filtering
+            return await fetchProblemsFromProblemset(contestId: contestId)
+        }
+    }
+    
+    // Fallback method to fetch problems from problemset API
+    private func fetchProblemsFromProblemset(contestId: Int) async -> [CFProblem] {
+        do {
+            let url = URL(string: "\(baseURL)/problemset.problems")!
+            let (data, _) = try await session.data(from: url)
+            let response = try JSONDecoder().decode(CFProblemsetResponse.self, from: data)
+            
+            if response.status == "OK" {
+                let contestProblems = response.result.problems.filter { $0.contestId == contestId }
+                logger.info("✅ Fallback method found \(contestProblems.count) problems for contest \(contestId)")
+                return contestProblems
+            } else {
+                logger.error("❌ Fallback problemset API also failed with status \(response.status)")
+                await MainActor.run {
+                    self.error = "Failed to fetch contest problems: API unavailable"
+                }
+                return []
+            }
+        } catch {
+            logger.error("❌ Fallback problemset fetch also failed: \(error.localizedDescription)")
+            await MainActor.run {
+                self.error = "Failed to fetch contest problems: \(error.localizedDescription)"
+            }
+            return []
+        }
+    }
+    
     // MARK: - Fetch All User Data (optimized with concurrent operations)
     func fetchAllUserData(handle: String) async {
         // Update loading state on main thread

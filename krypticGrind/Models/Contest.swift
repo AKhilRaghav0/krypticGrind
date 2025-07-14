@@ -86,6 +86,22 @@ struct CFContest: Codable, Identifiable {
         "https://codeforces.com/contest/\(id)"
     }
     
+    var registrationUrl: String {
+        "https://codeforces.com/contest/\(id)/register"
+    }
+    
+    var standingsUrl: String {
+        "https://codeforces.com/contest/\(id)/standings"
+    }
+    
+    var problemsUrl: String {
+        "https://codeforces.com/contest/\(id)"
+    }
+    
+    var announcementsUrl: String {
+        "https://codeforces.com/contest/\(id)/blog"
+    }
+    
     var phaseColor: String {
         switch phase {
         case "BEFORE": return "blue"
@@ -118,6 +134,61 @@ struct CFContest: Codable, Identifiable {
         default: return phase
         }
     }
+    
+    var statusEmoji: String {
+        switch phase {
+        case "BEFORE": return "🕐"
+        case "CODING": return "⚡"
+        case "PENDING_SYSTEM_TEST": return "⏳"
+        case "SYSTEM_TEST": return "🔄"
+        case "FINISHED": return "🏁"
+        default: return "❓"
+        }
+    }
+    
+    var difficultyText: String {
+        guard let difficulty = difficulty else { return "Unknown" }
+        switch difficulty {
+        case 1: return "Beginner"
+        case 2: return "Easy"
+        case 3: return "Medium"
+        case 4: return "Hard"
+        case 5: return "Expert"
+        default: return "Level \(difficulty)"
+        }
+    }
+    
+    var typeDisplayText: String {
+        switch type.lowercased() {
+        case "cf": return "Codeforces Round"
+        case "ioi": return "IOI Style"
+        case "icpc": return "ICPC Style"
+        default: return type.capitalized
+        }
+    }
+    
+    var estimatedProblems: Int {
+        // Estimate number of problems based on duration and type
+        let hours = durationSeconds / 3600
+        switch type.lowercased() {
+        case "cf":
+            if hours <= 2 { return 5 }
+            else if hours <= 3 { return 6 }
+            else { return 7 }
+        case "ioi": return 3
+        case "icpc": return 10
+        default: return hours // Rough estimate
+        }
+    }
+    
+    var ratingImpact: String {
+        switch phase {
+        case "FINISHED": return "Rated"
+        case "CODING", "PENDING_SYSTEM_TEST", "SYSTEM_TEST": return "Will be rated"
+        case "BEFORE": return type.lowercased() == "cf" ? "Will be rated" : "Check rules"
+        default: return "TBD"
+        }
+    }
 }
 
 // MARK: - Problemset Response
@@ -135,4 +206,50 @@ struct CFProblemStatistic: Codable {
     let contestId: Int?
     let index: String
     let solvedCount: Int
+}
+
+// MARK: - Contest Standings Response
+struct CFContestStandingsResponse: Codable {
+    let status: String
+    let result: CFContestStandingsResult
+}
+
+struct CFContestStandingsResult: Codable {
+    let contest: CFContest
+    let problems: [CFProblem]
+    let rows: [CFRanklistRow]
+}
+
+struct CFRanklistRow: Codable {
+    let party: CFParty
+    let rank: Int
+    let points: Double
+    let penalty: Int
+    let successfulHackCount: Int
+    let unsuccessfulHackCount: Int
+    let problemResults: [CFProblemResult]
+}
+
+struct CFParty: Codable {
+    let contestId: Int?
+    let members: [CFMember]
+    let participantType: String
+    let teamId: Int?
+    let teamName: String?
+    let ghost: Bool
+    let room: Int?
+    let startTimeSeconds: Int?
+}
+
+struct CFMember: Codable {
+    let handle: String
+    let name: String?
+}
+
+struct CFProblemResult: Codable {
+    let points: Double
+    let penalty: Int?
+    let rejectedAttemptCount: Int
+    let type: String
+    let bestSubmissionTimeSeconds: Int?
 }

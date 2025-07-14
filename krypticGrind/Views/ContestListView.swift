@@ -3,6 +3,7 @@
 //  KrypticGrind
 //
 //  Created by akhil on 29/06/25.
+//  Enhanced with contest problems display, analytics, and improved UX
 //
 
 import SwiftUI
@@ -204,7 +205,6 @@ struct UpcomingContestCard: View {
     let contest: CFContest
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var showingDetails = false
-    @State private var showLiveActivityError = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -247,48 +247,137 @@ struct UpcomingContestCard: View {
             
             // Action buttons
             HStack(spacing: 12) {
-                ActionButton(
-                    title: "Register",
-                    icon: "arrow.right.circle.fill",
-                    color: colorThemeManager.current.accent
-                ) {
-                    if let url = URL(string: "https://codeforces.com/contest/\(contest.id)/register") {
-                        UIApplication.shared.open(url)
+                // Primary notification button with haptic feedback
+                Button(action: {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                    impactFeedback.impactOccurred()
+                    scheduleMultipleReminders()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "bell.badge.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Notify Me")
+                                .font(.custom("TTPhobosTrial-Bold", size: 14))
+                            Text("Multi alerts")
+                                .font(.custom("TTPhobosTrial-Regular", size: 11))
+                                .opacity(0.8)
+                        }
                     }
-                }
-                
-                ActionButton(
-                    title: "Notify",
-                    icon: "bell.fill",
-                    color: Color.orange
-                ) {
-                    NotificationManager.shared.scheduleNotification(
-                        title: "Contest Reminder",
-                        body: "\(contest.name) is starting soon!",
-                        date: contest.startDate ?? Date(),
-                        identifier: "contest_\(contest.id)"
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.orange, Color.orange.opacity(0.8)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .shadow(color: Color.orange.opacity(0.3), radius: 4, x: 0, y: 2)
                     )
                 }
+                .buttonStyle(ScaleButtonStyle())
                 
-                if isLiveActivitySupported {
-                    ActionButton(
-                        title: "Live",
-                        icon: "waveform.path.ecg.rectangle",
-                        color: .green
-                    ) {
-                        #if canImport(ActivityKit)
-                        NotificationManager.shared.startContestLiveActivity(contest: contest)
-                        #endif
+                // Details button with improved styling
+                Button(action: {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
+                    showingDetails = true
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                        
+                        Text("Details")
+                            .font(.custom("TTPhobosTrial-Bold", size: 14))
                     }
-                } else {
-                    ActionButton(
-                        title: "Live",
-                        icon: "waveform.path.ecg.rectangle",
-                        color: .gray.opacity(0.5)
-                    ) {
-                        showLiveActivityError = true
+                    .foregroundStyle(colorThemeManager.current.text)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(colorThemeManager.current.tabBar.opacity(0.8))
+                            .stroke(colorThemeManager.current.accent.opacity(0.3), lineWidth: 1)
+                            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+                    )
+                }
+                .buttonStyle(ScaleButtonStyle())
+                
+                // Phase-specific action button with enhanced styling
+                if contest.phase == "CODING" {
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .heavy)
+                        impactFeedback.impactOccurred()
+                        if let url = URL(string: contest.contestUrl) {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "bolt.circle.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Join Live")
+                                    .font(.custom("TTPhobosTrial-Bold", size: 14))
+                                Text("Running now")
+                                    .font(.custom("TTPhobosTrial-Regular", size: 11))
+                                    .opacity(0.8)
+                            }
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.green, Color.green.opacity(0.8)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .shadow(color: Color.green.opacity(0.3), radius: 4, x: 0, y: 2)
+                        )
                     }
-                    .disabled(true)
+                    .buttonStyle(ScaleButtonStyle())
+                } else if contest.phase == "BEFORE" {
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                        impactFeedback.impactOccurred()
+                        scheduleLastMinuteAlert()
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "alarm.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Set Alert")
+                                    .font(.custom("TTPhobosTrial-Bold", size: 14))
+                                Text("5min before")
+                                    .font(.custom("TTPhobosTrial-Regular", size: 11))
+                                    .opacity(0.8)
+                            }
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [colorThemeManager.current.accent, colorThemeManager.current.accent.opacity(0.8)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .shadow(color: colorThemeManager.current.accent.opacity(0.3), radius: 4, x: 0, y: 2)
+                        )
+                    }
+                    .buttonStyle(ScaleButtonStyle())
                 }
             }
         }
@@ -298,18 +387,61 @@ struct UpcomingContestCard: View {
                 .fill(colorThemeManager.current.tabBar.opacity(0.9))
                 .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
         )
-        .alert("Live Activity Not Supported", isPresented: $showLiveActivityError) {
-            Button("OK") { }
-        } message: {
-            Text("Live Activities require iOS 16.1 or later.")
+        .sheet(isPresented: $showingDetails) {
+            BattleDetailsSheet(contest: contest)
         }
     }
     
-    private var isLiveActivitySupported: Bool {
-        if #available(iOS 16.1, *) {
-            return ActivityKit.ActivityAuthorizationInfo().areActivitiesEnabled
+    private func scheduleMultipleReminders() {
+        guard let startDate = contest.startDate else { return }
+        
+        // 1 day before
+        let oneDayBefore = startDate.addingTimeInterval(-24 * 60 * 60)
+        if oneDayBefore > Date() {
+            NotificationManager.shared.scheduleNotification(
+                title: "Contest Tomorrow! 📅",
+                body: "\(contest.name) starts tomorrow",
+                date: oneDayBefore,
+                identifier: "contest_\(contest.id)_1day"
+            )
         }
-        return false
+        
+        // 1 hour before
+        let oneHourBefore = startDate.addingTimeInterval(-60 * 60)
+        if oneHourBefore > Date() {
+            NotificationManager.shared.scheduleNotification(
+                title: "Contest Starting Soon! ⚔️",
+                body: "\(contest.name) starts in 1 hour",
+                date: oneHourBefore,
+                identifier: "contest_\(contest.id)_1hour"
+            )
+        }
+        
+        // 15 minutes before
+        let fifteenMinBefore = startDate.addingTimeInterval(-15 * 60)
+        if fifteenMinBefore > Date() {
+            NotificationManager.shared.scheduleNotification(
+                title: "Final Call! 🔔",
+                body: "\(contest.name) starts in 15 minutes!",
+                date: fifteenMinBefore,
+                identifier: "contest_\(contest.id)_15min"
+            )
+        }
+    }
+    
+    private func scheduleLastMinuteAlert() {
+        guard let startDate = contest.startDate else { return }
+        
+        // 5 minutes before
+        let fiveMinBefore = startDate.addingTimeInterval(-5 * 60)
+        if fiveMinBefore > Date() {
+            NotificationManager.shared.scheduleNotification(
+                title: "Battle Alert! ⚡",
+                body: "\(contest.name) starts in 5 minutes!",
+                date: fiveMinBefore,
+                identifier: "contest_\(contest.id)_alert"
+            )
+        }
     }
 }
 
@@ -989,40 +1121,179 @@ struct BattleCard: View {
             
             // Action buttons
             HStack(spacing: 12) {
+                // Enhanced Details button
                 Button(action: {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
                     showingDetails = true
                 }) {
-                    HStack(spacing: 6) {
+                    HStack(spacing: 8) {
                         Image(systemName: "info.circle.fill")
-                            .font(.system(size: 14))
-                        Text("Details")
-                            .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                            .font(.system(size: 15, weight: .semibold))
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Details")
+                                .font(.custom("TTPhobosTrial-Bold", size: 14))
+                            Text("Full info")
+                                .font(.custom("TTPhobosTrial-Regular", size: 11))
+                                .opacity(0.8)
+                        }
                     }
                     .foregroundColor(colorThemeManager.current.text)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 12)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorThemeManager.current.tabBar.opacity(0.6))
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(colorThemeManager.current.tabBar.opacity(0.8))
+                            .stroke(colorThemeManager.current.accent.opacity(0.3), lineWidth: 1)
+                            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
                     )
                 }
+                .buttonStyle(ScaleButtonStyle())
                 
-                if let url = URL(string: contest.contestUrl) {
-                    Link(destination: url) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "sword.fill")
-                                .font(.system(size: 14))
-                            Text("Enter Battle")
+                // Enhanced notification button
+                Button(action: {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                    impactFeedback.impactOccurred()
+                    scheduleContestNotifications()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "bell.badge.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Notify Me")
                                 .font(.custom("TTPhobosTrial-Bold", size: 14))
+                            Text("Smart alerts")
+                                .font(.custom("TTPhobosTrial-Regular", size: 11))
+                                .opacity(0.8)
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.orange, Color.orange.opacity(0.8)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .shadow(color: Color.orange.opacity(0.3), radius: 4, x: 0, y: 2)
+                    )
+                }
+                .buttonStyle(ScaleButtonStyle())
+                
+                // Phase-specific action button with enhanced styling
+                if contest.phase == "CODING" {
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .heavy)
+                        impactFeedback.impactOccurred()
+                        if let url = URL(string: contest.contestUrl) {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "bolt.circle.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Join Live")
+                                    .font(.custom("TTPhobosTrial-Bold", size: 14))
+                                Text("Battle now!")
+                                    .font(.custom("TTPhobosTrial-Regular", size: 11))
+                                    .opacity(0.8)
+                            }
                         }
                         .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 12)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(colorThemeManager.current.accent)
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.green, Color.green.opacity(0.8)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .shadow(color: Color.green.opacity(0.3), radius: 4, x: 0, y: 2)
                         )
                     }
+                    .buttonStyle(ScaleButtonStyle())
+                } else if contest.phase == "BEFORE" {
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                        impactFeedback.impactOccurred()
+                        scheduleLastMinuteReminder()
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "alarm.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Remind")
+                                    .font(.custom("TTPhobosTrial-Bold", size: 14))
+                                Text("Final alert")
+                                    .font(.custom("TTPhobosTrial-Regular", size: 11))
+                                    .opacity(0.8)
+                            }
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [colorThemeManager.current.accent, colorThemeManager.current.accent.opacity(0.8)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .shadow(color: colorThemeManager.current.accent.opacity(0.3), radius: 4, x: 0, y: 2)
+                        )
+                    }
+                    .buttonStyle(ScaleButtonStyle())
+                } else {
+                    // For finished contests - show results
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                        impactFeedback.impactOccurred()
+                        if let url = URL(string: contest.standingsUrl) {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "chart.bar.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Results")
+                                    .font(.custom("TTPhobosTrial-Bold", size: 14))
+                                Text("View standings")
+                                    .font(.custom("TTPhobosTrial-Regular", size: 11))
+                                    .opacity(0.8)
+                            }
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.gray, Color.gray.opacity(0.8)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .shadow(color: Color.gray.opacity(0.3), radius: 4, x: 0, y: 2)
+                        )
+                    }
+                    .buttonStyle(ScaleButtonStyle())
                 }
                 
                 Spacer()
@@ -1044,6 +1315,65 @@ struct BattleCard: View {
         .sheet(isPresented: $showingDetails) {
             BattleDetailsSheet(contest: contest)
         }
+    }
+    
+    private func scheduleContestNotifications() {
+        guard let startDate = contest.startDate else { return }
+        
+        // Schedule multiple notifications
+        // 1 day before
+        let oneDayBefore = startDate.addingTimeInterval(-24 * 60 * 60)
+        if oneDayBefore > Date() {
+            NotificationManager.shared.scheduleNotification(
+                title: "Contest Tomorrow! 📅",
+                body: "\(contest.name) starts tomorrow at \(startDate.formatted(date: .omitted, time: .shortened))",
+                date: oneDayBefore,
+                identifier: "contest_\(contest.id)_1day"
+            )
+        }
+        
+        // 1 hour before
+        let oneHourBefore = startDate.addingTimeInterval(-60 * 60)
+        if oneHourBefore > Date() {
+            NotificationManager.shared.scheduleNotification(
+                title: "Contest Starting Soon! ⚔️",
+                body: "\(contest.name) starts in 1 hour. Get ready!",
+                date: oneHourBefore,
+                identifier: "contest_\(contest.id)_1hour"
+            )
+        }
+        
+        // 15 minutes before
+        let fifteenMinBefore = startDate.addingTimeInterval(-15 * 60)
+        if fifteenMinBefore > Date() {
+            NotificationManager.shared.scheduleNotification(
+                title: "Final Call! 🔔",
+                body: "\(contest.name) starts in 15 minutes!",
+                date: fifteenMinBefore,
+                identifier: "contest_\(contest.id)_15min"
+            )
+        }
+        
+        // Show confirmation
+        // Note: In a real app, you might want to show a toast or alert
+        print("Scheduled notifications for \(contest.name)")
+    }
+    
+    private func scheduleLastMinuteReminder() {
+        guard let startDate = contest.startDate else { return }
+        
+        // 5 minutes before
+        let fiveMinBefore = startDate.addingTimeInterval(-5 * 60)
+        if fiveMinBefore > Date() {
+            NotificationManager.shared.scheduleNotification(
+                title: "Contest Alert! ⚡",
+                body: "\(contest.name) starts in 5 minutes! Time to battle!",
+                date: fiveMinBefore,
+                identifier: "contest_\(contest.id)_5min"
+            )
+        }
+        
+        print("Scheduled last-minute reminder for \(contest.name)")
     }
     
     private func startCountdownTimer() {
@@ -1138,7 +1468,25 @@ struct ConquestCard: View {
             }
             
             // Action button
-            HStack {
+            HStack(spacing: 12) {
+                if let url = URL(string: contest.standingsUrl) {
+                    Link(destination: url) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "chart.bar.fill")
+                                .font(.system(size: 14))
+                            Text("Standings")
+                                .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                        }
+                        .foregroundColor(colorThemeManager.current.text)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(colorThemeManager.current.tabBar.opacity(0.6))
+                        )
+                    }
+                }
+                
                 if let url = URL(string: contest.contestUrl) {
                     Link(destination: url) {
                         HStack(spacing: 6) {
@@ -1422,99 +1770,63 @@ struct EmptyConquestsView: View {
     }
 }
 
-// MARK: - Battle Details Sheet
+// MARK: - Enhanced Battle Details Sheet
 struct BattleDetailsSheet: View {
     let contest: CFContest
     @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @EnvironmentObject var cfService: CFService
     @Environment(\.dismiss) private var dismiss
+    @State private var selectedTab: DetailTab = .overview
+    @State private var showingStandings = false
+    @State private var contestProblems: [CFProblem] = []
+    @State private var isLoadingProblems = false
+    
+    enum DetailTab: String, CaseIterable {
+        case overview = "Overview"
+        case analytics = "Analytics"
+        case actions = "Actions"
+        
+        var icon: String {
+            switch self {
+            case .overview: return "info.circle.fill"
+            case .analytics: return "chart.bar.fill"
+            case .actions: return "bolt.fill"
+            }
+        }
+    }
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Battle Header
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("⚔️")
-                                .font(.system(size: 24))
-                            
-                            Text("Battle Details")
-                                .font(.custom("TTPhobosTrial-Bold", size: 24))
-                                .foregroundColor(colorThemeManager.current.text)
-                            
-                            Spacer()
-                        }
-                        
-                        Text(contest.name)
-                            .font(.custom("TTPhobosTrial-Bold", size: 20))
-                            .foregroundColor(colorThemeManager.current.accent)
-                    }
+            ZStack {
+                colorThemeManager.current.background
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Header
+                    contestHeader
                     
-                    Divider()
-                        .background(colorThemeManager.current.text.opacity(0.2))
+                    // Tab Selector
+                    tabSelector
                     
-                    // Battle Info
-                    VStack(alignment: .leading, spacing: 16) {
-                        ContestDetailRow(
-                            icon: "clock.fill",
-                            title: "Start Time",
-                            value: contest.startDate?.formatted(date: .complete, time: .shortened) ?? "TBA"
-                        )
-                        
-                        ContestDetailRow(
-                            icon: "timer",
-                            title: "Duration",
-                            value: formatDuration(contest.durationSeconds)
-                        )
-                        
-                        ContestDetailRow(
-                            icon: "flag.fill",
-                            title: "Type",
-                            value: contest.type.uppercased()
-                        )
-                        
-                        ContestDetailRow(
-                            icon: "gamecontroller.fill",
-                            title: "Phase",
-                            value: contest.phase.capitalized
-                        )
-                        
-                        // Participant count not available in API
-                        
-                        if let country = contest.country {
-                            ContestDetailRow(
-                                icon: "globe",
-                                title: "Region",
-                                value: country
-                            )
-                        }
-                    }
-                    
-                    // Action Button
-                    if let url = URL(string: contest.contestUrl) {
-                        Link(destination: url) {
-                            HStack {
-                                Image(systemName: "sword.fill")
-                                    .font(.system(size: 16, weight: .bold))
-                                Text("Enter the Arena")
-                                    .font(.custom("TTPhobosTrial-Bold", size: 16))
+                    // Content
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            switch selectedTab {
+                            case .overview:
+                                overviewContent
+                            case .analytics:
+                                analyticsContent
+                            case .actions:
+                                actionsContent
                             }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(colorThemeManager.current.accent)
-                            )
+                            
+                            Spacer().frame(height: 20)
                         }
-                        .padding(.top, 20)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
                     }
-                    
-                    Spacer().frame(height: 20)
                 }
-                .padding(20)
             }
-            .background(colorThemeManager.current.background)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -1523,6 +1835,778 @@ struct BattleDetailsSheet: View {
                     }
                     .foregroundColor(colorThemeManager.current.accent)
                 }
+            }
+            .onAppear {
+                loadContestProblems()
+            }
+        }
+    }
+    
+    // MARK: - Header
+    private var contestHeader: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("⚔️")
+                    .font(.system(size: 32))
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Battle Details")
+                        .font(.custom("TTPhobosTrial-Bold", size: 24))
+                        .foregroundColor(colorThemeManager.current.text)
+                    
+                    Text(contest.name)
+                        .font(.custom("TTPhobosTrial-DemiBold", size: 18))
+                        .foregroundColor(colorThemeManager.current.accent)
+                        .lineLimit(2)
+                }
+                
+                Spacer()
+            }
+            
+            // Status Badge
+            HStack {
+                ContestStatusBadge(contest: contest)
+                
+                if contest.isUpcoming, let timeUntilStart = contest.timeUntilStart {
+                    HStack(spacing: 6) {
+                        Image(systemName: "clock.fill")
+                            .font(.system(size: 12))
+                        Text("Starts in \(timeUntilStart)")
+                            .font(.custom("TTPhobosTrial-DemiBold", size: 12))
+                    }
+                    .foregroundColor(colorThemeManager.current.accent)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorThemeManager.current.accent.opacity(0.1))
+                    )
+                }
+                
+                Spacer()
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(colorThemeManager.current.background)
+    }
+    
+    // MARK: - Tab Selector
+    private var tabSelector: some View {
+        HStack(spacing: 0) {
+            ForEach(DetailTab.allCases, id: \.self) { tab in
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        selectedTab = tab
+                    }
+                }) {
+                    VStack(spacing: 8) {
+                        Image(systemName: tab.icon)
+                            .font(.system(size: 16, weight: .semibold))
+                        
+                        Text(tab.rawValue)
+                            .font(.custom("TTPhobosTrial-DemiBold", size: 12))
+                    }
+                    .foregroundColor(selectedTab == tab ? colorThemeManager.current.accent : colorThemeManager.current.text.opacity(0.6))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(selectedTab == tab ? colorThemeManager.current.accent.opacity(0.1) : Color.clear)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 8)
+        .background(colorThemeManager.current.background)
+    }
+    
+    // MARK: - Overview Content
+    private var overviewContent: some View {
+        VStack(spacing: 20) {
+            // Contest Status Card
+            ContestInfoSection(
+                title: "Battle Status",
+                icon: "flag.checkered",
+                color: contest.phaseColorValue
+            ) {
+                VStack(spacing: 16) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Current Phase")
+                                .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                                .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                            
+                            HStack(spacing: 8) {
+                                Text(contest.phaseDisplayText)
+                                    .font(.custom("TTPhobosTrial-Bold", size: 18))
+                                    .foregroundColor(contest.phaseColorValue)
+                                
+                                Text(contest.statusEmoji)
+                                    .font(.system(size: 18))
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        // Phase progress indicator
+                        VStack(spacing: 4) {
+                            Circle()
+                                .fill(contest.phaseColorValue)
+                                .frame(width: 12, height: 12)
+                                .overlay(
+                                    Circle()
+                                        .stroke(contest.phaseColorValue.opacity(0.3), lineWidth: 8)
+                                        .scaleEffect(1.5)
+                                )
+                            
+                            Text("LIVE")
+                                .font(.custom("TTPhobosTrial-Bold", size: 10))
+                                .foregroundColor(contest.phaseColorValue)
+                        }
+                    }
+                    
+                    if contest.isUpcoming, let timeUntilStart = contest.timeUntilStart {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Time Until Battle")
+                                .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                                .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                            
+                            Text(timeUntilStart)
+                                .font(.custom("TTPhobosTrial-Bold", size: 16))
+                                .foregroundColor(colorThemeManager.current.accent)
+                        }
+                    }
+                }
+            }
+            
+            // Basic Info Card
+            ContestInfoSection(
+                title: "Battle Information",
+                icon: "info.circle.fill",
+                color: colorThemeManager.current.accent
+            ) {
+                VStack(spacing: 16) {
+                    ContestDetailRow(
+                        icon: "clock.fill",
+                        title: "Start Time",
+                        value: contest.startDate?.formatted(date: .complete, time: .shortened) ?? "TBA"
+                    )
+                    
+                    ContestDetailRow(
+                        icon: "timer",
+                        title: "Duration",
+                        value: formatDuration(contest.durationSeconds)
+                    )
+                    
+                    ContestDetailRow(
+                        icon: "flag.fill",
+                        title: "Type",
+                        value: contest.type.uppercased()
+                    )
+                    
+                    ContestDetailRow(
+                        icon: "gamecontroller.fill",
+                        title: "Phase",
+                        value: contest.phase.capitalized
+                    )
+                    
+                    if let difficulty = contest.difficulty {
+                        ContestDetailRow(
+                            icon: "target",
+                            title: "Difficulty",
+                            value: "Level \(difficulty)"
+                        )
+                    }
+                    
+                    if let country = contest.country {
+                        ContestDetailRow(
+                            icon: "globe",
+                            title: "Region",
+                            value: country
+                        )
+                    }
+                    
+                    if let preparedBy = contest.preparedBy {
+                        ContestDetailRow(
+                            icon: "person.crop.circle.fill",
+                            title: "Prepared By",
+                            value: preparedBy
+                        )
+                    }
+                }
+            }
+            
+            // Quick Stats Grid
+            ContestInfoSection(
+                title: "Quick Stats",
+                icon: "chart.bar.doc.horizontal.fill",
+                color: .blue
+            ) {
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: 16) {
+                    QuickStatCard(
+                        title: "Contest ID",
+                        value: "#\(contest.id)",
+                        icon: "number.circle.fill",
+                        color: .blue
+                    )
+                    
+                    QuickStatCard(
+                        title: "Rating Impact",
+                        value: contest.phase == "FINISHED" ? "Rated" : "TBD",
+                        icon: "star.fill",
+                        color: .yellow
+                    )
+                    
+                    QuickStatCard(
+                        title: "Duration",
+                        value: "\(contest.durationSeconds / 3600)h",
+                        icon: "clock.fill",
+                        color: .orange
+                    )
+                    
+                    QuickStatCard(
+                        title: "Type",
+                        value: contest.type.uppercased(),
+                        icon: "tag.fill",
+                        color: .green
+                    )
+                }
+            }
+            
+            // Contest Problems Section (for finished and running contests)
+            if contest.isFinished || contest.isRunning {
+                ContestInfoSection(
+                    title: contest.isFinished ? "Problem Set" : "Live Problems",
+                    icon: contest.isFinished ? "list.bullet.rectangle.fill" : "bolt.circle.fill",
+                    color: contest.isFinished ? .indigo : .orange
+                ) {
+                    ContestProblemsView(
+                        problems: contestProblems,
+                        isLoading: isLoadingProblems,
+                        contest: contest
+                    )
+                }
+            }
+            
+            // Description Card (if available)
+            if let description = contest.description, !description.isEmpty {
+                ContestInfoSection(
+                    title: "Description",
+                    icon: "doc.text.fill",
+                    color: .purple
+                ) {
+                    Text(description)
+                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.8))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.vertical, 8)
+                }
+            }
+            
+            // Contest Links Section
+            ContestInfoSection(
+                title: "Quick Access",
+                icon: "link.circle.fill",
+                color: .cyan
+            ) {
+                VStack(spacing: 12) {
+                    QuickLinkRow(
+                        title: "Contest Portal",
+                        icon: "globe",
+                        url: contest.contestUrl,
+                        color: colorThemeManager.current.accent
+                    )
+                    
+                    QuickLinkRow(
+                        title: "Live Standings",
+                        icon: "chart.bar.fill",
+                        url: contest.standingsUrl,
+                        color: .orange
+                    )
+                    
+                    QuickLinkRow(
+                        title: "Problem Set",
+                        icon: "list.bullet.rectangle.fill",
+                        url: contest.problemsUrl,
+                        color: .blue
+                    )
+                    
+                    if contest.isUpcoming {
+                        QuickLinkRow(
+                            title: "Registration",
+                            icon: "person.badge.plus.fill",
+                            url: contest.registrationUrl,
+                            color: .green
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Analytics Content
+    private var analyticsContent: some View {
+        VStack(spacing: 20) {
+            // Contest Performance Metrics
+            ContestInfoSection(
+                title: "Contest Metrics",
+                icon: "chart.line.uptrend.xyaxis",
+                color: .orange
+            ) {
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: 16) {
+                    MetricCard(
+                        title: "Contest ID",
+                        value: "#\(contest.id)",
+                        subtitle: "Unique identifier",
+                        icon: "number.circle.fill",
+                        color: .blue
+                    )
+                    
+                    MetricCard(
+                        title: "Est. Problems",
+                        value: "\(contest.estimatedProblems)",
+                        subtitle: "Expected count",
+                        icon: "list.number",
+                        color: .green
+                    )
+                    
+                    MetricCard(
+                        title: "Difficulty",
+                        value: contest.difficultyText,
+                        subtitle: contest.difficulty != nil ? "Level \(contest.difficulty!)" : "Not rated",
+                        icon: "target",
+                        color: .red
+                    )
+                    
+                    MetricCard(
+                        title: "Rating Impact",
+                        value: contest.ratingImpact,
+                        subtitle: "Performance affects rating",
+                        icon: "star.fill",
+                        color: .yellow
+                    )
+                }
+            }
+            
+            // Time Analytics
+            ContestInfoSection(
+                title: "Time Analysis",
+                icon: "clock.fill",
+                color: .purple
+            ) {
+                VStack(spacing: 16) {
+                    if let startDate = contest.startDate {
+                        TimeAnalysisRow(
+                            title: "Start Date",
+                            value: startDate.formatted(date: .complete, time: .omitted),
+                            subtitle: startDate.formatted(date: .omitted, time: .complete)
+                        )
+                        
+                        if let endDate = contest.endDate {
+                            TimeAnalysisRow(
+                                title: "End Date",
+                                value: endDate.formatted(date: .complete, time: .omitted),
+                                subtitle: endDate.formatted(date: .omitted, time: .complete)
+                            )
+                        }
+                        
+                        // Day of week analysis
+                        let dayOfWeek = Calendar.current.component(.weekday, from: startDate)
+                        let dayName = DateFormatter().weekdaySymbols[dayOfWeek - 1]
+                        TimeAnalysisRow(
+                            title: "Day of Week",
+                            value: dayName,
+                            subtitle: "Contest scheduling pattern"
+                        )
+                    }
+                    
+                    TimeAnalysisRow(
+                        title: "Duration",
+                        value: formatDuration(contest.durationSeconds),
+                        subtitle: "\(contest.durationSeconds / 60) minutes total"
+                    )
+                    
+                    // Time per problem estimation
+                    let timePerProblem = contest.durationSeconds / contest.estimatedProblems / 60
+                    TimeAnalysisRow(
+                        title: "Avg. Time/Problem",
+                        value: "\(timePerProblem) minutes",
+                        subtitle: "Strategic time allocation"
+                    )
+                    
+                    if contest.isUpcoming, let timeUntilStart = contest.timeUntilStart {
+                        TimeAnalysisRow(
+                            title: "Time Until Start",
+                            value: timeUntilStart,
+                            subtitle: "Battle preparation time"
+                        )
+                    }
+                }
+            }
+            
+            // Contest Insights
+            ContestInfoSection(
+                title: "Strategic Insights",
+                icon: "brain.head.profile",
+                color: .cyan
+            ) {
+                VStack(spacing: 16) {
+                    InsightCard(
+                        title: "Contest Format",
+                        description: getContestFormatInsight(),
+                        icon: "gamecontroller.fill",
+                        color: .blue
+                    )
+                    
+                    InsightCard(
+                        title: "Preparation Tips",
+                        description: getPreparationTips(),
+                        icon: "lightbulb.fill",
+                        color: .yellow
+                    )
+                    
+                    InsightCard(
+                        title: "Time Strategy",
+                        description: getTimeStrategy(),
+                        icon: "clock.arrow.circlepath",
+                        color: .green
+                    )
+                    
+                    if contest.isUpcoming {
+                        InsightCard(
+                            title: "Last-Minute Prep",
+                            description: getLastMinutePrep(),
+                            icon: "bolt.fill",
+                            color: .orange
+                        )
+                    }
+                }
+            }
+            
+            // Historical Context
+            ContestInfoSection(
+                title: "Historical Context",
+                icon: "chart.bar.doc.horizontal",
+                color: .indigo
+            ) {
+                VStack(spacing: 16) {
+                    HistoricalStatRow(
+                        title: "Contest Series",
+                        value: contest.typeDisplayText,
+                        description: "Part of regular contest series"
+                    )
+                    
+                    if let country = contest.country {
+                        HistoricalStatRow(
+                            title: "Regional Focus",
+                            value: country,
+                            description: "Contest targeting specific region"
+                        )
+                    }
+                    
+                    if let season = contest.season {
+                        HistoricalStatRow(
+                            title: "Season",
+                            value: season,
+                            description: "Part of competitive programming season"
+                        )
+                    }
+                    
+                    HistoricalStatRow(
+                        title: "Participation",
+                        value: "Global",
+                        description: "Open to worldwide participants"
+                    )
+                }
+            }
+        }
+    }
+    
+    private func getContestFormatInsight() -> String {
+        switch contest.type.lowercased() {
+        case "cf":
+            return "Standard Codeforces format with \(contest.estimatedProblems) problems. Focus on speed and accuracy."
+        case "ioi":
+            return "IOI-style contest with 3 challenging problems. Partial scoring available."
+        case "icpc":
+            return "ICPC format emphasizing teamwork and problem-solving strategy."
+        default:
+            return "Contest format: \(contest.type). Check rules for specific details."
+        }
+    }
+    
+    private func getPreparationTips() -> String {
+        let hours = contest.durationSeconds / 3600
+        if hours <= 2 {
+            return "Short contest - practice speed coding and quick problem analysis."
+        } else if hours <= 3 {
+            return "Standard duration - balance speed with thorough problem understanding."
+        } else {
+            return "Extended contest - focus on endurance and complex problem solving."
+        }
+    }
+    
+    private func getTimeStrategy() -> String {
+        let timePerProblem = contest.durationSeconds / contest.estimatedProblems / 60
+        if timePerProblem < 20 {
+            return "Fast-paced: \(timePerProblem)min/problem. Quick implementation crucial."
+        } else if timePerProblem < 40 {
+            return "Balanced: \(timePerProblem)min/problem. Time for debugging and optimization."
+        } else {
+            return "Deep thinking: \(timePerProblem)min/problem. Complex algorithms expected."
+        }
+    }
+    
+    private func getLastMinutePrep() -> String {
+        guard let startDate = contest.startDate else { return "Prepare your coding environment and review key algorithms." }
+        let timeUntil = startDate.timeIntervalSinceNow
+        
+        if timeUntil < 3600 { // Less than 1 hour
+            return "Final preparations: Check internet, test IDE, and stay calm."
+        } else if timeUntil < 86400 { // Less than 1 day
+            return "Review key algorithms, practice similar problems, prepare snacks."
+        } else {
+            return "Plan your schedule, review contest format, practice regularly."
+        }
+    }
+    
+    // MARK: - Actions Content
+    private var actionsContent: some View {
+        VStack(spacing: 20) {
+            // Quick Actions
+            ContestInfoSection(
+                title: "Battle Actions",
+                icon: "bolt.fill",
+                color: .yellow
+            ) {
+                VStack(spacing: 16) {
+                    ActionRow(
+                        title: "Enter Contest",
+                        subtitle: "Access contest problems and submit solutions",
+                        icon: "sword.fill",
+                        color: colorThemeManager.current.accent,
+                        url: contest.contestUrl
+                    )
+                    
+                    if contest.isUpcoming {
+                        ActionRow(
+                            title: "Register",
+                            subtitle: "Register for the upcoming contest",
+                            icon: "person.badge.plus.fill",
+                            color: .green,
+                            url: contest.registrationUrl
+                        )
+                    }
+                    
+                    ActionRow(
+                        title: "View Standings",
+                        subtitle: "Check current rankings and results",
+                        icon: "chart.bar.fill",
+                        color: .orange,
+                        url: contest.standingsUrl
+                    )
+                    
+                    ActionRow(
+                        title: "Problems",
+                        subtitle: "View all contest problems",
+                        icon: "list.bullet.rectangle.fill",
+                        color: .blue,
+                        url: contest.problemsUrl
+                    )
+                    
+                    ActionRow(
+                        title: "Announcements",
+                        subtitle: "Read contest announcements and updates",
+                        icon: "megaphone.fill",
+                        color: .purple,
+                        url: contest.announcementsUrl
+                    )
+                }
+            }
+            
+            // Strategic Actions
+            ContestInfoSection(
+                title: "Battle Strategy",
+                icon: "brain.head.profile.fill",
+                color: .cyan
+            ) {
+                VStack(spacing: 16) {
+                    StrategyActionRow(
+                        title: "AI Analysis",
+                        subtitle: "Get AI-powered contest insights and tips",
+                        icon: "brain.head.profile.fill",
+                        color: .cyan
+                    ) {
+                        // Add AI analysis action
+                    }
+                    
+                    StrategyActionRow(
+                        title: "Practice Mode",
+                        subtitle: "Review similar problems for preparation",
+                        icon: "dumbbell.fill",
+                        color: .green
+                    ) {
+                        // Add practice mode action
+                    }
+                    
+                    StrategyActionRow(
+                        title: "Study Contest",
+                        subtitle: "Add to your study list for later review",
+                        icon: "bookmark.fill",
+                        color: .yellow
+                    ) {
+                        // Add bookmark action
+                    }
+                    
+                    StrategyActionRow(
+                        title: "Team Invite",
+                        subtitle: "Share contest with your coding team",
+                        icon: "person.3.fill",
+                        color: .blue
+                    ) {
+                        // Add team sharing action
+                    }
+                }
+            }
+            
+            // Notification Actions
+            ContestInfoSection(
+                title: "Notifications",
+                icon: "bell.fill",
+                color: .red
+            ) {
+                VStack(spacing: 16) {
+                    NotificationActionRow(
+                        title: "Set Reminder",
+                        subtitle: "Get notified before contest starts",
+                        icon: "bell.badge.fill"
+                    ) {
+                        NotificationManager.shared.scheduleNotification(
+                            title: "Contest Reminder",
+                            body: "\(contest.name) is starting soon!",
+                            date: contest.startDate ?? Date(),
+                            identifier: "contest_\(contest.id)"
+                        )
+                    }
+                    
+                    NotificationActionRow(
+                        title: "Multiple Reminders",
+                        subtitle: "Set reminders 1 day, 1 hour, and 15 min before",
+                        icon: "alarm.fill"
+                    ) {
+                        setMultipleReminders()
+                    }
+                    
+                    if #available(iOS 16.1, *) {
+                        NotificationActionRow(
+                            title: "Live Activity",
+                            subtitle: "Track contest progress in real-time",
+                            icon: "waveform.path.ecg.rectangle.fill"
+                        ) {
+                            #if canImport(ActivityKit)
+                            NotificationManager.shared.startContestLiveActivity(contest: contest)
+                            #endif
+                        }
+                    }
+                }
+            }
+            
+            // Contest Preparation
+            ContestInfoSection(
+                title: "Preparation Tools",
+                icon: "hammer.fill",
+                color: .indigo
+            ) {
+                VStack(spacing: 16) {
+                    PreparationActionRow(
+                        title: "Past Problems",
+                        subtitle: "Review similar contest problems",
+                        icon: "clock.arrow.circlepath",
+                        color: .purple
+                    ) {
+                        // Add past problems action
+                    }
+                    
+                    PreparationActionRow(
+                        title: "Difficulty Analysis",
+                        subtitle: "Analyze expected problem difficulty range",
+                        icon: "chart.line.uptrend.xyaxis",
+                        color: .orange
+                    ) {
+                        // Add difficulty analysis action
+                    }
+                    
+                    PreparationActionRow(
+                        title: "Time Strategy",
+                        subtitle: "Calculate optimal time allocation per problem",
+                        icon: "stopwatch.fill",
+                        color: .green
+                    ) {
+                        // Add time strategy action
+                    }
+                    
+                    PreparationActionRow(
+                        title: "Editorial Access",
+                        subtitle: "Quick access to solutions after contest",
+                        icon: "doc.text.magnifyingglass",
+                        color: .blue
+                    ) {
+                        // Add editorial access action
+                    }
+                }
+            }
+        }
+    }
+    
+    private func setMultipleReminders() {
+        guard let startDate = contest.startDate else { return }
+        
+        // 1 day before
+        let oneDayBefore = startDate.addingTimeInterval(-24 * 60 * 60)
+        NotificationManager.shared.scheduleNotification(
+            title: "Contest Tomorrow",
+            body: "\(contest.name) starts tomorrow at \(startDate.formatted(date: .omitted, time: .shortened))",
+            date: oneDayBefore,
+            identifier: "contest_\(contest.id)_1day"
+        )
+        
+        // 1 hour before
+        let oneHourBefore = startDate.addingTimeInterval(-60 * 60)
+        NotificationManager.shared.scheduleNotification(
+            title: "Contest Starting Soon",
+            body: "\(contest.name) starts in 1 hour!",
+            date: oneHourBefore,
+            identifier: "contest_\(contest.id)_1hour"
+        )
+        
+        // 15 minutes before
+        let fifteenMinBefore = startDate.addingTimeInterval(-15 * 60)
+        NotificationManager.shared.scheduleNotification(
+            title: "Contest Alert",
+            body: "\(contest.name) starts in 15 minutes! Get ready!",
+            date: fifteenMinBefore,
+            identifier: "contest_\(contest.id)_15min"
+        )
+    }
+    
+    private func loadContestProblems() {
+        guard contest.isFinished || contest.isRunning else { return }
+        
+        isLoadingProblems = true
+        Task {
+            let problems = await cfService.fetchContestProblems(contestId: contest.id)
+            await MainActor.run {
+                self.contestProblems = problems
+                self.isLoadingProblems = false
             }
         }
     }
@@ -1540,6 +2624,297 @@ struct BattleDetailsSheet: View {
         }
     }
 }
+
+// MARK: - Contest Problems View
+struct ContestProblemsView: View {
+    let problems: [CFProblem]
+    let isLoading: Bool
+    let contest: CFContest
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    private var difficultyDistribution: [(color: Color, count: Int)] {
+        let ratingGroups = Dictionary(grouping: problems.compactMap { $0.rating }) { rating in
+            switch rating {
+            case 0..<1200: return 0
+            case 1200..<1600: return 1
+            case 1600..<1900: return 2
+            case 1900..<2100: return 3
+            case 2100..<2400: return 4
+            default: return 5
+            }
+        }
+        
+        let colors: [Color] = [.green, .cyan, .blue, .purple, .orange, .red]
+        return ratingGroups.sorted(by: { $0.key < $1.key }).map { (color: colors[$0.key], count: $0.value.count) }
+    }
+    
+    private var topTags: [String] {
+        let allTags = problems.flatMap { $0.tags }
+        let tagCounts = Dictionary(grouping: allTags) { $0 }
+            .mapValues { $0.count }
+            .sorted { $0.value > $1.value }
+        
+        return Array(tagCounts.prefix(5).map { $0.key })
+    }
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            if isLoading {
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("Loading problems...")
+                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                }
+                .frame(height: 60)
+            } else if problems.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "doc.questionmark.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.4))
+                    
+                    Text("No problems available")
+                        .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                    
+                    Text("Problem data may not be accessible")
+                        .font(.custom("TTPhobosTrial-Regular", size: 12))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.4))
+                }
+                .frame(height: 80)
+            } else {
+                VStack(spacing: 16) {
+                    // Header with problem count and stats
+                    VStack(spacing: 12) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("\(problems.count) Problem\(problems.count == 1 ? "" : "s")")
+                                    .font(.custom("TTPhobosTrial-Bold", size: 16))
+                                    .foregroundColor(colorThemeManager.current.text)
+                                
+                                Text("Contest #\(contest.id)")
+                                    .font(.custom("TTPhobosTrial-Regular", size: 12))
+                                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                            }
+                            
+                            Spacer()
+                            
+                            // Difficulty distribution
+                            if !problems.isEmpty {
+                                VStack(alignment: .trailing, spacing: 4) {
+                                    HStack(spacing: 8) {
+                                        ForEach(difficultyDistribution, id: \.color) { diff in
+                                            HStack(spacing: 4) {
+                                                Circle()
+                                                    .fill(diff.color)
+                                                    .frame(width: 8, height: 8)
+                                                Text("\(diff.count)")
+                                                    .font(.custom("TTPhobosTrial-Bold", size: 10))
+                                                    .foregroundColor(diff.color)
+                                            }
+                                        }
+                                    }
+                                    
+                                    Text("Difficulty spread")
+                                        .font(.custom("TTPhobosTrial-Regular", size: 10))
+                                        .foregroundColor(colorThemeManager.current.text.opacity(0.5))
+                                }
+                            }
+                        }
+                        
+                        // Problem type tags summary
+                        if !topTags.isEmpty {
+                            HStack {
+                                Text("Common tags:")
+                                    .font(.custom("TTPhobosTrial-Regular", size: 12))
+                                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 8) {
+                                        ForEach(topTags.prefix(4), id: \.self) { tag in
+                                            Text(tag)
+                                                .font(.custom("TTPhobosTrial-Regular", size: 11))
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
+                                                .background(
+                                                    Capsule()
+                                                        .fill(colorThemeManager.current.accent.opacity(0.1))
+                                                )
+                                                .foregroundColor(colorThemeManager.current.accent)
+                                        }
+                                    }
+                                    .padding(.horizontal, 1)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.bottom, 8)
+                    
+                    // Problems list
+                    ForEach(Array(problems.enumerated()), id: \.element.id) { index, problem in
+                        ProblemRow(
+                            problem: problem,
+                            index: index,
+                            contestId: contest.id
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Problem Row
+struct ProblemRow: View {
+    let problem: CFProblem
+    let index: Int
+    let contestId: Int
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    private var difficultyColor: Color {
+        guard let rating = problem.rating else { return .gray }
+        switch rating {
+        case 0..<1200: return .green
+        case 1200..<1600: return .cyan
+        case 1600..<1900: return .blue
+        case 1900..<2100: return .purple
+        case 2100..<2400: return .orange
+        default: return .red
+        }
+    }
+    
+    private var problemUrl: String {
+        "https://codeforces.com/contest/\(contestId)/problem/\(problem.index)"
+    }
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Problem index with enhanced visual
+            VStack(spacing: 4) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(difficultyColor.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(difficultyColor.opacity(0.3), lineWidth: 1)
+                        )
+                    
+                    Text(problem.index)
+                        .font(.custom("TTPhobosTrial-Bold", size: 18))
+                        .foregroundColor(difficultyColor)
+                }
+                
+                // Problem type indicator
+                if let points = problem.points, points > 0 {
+                    Text("\(Int(points))pt")
+                        .font(.custom("TTPhobosTrial-Regular", size: 9))
+                        .foregroundColor(difficultyColor)
+                        .opacity(0.8)
+                } else if let rating = problem.rating {
+                    Text("\(rating)")
+                        .font(.custom("TTPhobosTrial-Regular", size: 9))
+                        .foregroundColor(difficultyColor)
+                        .opacity(0.8)
+                }
+            }
+            
+            // Problem details with better layout
+            VStack(alignment: .leading, spacing: 6) {
+                Text(problem.name)
+                    .font(.custom("TTPhobosTrial-DemiBold", size: 15))
+                    .foregroundColor(colorThemeManager.current.text)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                
+                // Rating and difficulty info
+                HStack(spacing: 12) {
+                    if let rating = problem.rating {
+                        HStack(spacing: 4) {
+                            Image(systemName: "target")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(difficultyColor)
+                            
+                            Text("\(rating)")
+                                .font(.custom("TTPhobosTrial-Bold", size: 12))
+                                .foregroundColor(difficultyColor)
+                            
+                            Text("• \(difficultyText)")
+                                .font(.custom("TTPhobosTrial-Regular", size: 11))
+                                .foregroundColor(difficultyColor.opacity(0.8))
+                        }
+                    }
+                }
+                
+                // Tags with better styling
+                if !problem.tags.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(problem.tags.prefix(3), id: \.self) { tag in
+                                Text(tag)
+                                    .font(.custom("TTPhobosTrial-Regular", size: 10))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(
+                                        Capsule()
+                                            .fill(colorThemeManager.current.text.opacity(0.08))
+                                    )
+                                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                            }
+                        }
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            // Enhanced action button
+            VStack(spacing: 8) {
+                Button(action: {
+                    if let url = URL(string: problemUrl) {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    VStack(spacing: 2) {
+                        Image(systemName: "doc.text.fill")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(colorThemeManager.current.accent)
+                        
+                        Text("View")
+                            .font(.custom("TTPhobosTrial-Bold", size: 9))
+                            .foregroundColor(colorThemeManager.current.accent)
+                    }
+                }
+                .buttonStyle(ScaleButtonStyle())
+            }
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(colorThemeManager.current.tabBar.opacity(0.8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(difficultyColor.opacity(0.2), lineWidth: 1)
+                )
+        )
+        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+    }
+    
+    private var difficultyText: String {
+        guard let rating = problem.rating else { return "Unrated" }
+        switch rating {
+        case 0..<1200: return "Beginner"
+        case 1200..<1600: return "Easy"
+        case 1600..<1900: return "Medium"
+        case 1900..<2100: return "Hard"
+        case 2100..<2400: return "Expert"
+        default: return "Master"
+        }
+    }
+}
+
 
 struct ContestDetailRow: View {
     let icon: String
@@ -1567,6 +2942,497 @@ struct ContestDetailRow: View {
             Spacer()
         }
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Enhanced Supporting Components
+struct ContestInfoSection<Content: View>: View {
+    let title: String
+    let icon: String
+    let color: Color
+    let content: Content
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    init(title: String, icon: String, color: Color, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.icon = icon
+        self.color = color
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                    .font(.system(size: 18, weight: .semibold))
+                
+                Text(title)
+                    .font(.custom("TTPhobosTrial-Bold", size: 18))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                Spacer()
+            }
+            
+            content
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(colorThemeManager.current.tabBar.opacity(0.6))
+                .stroke(color.opacity(0.2), lineWidth: 1)
+        )
+    }
+}
+
+struct ActionRow: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let color: Color
+    let url: String
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        if let validUrl = URL(string: url) {
+            Link(destination: validUrl) {
+                actionContent
+            }
+            .buttonStyle(.plain)
+        } else {
+            actionContent
+                .opacity(0.5)
+        }
+    }
+    
+    private var actionContent: some View {
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.system(size: 20, weight: .semibold))
+                .frame(width: 24)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.custom("TTPhobosTrial-Bold", size: 16))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                Text(subtitle)
+                    .font(.custom("TTPhobosTrial-Regular", size: 14))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                    .multilineTextAlignment(.leading)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .foregroundColor(colorThemeManager.current.text.opacity(0.4))
+                .font(.system(size: 14, weight: .medium))
+        }
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
+    }
+}
+
+struct StrategyActionRow: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let color: Color
+    let action: () -> Void
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                    .font(.system(size: 20, weight: .semibold))
+                    .frame(width: 24)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.custom("TTPhobosTrial-Bold", size: 16))
+                        .foregroundColor(colorThemeManager.current.text)
+                    
+                    Text(subtitle)
+                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                        .multilineTextAlignment(.leading)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.4))
+                    .font(.system(size: 14, weight: .medium))
+            }
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct PreparationActionRow: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let color: Color
+    let action: () -> Void
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                    .font(.system(size: 20, weight: .semibold))
+                    .frame(width: 24)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        Text(title)
+                            .font(.custom("TTPhobosTrial-Bold", size: 16))
+                            .foregroundColor(colorThemeManager.current.text)
+                        
+                        Text("PRO")
+                            .font(.custom("TTPhobosTrial-Bold", size: 10))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(color)
+                            )
+                    }
+                    
+                    Text(subtitle)
+                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                        .multilineTextAlignment(.leading)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.4))
+                    .font(.system(size: 14, weight: .medium))
+            }
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct NotificationActionRow: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let action: () -> Void
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @State private var isEnabled = false
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .foregroundColor(.red)
+                .font(.system(size: 20, weight: .semibold))
+                .frame(width: 24)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.custom("TTPhobosTrial-Bold", size: 16))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                Text(subtitle)
+                    .font(.custom("TTPhobosTrial-Regular", size: 14))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                    .multilineTextAlignment(.leading)
+            }
+            
+            Spacer()
+            
+            Toggle("", isOn: $isEnabled)
+                .toggleStyle(SwitchToggleStyle(tint: .red))
+                .onChange(of: isEnabled) { _, newValue in
+                    if newValue {
+                        action()
+                    }
+                }
+        }
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
+    }
+}
+
+struct StatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.system(size: 24, weight: .semibold))
+            
+            VStack(spacing: 4) {
+                Text(value)
+                    .font(.custom("TTPhobosTrial-Bold", size: 18))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                Text(title)
+                    .font(.custom("TTPhobosTrial-DemiBold", size: 12))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(color.opacity(0.1))
+                .stroke(color.opacity(0.3), lineWidth: 1)
+        )
+    }
+}
+
+struct TimeAnalysisRow: View {
+    let title: String
+    let value: String
+    let subtitle: String
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                
+                Text(value)
+                    .font(.custom("TTPhobosTrial-Bold", size: 16))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                Text(subtitle)
+                    .font(.custom("TTPhobosTrial-Regular", size: 12))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.5))
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 8)
+    }
+}
+
+struct QuickStatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.system(size: 18, weight: .semibold))
+            
+            Text(value)
+                .font(.custom("TTPhobosTrial-Bold", size: 16))
+                .foregroundColor(colorThemeManager.current.text)
+            
+            Text(title)
+                .font(.custom("TTPhobosTrial-DemiBold", size: 11))
+                .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(color.opacity(0.08))
+                .stroke(color.opacity(0.2), lineWidth: 1)
+        )
+    }
+}
+
+struct QuickLinkRow: View {
+    let title: String
+    let icon: String
+    let url: String
+    let color: Color
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        if let validUrl = URL(string: url) {
+            Link(destination: validUrl) {
+                linkContent
+            }
+            .buttonStyle(.plain)
+        } else {
+            linkContent
+                .opacity(0.5)
+        }
+    }
+    
+    private var linkContent: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.system(size: 16, weight: .medium))
+                .frame(width: 20)
+            
+            Text(title)
+                .font(.custom("TTPhobosTrial-DemiBold", size: 15))
+                .foregroundColor(colorThemeManager.current.text)
+            
+            Spacer()
+            
+            Image(systemName: "arrow.up.right")
+                .foregroundColor(colorThemeManager.current.text.opacity(0.4))
+                .font(.system(size: 12, weight: .medium))
+        }
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
+    }
+}
+
+struct MetricCard: View {
+    let title: String
+    let value: String
+    let subtitle: String
+    let icon: String
+    let color: Color
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.system(size: 20, weight: .semibold))
+            
+            VStack(spacing: 4) {
+                Text(value)
+                    .font(.custom("TTPhobosTrial-Bold", size: 16))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                Text(title)
+                    .font(.custom("TTPhobosTrial-DemiBold", size: 12))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                
+                Text(subtitle)
+                    .font(.custom("TTPhobosTrial-Regular", size: 10))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.5))
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(color.opacity(0.08))
+                .stroke(color.opacity(0.25), lineWidth: 1)
+        )
+    }
+}
+
+struct InsightCard: View {
+    let title: String
+    let description: String
+    let icon: String
+    let color: Color
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.system(size: 18, weight: .semibold))
+                .frame(width: 24)
+            
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
+                    .font(.custom("TTPhobosTrial-Bold", size: 16))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                Text(description)
+                    .font(.custom("TTPhobosTrial-Regular", size: 14))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 12)
+    }
+}
+
+struct HistoricalStatRow: View {
+    let title: String
+    let value: String
+    let description: String
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                
+                Text(value)
+                    .font(.custom("TTPhobosTrial-Bold", size: 16))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                Text(description)
+                    .font(.custom("TTPhobosTrial-Regular", size: 12))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.5))
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 8)
+    }
+}
+
+struct ContestStatusBadge: View {
+    let contest: CFContest
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(contest.statusEmoji)
+                .font(.system(size: 16))
+            
+            Text(contest.phaseDisplayText)
+                .font(.custom("TTPhobosTrial-Bold", size: 14))
+                .foregroundColor(contest.phaseColorValue)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(contest.phaseColorValue.opacity(0.1))
+                .stroke(contest.phaseColorValue.opacity(0.3), lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - Custom Button Style for Better UX
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 

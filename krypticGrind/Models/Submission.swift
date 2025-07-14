@@ -77,7 +77,7 @@ struct CFSubmission: Codable, Identifiable, Equatable {
     }
 }
 
-struct CFProblem: Codable, Equatable {
+struct CFProblem: Codable, Equatable, Identifiable {
     let contestId: Int?
     let problemsetName: String?
     let index: String
@@ -86,6 +86,10 @@ struct CFProblem: Codable, Equatable {
     let points: Double?
     let rating: Int?
     let tags: [String]
+    
+    var id: String {
+        "\(contestId ?? 0)_\(index)"
+    }
     
     // Computed properties
     var difficulty: String {
@@ -106,20 +110,4 @@ struct CFProblem: Codable, Equatable {
         }
         return "https://codeforces.com/problemset/problem/\(index)"
     }
-}
-
-struct CFParty: Codable, Equatable {
-    let contestId: Int?
-    let members: [CFMember]
-    let participantType: String
-    let teamId: Int?
-    let teamName: String?
-    let ghost: Bool
-    let room: Int?
-    let startTimeSeconds: Int?
-}
-
-struct CFMember: Codable, Equatable {
-    let handle: String
-    let name: String?
 }
