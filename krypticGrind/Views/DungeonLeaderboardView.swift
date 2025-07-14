@@ -60,9 +60,9 @@ struct DungeonLeaderboardView: View {
                     }
                 }
                 
-                Spacer().frame(height: 50)
+                Spacer().frame(height: 100)
             }
-            .padding(.top, 20)
+            .padding(.top, 12)
         }
         .refreshable {
             await leaderboardManager.refreshAllHandles()

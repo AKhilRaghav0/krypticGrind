@@ -65,9 +65,9 @@ struct DungeonPracticeView: View {
                 CombatHistoryCard()
                     .padding(.horizontal, 20)
                 
-                Spacer().frame(height: 50)
+                Spacer().frame(height: 100)
             }
-            .padding(.top, 20)
+            .padding(.top, 12)
         }
         .task {
             if let handle = UserDefaults.standard.savedHandle {

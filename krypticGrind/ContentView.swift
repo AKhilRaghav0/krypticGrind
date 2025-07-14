@@ -112,12 +112,14 @@ struct PracticeAndLeaderboardView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Dungeon Header
+                    // Dungeon Header with proper safe area
                     DungeonHeader(selectedTab: $selectedTab)
                         .padding(.horizontal, 20)
                         .padding(.top, 16)
+                        .background(colorThemeManager.current.background)
+                        .zIndex(1)
                     
-                    // Content
+                    // Content with proper spacing
                     TabView(selection: $selectedTab) {
                         DungeonPracticeView()
                             .tag(DungeonTab.practice)
@@ -126,10 +128,12 @@ struct PracticeAndLeaderboardView: View {
                             .tag(DungeonTab.leaderboard)
                     }
                     .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                    .clipped()
                 }
             }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarHidden(true)
         }
         .tint(colorThemeManager.current.accent)
     }
@@ -146,6 +150,7 @@ struct DungeonHeader: View {
             Text("The Dungeon")
                 .font(.custom("TTPhobosTrial-Bold", size: 28))
                 .foregroundColor(colorThemeManager.current.text)
+                .padding(.top, 8) // Add safe area padding
             
             // Tab Selector with Sliding Glass Effect
             ZStack {
