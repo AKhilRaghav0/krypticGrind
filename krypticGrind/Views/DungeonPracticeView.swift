@@ -90,9 +90,7 @@ struct QuestSelector: View {
                         quest: quest,
                         isSelected: selectedQuest == quest,
                         action: {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                selectedQuest = quest
-                            }
+                            selectedQuest = quest
                         }
                     )
                 }
@@ -110,14 +108,19 @@ struct QuestTab: View {
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7, blendDuration: 0)) {
+                action()
+            }
+        }) {
             VStack(spacing: 8) {
                 Text(quest.icon)
-                    .font(.system(size: 20))
+                    .font(.system(size: isSelected ? 22 : 20))
+                    .scaleEffect(isSelected ? 1.1 : 1.0)
                 
                 VStack(spacing: 4) {
                     Text(quest.rawValue)
-                        .font(.custom("TTPhobosTrial-Bold", size: 14))
+                        .font(.custom("TTPhobosTrial-Bold", size: isSelected ? 15 : 14))
                         .foregroundColor(
                             isSelected ? colorThemeManager.current.text : colorThemeManager.current.text.opacity(0.7)
                         )
@@ -133,24 +136,70 @@ struct QuestTab: View {
             .padding(.vertical, 16)
             .padding(.horizontal, 12)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        isSelected ? 
-                        colorThemeManager.current.tabBar : 
-                        colorThemeManager.current.tabBar.opacity(0.5)
-                    )
-                    .stroke(
-                        isSelected ? colorThemeManager.current.accent.opacity(0.3) : Color.clear,
-                        lineWidth: isSelected ? 1 : 0
-                    )
-                    .shadow(
-                        color: isSelected ? colorThemeManager.current.accent.opacity(0.1) : Color.clear,
-                        radius: isSelected ? 6 : 0,
-                        y: isSelected ? 2 : 0
-                    )
+                ZStack {
+                    // Base background
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(
+                            isSelected ? 
+                            colorThemeManager.current.tabBar : 
+                            colorThemeManager.current.tabBar.opacity(0.5)
+                        )
+                    
+                    if isSelected {
+                        // Glass effect overlay for selected tab
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        colorThemeManager.current.tabBar.opacity(0.3),
+                                        colorThemeManager.current.tabBar.opacity(0.1)
+                                    ]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [
+                                                colorThemeManager.current.accent.opacity(0.4),
+                                                colorThemeManager.current.accent.opacity(0.1)
+                                            ]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 1.5
+                                    )
+                            )
+                            .overlay(
+                                // Glass shine
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(
+                                        LinearGradient(
+                                            gradient: Gradient(stops: [
+                                                .init(color: .white.opacity(0.2), location: 0),
+                                                .init(color: .white.opacity(0.05), location: 0.3),
+                                                .init(color: .clear, location: 0.7),
+                                                .init(color: .white.opacity(0.05), location: 1)
+                                            ]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                            )
+                            .shadow(color: colorThemeManager.current.accent.opacity(0.2), radius: 8, x: 0, y: 2)
+                    } else {
+                        // Simple border for unselected
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(colorThemeManager.current.accent.opacity(0.1), lineWidth: 0.5)
+                    }
+                }
             )
         }
         .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isSelected ? 1.02 : 1.0)
+        .animation(.spring(response: 0.4, dampingFraction: 0.7, blendDuration: 0), value: isSelected)
     }
 }
 

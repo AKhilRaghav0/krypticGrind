@@ -147,50 +147,97 @@ struct DungeonHeader: View {
                 .font(.custom("TTPhobosTrial-Bold", size: 28))
                 .foregroundColor(colorThemeManager.current.text)
             
-            // Tab Selector
-            HStack(spacing: 0) {
-                ForEach(PracticeAndLeaderboardView.DungeonTab.allCases, id: \.self) { tab in
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            selectedTab = tab
-                        }
-                    }) {
-                        VStack(spacing: 8) {
-                            Text(tab.icon)
-                                .font(.system(size: 24))
-                            
-                            Text(tab.dungeonTitle)
-                                .font(.custom("TTPhobosTrial-DemiBold", size: 16))
-                                .foregroundColor(
-                                    selectedTab == tab ? 
-                                    colorThemeManager.current.text : 
-                                    colorThemeManager.current.text.opacity(0.6)
-                                )
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(
-                                    selectedTab == tab ? 
-                                    colorThemeManager.current.tabBar : 
-                                    Color.clear
-                                )
-                                .shadow(
-                                    color: selectedTab == tab ? colorThemeManager.current.accent.opacity(0.1) : Color.clear,
-                                    radius: selectedTab == tab ? 8 : 0,
-                                    y: selectedTab == tab ? 2 : 0
-                                )
-                        )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-            }
-            .background(
+            // Tab Selector with Sliding Glass Effect
+            ZStack {
+                // Background container
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(colorThemeManager.current.tabBar.opacity(0.3))
                     .stroke(colorThemeManager.current.accent.opacity(0.2), lineWidth: 1)
-            )
+                
+                // Sliding glass background
+                GeometryReader { geometry in
+                    let tabWidth = geometry.size.width / CGFloat(PracticeAndLeaderboardView.DungeonTab.allCases.count)
+                    let selectedIndex = PracticeAndLeaderboardView.DungeonTab.allCases.firstIndex(of: selectedTab) ?? 0
+                    
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    colorThemeManager.current.tabBar.opacity(0.8),
+                                    colorThemeManager.current.tabBar.opacity(0.6)
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            colorThemeManager.current.accent.opacity(0.4),
+                                            colorThemeManager.current.accent.opacity(0.1)
+                                        ]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1.5
+                                )
+                        )
+                        .overlay(
+                            // Glass shine effect
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        gradient: Gradient(stops: [
+                                            .init(color: .white.opacity(0.3), location: 0),
+                                            .init(color: .white.opacity(0.1), location: 0.3),
+                                            .init(color: .clear, location: 0.7),
+                                            .init(color: .white.opacity(0.1), location: 1)
+                                        ]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        )
+                        .frame(width: tabWidth - 8)
+                        .offset(x: CGFloat(selectedIndex) * tabWidth + 4)
+                        .shadow(color: colorThemeManager.current.accent.opacity(0.3), radius: 8, x: 0, y: 2)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0), value: selectedTab)
+                }
+                
+                // Tab buttons
+                HStack(spacing: 0) {
+                    ForEach(PracticeAndLeaderboardView.DungeonTab.allCases, id: \.self) { tab in
+                        Button(action: {
+                            withAnimation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0)) {
+                                selectedTab = tab
+                            }
+                        }) {
+                            VStack(spacing: 8) {
+                                Text(tab.icon)
+                                    .font(.system(size: selectedTab == tab ? 26 : 24))
+                                    .scaleEffect(selectedTab == tab ? 1.1 : 1.0)
+                                
+                                Text(tab.dungeonTitle)
+                                    .font(.custom("TTPhobosTrial-DemiBold", size: selectedTab == tab ? 17 : 16))
+                                    .foregroundColor(
+                                        selectedTab == tab ? 
+                                        colorThemeManager.current.text : 
+                                        colorThemeManager.current.text.opacity(0.6)
+                                    )
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .animation(.spring(response: 0.4, dampingFraction: 0.7, blendDuration: 0), value: selectedTab)
+                    }
+                }
+            }
+            .frame(height: 80)
+            .padding(.horizontal, 4)
         }
     }
 }
