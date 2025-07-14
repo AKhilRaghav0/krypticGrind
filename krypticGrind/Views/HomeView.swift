@@ -831,6 +831,8 @@ struct StreakCard: View {
         }
     }
     
+    /// Calculates the user's current daily problem-solving streak based on accepted submissions within the last 30 days.
+    /// - Returns: The number of consecutive days, up to 30, with at least one accepted submission per day, counting backward from today.
     private func calculateCurrentStreak() -> Int {
         let calendar = Calendar.current
         var streak = 0
@@ -1045,6 +1047,8 @@ struct AISuggestionsCard: View {
         }
     }
     
+    /// Asynchronously generates personalized AI suggestions for the user based on recent submission data and user statistics.
+    /// Gathers metrics such as acceptance rate, most used language, top problem topics, current streak, and weekly activity, then requests suggestions from the AI service.
     private func generateSuggestions() async {
         let acceptedSubmissions = cfService.recentSubmissions.filter { $0.isAccepted }
         let totalSubmissions = cfService.recentSubmissions.count
@@ -1074,6 +1078,8 @@ struct AISuggestionsCard: View {
         )
     }
     
+    /// Calculates the user's current daily accepted submission streak, counting consecutive days up to 30 where at least one accepted submission was made.
+    /// - Returns: The number of consecutive days, including today, with at least one accepted submission.
     private func calculateCurrentStreak() -> Int {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -1157,6 +1163,10 @@ struct SuggestionRow: View {
 // MARK: - Scroll Offset Preference Key
 struct ScrollOffsetPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
+    /// Updates the preference value with the next reported scroll offset.
+    /// - Parameters:
+    ///   - value: The current accumulated scroll offset value.
+    ///   - nextValue: A closure that returns the next scroll offset value to use.
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
     }

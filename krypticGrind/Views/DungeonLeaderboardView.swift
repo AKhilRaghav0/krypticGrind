@@ -594,6 +594,9 @@ struct DungeonAddHandleSheet: View {
         }
     }
     
+    /// Attempts to add a new handle to the leaderboard asynchronously.
+    /// 
+    /// Validates the input, sets loading state, and updates the UI upon success or failure. On failure, displays an error message.
     private func addHandle() {
         guard !newHandle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         

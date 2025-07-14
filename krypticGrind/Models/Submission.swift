@@ -27,7 +27,11 @@ struct CFSubmission: Codable, Identifiable, Equatable {
     let timeConsumedMillis: Int
     let memoryConsumedBytes: Int
     
-    // Equatable conformance
+    /// Determines whether two `CFSubmission` instances are equal based on creation time, contest ID, and problem ID.
+    /// - Parameters:
+    ///   - lhs: The first submission to compare.
+    ///   - rhs: The second submission to compare.
+    /// - Returns: `true` if both submissions have the same creation time, contest ID, and problem ID; otherwise, `false`.
     static func == (lhs: CFSubmission, rhs: CFSubmission) -> Bool {
         return lhs.creationTimeSeconds == rhs.creationTimeSeconds &&
                lhs.contestId == rhs.contestId &&

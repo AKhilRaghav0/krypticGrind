@@ -109,6 +109,9 @@ extension Color {
     static let rtePurple = Color.purple
     static let ceGray = Color.gray
     
+    /// Returns a color corresponding to a given rating value, mapping rating ranges to standard SwiftUI colors.
+    /// - Parameter rating: The rating value to evaluate.
+    /// - Returns: A color representing the rating tier.
     static func ratingColor(for rating: Int) -> Color {
         switch rating {
         case 0..<1200: return .gray
@@ -123,6 +126,9 @@ extension Color {
         }
     }
     
+    /// Returns a color corresponding to the given verdict string.
+    /// - Parameter verdict: The verdict code to evaluate.
+    /// - Returns: A color representing the verdict type, such as green for "OK", red for "WRONG_ANSWER", orange for time or memory limits, purple for runtime errors, gray for compilation errors, and blue for others.
     static func verdictColor(for verdict: String) -> Color {
         switch verdict {
         case "OK": return .green
@@ -329,6 +335,7 @@ extension Array where Element == CFSubmission {
         }
     }
     
+    /// Returns an array of submissions that have been accepted.
     func acceptedSubmissions() -> [CFSubmission] {
         return self.filter { $0.isAccepted }
     }
@@ -336,6 +343,9 @@ extension Array where Element == CFSubmission {
 
 // MARK: - Array Extensions for Threading
 extension Array {
+    /// Splits the array into subarrays of the specified size.
+    /// - Parameter size: The maximum number of elements in each subarray.
+    /// - Returns: An array of subarrays, each containing up to `size` elements from the original array. The last subarray may contain fewer elements if the array cannot be evenly divided.
     func chunked(into size: Int) -> [[Element]] {
         return stride(from: 0, to: count, by: size).map {
             Array(self[$0..<Swift.min($0 + size, count)])

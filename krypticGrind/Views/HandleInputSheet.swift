@@ -238,6 +238,7 @@ struct HandleInputSheet: View {
         return !trimmed.isEmpty && !isValidating
     }
     
+    /// Returns the appropriate label for the submit button based on the current validation state.
     private func getButtonText() -> String {
         if isValidating {
             return "Validating..."
@@ -248,6 +249,9 @@ struct HandleInputSheet: View {
         }
     }
     
+    /// Saves the trimmed handle input and proceeds without validation.
+    /// 
+    /// If the input is not empty after trimming, it is saved to persistent storage and the submission callback is triggered.
     private func continueAnyway() {
         let trimmedHandle = localInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedHandle.isEmpty else { return }
@@ -260,6 +264,9 @@ struct HandleInputSheet: View {
         onSubmit()
     }
     
+    /// Initiates validation of the entered Codeforces handle, saving it immediately and updating UI state based on validation results.
+    /// 
+    /// Trims and saves the handle to persistent storage and the binding, then asynchronously validates the handle using the Codeforces service. Updates validation state flags to control UI feedback. If validation succeeds, triggers the submission callback after a short delay; if validation fails or takes too long, enables the option to continue without validation.
     private func submitHandle() {
         let trimmedHandle = localInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedHandle.isEmpty else { return }

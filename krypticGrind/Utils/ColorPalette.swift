@@ -110,15 +110,21 @@ class ColorThemeManager: ObservableObject {
 
     var current: ColorTheme { themes[currentThemeIndex % themes.count] }
 
+    /// Advances to the next color theme in the list, cycling back to the first theme if at the end.
     func nextTheme() {
         currentThemeIndex = (currentThemeIndex + 1) % themes.count
     }
     
+    /// Sets the current theme to the theme at the specified index if the index is valid.
+    /// - Parameter index: The index of the theme to activate. Indices outside the valid range are ignored.
     func setTheme(index: Int) {
         guard index >= 0 && index < themes.count else { return }
         currentThemeIndex = index
     }
     
+    /// Returns the color theme at the specified index if it exists.
+    /// - Parameter index: The index of the desired theme.
+    /// - Returns: The `ColorTheme` at the given index, or `nil` if the index is out of bounds.
     func getTheme(at index: Int) -> ColorTheme? {
         guard index >= 0 && index < themes.count else { return nil }
         return themes[index]

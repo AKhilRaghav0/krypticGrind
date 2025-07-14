@@ -440,6 +440,9 @@ struct SkillTreeChart: View {
         .padding(.vertical, 8)
     }
     
+    /// Returns an emoji icon representing the given problem tag.
+    /// - Parameter tag: The problem tag to map to an icon.
+    /// - Returns: An emoji string corresponding to the tag, or a default icon if the tag is unrecognized.
     private func getSkillIcon(for tag: String) -> String {
         switch tag.lowercased() {
         case "implementation": return "🛠️"
@@ -453,6 +456,9 @@ struct SkillTreeChart: View {
         }
     }
     
+    /// Returns a color from a predefined palette based on the given index, cycling through the palette if the index exceeds its length.
+    /// - Parameter index: The index used to select a color.
+    /// - Returns: A `Color` corresponding to the index from the palette.
     private func getSkillColor(for index: Int) -> Color {
         let colors: [Color] = [.purple, .blue, .green, .orange, .red]
         return colors[index % colors.count]
@@ -511,6 +517,9 @@ struct WeaponMasteryChart: View {
         .padding(.vertical, 8)
     }
     
+    /// Returns an emoji icon representing the given programming language.
+    /// - Parameter language: The name of the programming language.
+    /// - Returns: An emoji symbolizing the specified language, or a default icon if not recognized.
     private func getWeaponIcon(for language: String) -> String {
         switch language.lowercased() {
         case let lang where lang.contains("python"): return "🐍"
@@ -523,6 +532,9 @@ struct WeaponMasteryChart: View {
         }
     }
     
+    /// Returns the mastery level (1–5) based on the provided count of submissions.
+    /// - Parameter count: The number of submissions for a programming language.
+    /// - Returns: An integer from 1 to 5 representing the mastery level, with higher levels for greater counts.
     private func getMasteryLevel(count: Int) -> Int {
         switch count {
         case 0...5: return 1
@@ -582,6 +594,9 @@ struct BattleResultsChart: View {
         .padding(.vertical, 8)
     }
     
+    /// Returns an emoji icon representing the given submission verdict.
+    /// - Parameter verdict: The verdict string to map to an icon.
+    /// - Returns: An emoji corresponding to the verdict type.
     private func getBattleIcon(for verdict: String) -> String {
         switch verdict {
         case "OK", "ACCEPTED": return "🏆"
@@ -593,6 +608,9 @@ struct BattleResultsChart: View {
         }
     }
     
+    /// Returns a user-friendly battle result description for a given submission verdict.
+    /// - Parameter verdict: The verdict string from a submission.
+    /// - Returns: A descriptive label representing the outcome, such as "Victory" or "Defeated". If the verdict is unrecognized, returns the original verdict string.
     private func getBattleResult(for verdict: String) -> String {
         switch verdict {
         case "OK", "ACCEPTED": return "Victory"
@@ -604,6 +622,9 @@ struct BattleResultsChart: View {
         }
     }
     
+    /// Returns a color representing the outcome of a submission based on its verdict.
+    /// - Parameter verdict: The verdict string of the submission.
+    /// - Returns: A color corresponding to the verdict type (e.g., green for accepted, red for wrong answer).
     private func getBattleColor(for verdict: String) -> Color {
         switch verdict {
         case "OK", "ACCEPTED": return .green
@@ -659,6 +680,9 @@ struct ChallengeLevelChart: View {
         .padding(.vertical, 8)
     }
     
+    /// Returns the difficulty range label corresponding to a given problem rating.
+    /// - Parameter rating: The problem's rating value.
+    /// - Returns: A string representing the difficulty category (e.g., "Novice", "Expert") for the specified rating.
     private func getDifficultyRange(rating: Int) -> String {
         switch rating {
         case 0...1199: return "Novice"
@@ -671,6 +695,9 @@ struct ChallengeLevelChart: View {
         }
     }
     
+    /// Returns the emoji icon associated with a given difficulty level label.
+    /// - Parameter difficulty: The difficulty level as a string (e.g., "Novice", "Expert").
+    /// - Returns: An emoji representing the specified difficulty, or a default icon if the label is unrecognized.
     private func getDifficultyIcon(for difficulty: String) -> String {
         switch difficulty {
         case "Novice": return "🌱"
@@ -684,6 +711,9 @@ struct ChallengeLevelChart: View {
         }
     }
     
+    /// Returns a color associated with the specified difficulty level.
+    /// - Parameter difficulty: The difficulty label (e.g., "Novice", "Expert").
+    /// - Returns: The corresponding color for the given difficulty, or gray if the label is unrecognized.
     private func getDifficultyColor(for difficulty: String) -> Color {
         switch difficulty {
         case "Novice": return .green
@@ -1012,6 +1042,8 @@ struct SkillProgressionCard: View {
         }
     }
     
+    /// Asynchronously loads a personalized practice suggestion using recent accepted submissions and updates the AI suggestion state.
+    /// If fetching the suggestion fails, sets a default suggestion based on weakest topics and recent difficulty range.
     private func loadAISuggestion() {
         guard !isLoadingSuggestion else { return }
         
@@ -1171,6 +1203,9 @@ struct BattleHistoryRow: View {
         )
     }
     
+    /// Returns a human-readable string representing the time elapsed since the given date, formatted as minutes, hours, or days ago.
+    /// - Parameter date: The date to compare against the current time.
+    /// - Returns: A string such as "5m ago", "2h ago", or "3d ago" indicating the elapsed time.
     private func timeAgoString(from date: Date) -> String {
         let now = Date()
         let timeInterval = now.timeIntervalSince(date)

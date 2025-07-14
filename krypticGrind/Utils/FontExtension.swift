@@ -1,6 +1,12 @@
 import SwiftUI
 
 extension Font {
+    /// Returns a custom Font instance using the TTPhobosTrial font family with the specified size, weight, and italic style.
+    /// - Parameters:
+    ///   - size: The font size.
+    ///   - weight: The font weight. Defaults to `.regular`.
+    ///   - italic: Whether to use the italic variant. Defaults to `false`.
+    /// - Returns: A Font configured with the appropriate TTPhobosTrial variant.
     static func ttphobos(size: CGFloat, weight: Font.Weight = .regular, italic: Bool = false) -> Font {
         switch (weight, italic) {
         case (.bold, true):
@@ -36,6 +42,9 @@ extension Font {
 
 // Extension to register fonts
 extension Font {
+    /// Registers all `.otf` font files located in the "Fonts" subdirectory of the main app bundle with the system font manager.
+    /// 
+    /// This enables the use of custom fonts within the app at runtime. Prints diagnostic messages for success or failure of each font registration.
     static func registerFonts() {
         guard let fontURLs = Bundle.main.urls(forResourcesWithExtension: "otf", subdirectory: "Fonts") else {
             print("Failed to find font files")

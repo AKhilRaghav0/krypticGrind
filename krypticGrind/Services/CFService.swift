@@ -88,7 +88,10 @@ class CFService: ObservableObject {
             .store(in: &cancellables)
     }
     
-    // MARK: - User Info (improved with background threading)
+    /// Fetches user information for the specified Codeforces handle and updates the current user state.
+    /// - Parameter handle: The Codeforces user handle to look up.
+    /// 
+    /// Initiates a network request to retrieve user details. Updates loading and error states on the main thread. If the user is found, updates the current user and saves the handle to persistent storage. Sets an error message if the user is not found or if a network error occurs.
     func fetchUserInfo(handle: String) async {
         logger.info("🔍 Fetching user info for handle: \(handle)")
         
@@ -139,7 +142,10 @@ class CFService: ObservableObject {
         }
     }
     
-    // MARK: - Rating History (with background threading)
+    /// Fetches and updates the user's rating history from the Codeforces API asynchronously.
+    /// - Parameter handle: The Codeforces user handle whose rating history is to be retrieved.
+    /// 
+    /// On success, updates the `ratingHistory` property with the user's rating changes sorted by update time. On failure, sets an error message.
     func fetchRatingHistory(handle: String) async {
         logger.info("📈 Fetching rating history for: \(handle)")
         
@@ -177,7 +183,12 @@ class CFService: ObservableObject {
         }
     }
     
-    // MARK: - User Submissions (with background threading)
+    /// Fetches a user's recent submissions from the Codeforces API and updates the published property with the results.
+    /// - Parameters:
+    ///   - handle: The Codeforces user handle.
+    ///   - count: The number of recent submissions to fetch (default is 50).
+    ///
+    /// On success, updates `recentSubmissions` with the most recent submissions sorted by creation time. On failure, sets an error message.
     func fetchUserSubmissions(handle: String, count: Int = 50) async {
         logger.info("📝 Fetching \(count) submissions for: \(handle)")
         
@@ -215,7 +226,8 @@ class CFService: ObservableObject {
         }
     }
     
-    // MARK: - Contest List (with fallback and retry)
+    /// Fetches the list of upcoming Codeforces contests and updates the published property.
+    /// - Note: On success, updates and caches up to 10 upcoming contests. If the API call fails or returns an error status, attempts to load cached contest data. Sets an appropriate error message for various failure scenarios.
     func fetchContests() async {
         logger.info("🏆 Fetching contests list")
         
@@ -295,7 +307,8 @@ class CFService: ObservableObject {
         }
     }
     
-    // MARK: - Cache Helper
+    /// Loads upcoming contests from cache if available and not older than 24 hours.
+    /// Updates the `upcomingContests` property on the main actor if valid cached data is found.
     private func loadCachedContestsIfAvailable() async {
         logger.info("📦 Attempting to load cached contests")
         
@@ -325,7 +338,8 @@ class CFService: ObservableObject {
         }
     }
     
-    // MARK: - Problem Set (with background threading)
+    /// Fetches the complete list of problems from the Codeforces API and updates the published problems property.
+    /// Updates the error property if the request fails.
     func fetchProblems() async {
         do {
             let url = URL(string: "\(baseURL)/problemset.problems")!
@@ -348,7 +362,10 @@ class CFService: ObservableObject {
         }
     }
     
-    // MARK: - Fetch All User Data (optimized with concurrent operations)
+    /// Fetches all user-related data from the Codeforces API for the given handle, including user info, rating history, recent submissions, and upcoming contests.
+    /// - Parameter handle: The Codeforces user handle to fetch data for.
+    /// 
+    /// Initiates user info retrieval first; if the user exists, concurrently fetches rating history, submissions (up to 100), and contests. Updates loading state on the main thread before and after the operation.
     func fetchAllUserData(handle: String) async {
         // Update loading state on main thread
         await MainActor.run {
@@ -379,7 +396,9 @@ class CFService: ObservableObject {
         }
     }
     
-    // MARK: - Refresh Data (with concurrent operations)
+    /// Refreshes all user-related data using the saved handle from user defaults.
+    /// 
+    /// If a handle is stored, concurrently fetches user info, rating history, submissions, and upcoming contests.
     func refreshData() async {
         guard let handle = UserDefaults.standard.string(forKey: "saved_handle") else { return }
         
@@ -410,6 +429,7 @@ class CFService: ObservableObject {
         return langCounts
     }
     
+    /// Returns a dictionary mapping verdict display texts to their occurrence counts in recent submissions.
     func getVerdictStatistics() -> [String: Int] {
         var verdictCounts: [String: Int] = [:]
         
@@ -421,7 +441,8 @@ class CFService: ObservableObject {
         return verdictCounts
     }
     
-    // MARK: - Async Analytics (for heavy computation)
+    /// Asynchronously computes the count of accepted submissions for each problem tag.
+    /// - Returns: A dictionary mapping each tag to the number of accepted submissions with that tag.
     func getTagStatisticsAsync() async -> [String: Int] {
         return await Task.detached(priority: .userInitiated) {
             var tagCounts: [String: Int] = [:]
@@ -436,6 +457,8 @@ class CFService: ObservableObject {
         }.value
     }
     
+    /// Asynchronously computes the count of each programming language used in recent submissions.
+    /// - Returns: A dictionary mapping programming language names to their usage counts.
     func getLanguageStatisticsAsync() async -> [String: Int] {
         return await Task.detached(priority: .userInitiated) {
             var langCounts: [String: Int] = [:]
@@ -448,6 +471,8 @@ class CFService: ObservableObject {
         }.value
     }
     
+    /// Asynchronously computes the count of each verdict type from recent submissions.
+    /// - Returns: A dictionary mapping verdict display texts to their occurrence counts.
     func getVerdictStatisticsAsync() async -> [String: Int] {
         return await Task.detached(priority: .userInitiated) {
             var verdictCounts: [String: Int] = [:]
@@ -461,6 +486,8 @@ class CFService: ObservableObject {
         }.value
     }
     
+    /// Asynchronously computes the count of accepted submissions for each problem difficulty.
+    /// - Returns: A dictionary mapping problem difficulty levels to the number of accepted submissions for each.
     func getDifficultyStatisticsAsync() async -> [String: Int] {
         return await Task.detached(priority: .userInitiated) {
             var difficultyCounts: [String: Int] = [:]
@@ -474,7 +501,7 @@ class CFService: ObservableObject {
         }.value
     }
     
-    // MARK: - Goal Tracking
+    /// Returns the number of submissions made today based on the user's recent submissions.
     func getTodaysSubmissionCount() -> Int {
         let today = Calendar.current.startOfDay(for: Date())
         let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
@@ -573,6 +600,13 @@ extension CFService {
 
 // MARK: - Helper Methods
 extension CFService {
+    /// Performs an HTTP GET request to the specified URL, attempting multiple base URLs and retrying on failure with exponential backoff.
+    /// - Parameters:
+    ///   - url: The endpoint URL string to request.
+    ///   - responseType: The expected Codable type for decoding the JSON response.
+    ///   - retries: The number of retry attempts per base URL (default is 3).
+    /// - Returns: The decoded response object of the specified type.
+    /// - Throws: An error if all attempts fail, if the network is unavailable, or if the response cannot be decoded.
     private func performAPIRequest<T: Codable>(
         url: String,
         responseType: T.Type,
@@ -694,6 +728,9 @@ extension CFService {
 
 // MARK: - Background Data Processing
 extension CFService {
+    /// Processes a list of submissions in parallel by chunking and sorting them by creation time in descending order.
+    /// - Parameter submissions: The array of submissions to process.
+    /// - Returns: A new array of submissions sorted by creation time, with processing performed concurrently for improved performance.
     private func processSubmissionsData(_ submissions: [CFSubmission]) async -> [CFSubmission] {
         return await withTaskGroup(of: [CFSubmission].self) { group in
             // Split submissions into chunks for parallel processing
@@ -719,6 +756,7 @@ extension CFService {
 
 // MARK: - Memory Management
 extension CFService {
+    /// Clears all cached data and resets published properties to their initial state on the main actor.
     func clearCache() {
         Task { @MainActor in
             recentSubmissions.removeAll()

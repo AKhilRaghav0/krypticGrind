@@ -896,6 +896,8 @@ struct PastConquestsView: View {
         }
     }
     
+    /// Asynchronously fetches the list of finished Codeforces contests and updates the local state with the 20 most recent ones.
+    /// Filters contests to include only those that have finished and sorts them by start time in descending order. Prints an error message if the fetch fails.
     private func loadFinishedContests() async {
         isLoading = true
         defer { isLoading = false }
@@ -1046,6 +1048,7 @@ struct BattleCard: View {
         }
     }
     
+    /// Starts a timer that updates the countdown to the contest start every minute.
     private func startCountdownTimer() {
         updateTimeUntilStart()
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
@@ -1053,6 +1056,8 @@ struct BattleCard: View {
         }
     }
     
+    /// Updates the `timeUntilStart` property with a formatted countdown string until the contest begins.
+    /// If the contest has already started, sets the message to indicate the battle has begun and invalidates the timer.
     private func updateTimeUntilStart() {
         guard let startDate = contest.startDate else {
             timeUntilStart = ""
@@ -1527,6 +1532,9 @@ struct BattleDetailsSheet: View {
         }
     }
     
+    /// Converts a duration in seconds to a human-readable string in hours and minutes.
+    /// - Parameter seconds: The duration in seconds.
+    /// - Returns: A string representing the duration, such as "2 hours 15 minutes", "1 hour", or "45 minutes".
     private func formatDuration(_ seconds: Int) -> String {
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
