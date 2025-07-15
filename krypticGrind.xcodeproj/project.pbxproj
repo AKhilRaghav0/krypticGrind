@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E92F26172E26123800AE4BAE /* AIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92F26162E26123800AE4BAE /* AIModels.swift */; };
 		E937A1322E1203EF00E3FCB5 /* ThemeSelectorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E937A1312E1203EF00E3FCB5 /* ThemeSelectorSheet.swift */; };
 		E93A8F5C2E13474A00873483 /* GeminiService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E93A8F5B2E13474A00873483 /* GeminiService.swift */; };
 		E93A8F5F2E1352DB00873483 /* AISuggestionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E93A8F5D2E1352DB00873483 /* AISuggestionsView.swift */; };
@@ -79,6 +80,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		E92F26162E26123800AE4BAE /* AIModels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AIModels.swift; sourceTree = "<group>"; };
 		E937A1312E1203EF00E3FCB5 /* ThemeSelectorSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThemeSelectorSheet.swift; sourceTree = "<group>"; };
 		E93A8F5B2E13474A00873483 /* GeminiService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeminiService.swift; sourceTree = "<group>"; };
 		E93A8F5D2E1352DB00873483 /* AISuggestionsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AISuggestionsView.swift; sourceTree = "<group>"; };
@@ -243,6 +245,7 @@
 		E953DE652E1160AD00CA247C /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				E92F26162E26123800AE4BAE /* AIModels.swift */,
 				E9BCD8672E24F3E5006E5419 /* ContestAnalytics.swift */,
 				E9BE03B32E13BADF00FF868F /* LeaderboardManager.swift */,
 				E9BE03B42E13BADF00FF868F /* ProblemNote.swift */,
@@ -411,6 +414,7 @@
 				E97245AE2E135F6100AE9379 /* NotificationManager.swift in Sources */,
 				E985EAEB2E231F3F00C54711 /* ColorPalette.swift in Sources */,
 				E953DE722E1160AD00CA247C /* Contest.swift in Sources */,
+				E92F26172E26123800AE4BAE /* AIModels.swift in Sources */,
 				E93A8F602E1352DB00873483 /* AIProblemSuggestionCard.swift in Sources */,
 				E9BE03B82E13BC1900FF868F /* LeaderboardView.swift in Sources */,
 				E953DE6A2E1160AD00CA247C /* HandleInputSheet.swift in Sources */,

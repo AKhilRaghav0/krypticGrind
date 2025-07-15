@@ -47,62 +47,7 @@ struct GeminiResponse: Codable {
     }
 }
 
-// MARK: - AI Suggestion Models
-struct AISuggestion {
-    let id = UUID()
-    let title: String
-    let description: String
-    let type: SuggestionType
-    let priority: Priority
-    let actionText: String
-    let actionURL: String?
-    
-    enum SuggestionType {
-        case practice, improvement, topic, contest, streak
-        
-        var icon: String {
-            switch self {
-            case .practice: return "book.fill"
-            case .improvement: return "chart.line.uptrend.xyaxis"
-            case .topic: return "tag.fill"
-            case .contest: return "trophy.fill"
-            case .streak: return "flame.fill"
-            }
-        }
-        
-        var color: String {
-            switch self {
-            case .practice: return "blue"
-            case .improvement: return "green"
-            case .topic: return "purple"
-            case .contest: return "orange"
-            case .streak: return "red"
-            }
-        }
-        
-        var displayText: String {
-            switch self {
-            case .practice: return "Practice"
-            case .improvement: return "Improvement"
-            case .topic: return "Topic"
-            case .contest: return "Contest"
-            case .streak: return "Streak"
-            }
-        }
-    }
-    
-    enum Priority: Int, CaseIterable {
-        case low = 1, medium = 2, high = 3
-        
-        var displayText: String {
-            switch self {
-            case .low: return "Low"
-            case .medium: return "Medium"
-            case .high: return "High"
-            }
-        }
-    }
-}
+
 
 // MARK: - Problem Recommendation Model
 struct ProblemRecommendation: Identifiable {
@@ -451,7 +396,7 @@ class GeminiService: ObservableObject {
                 var priority: AISuggestion.Priority = .medium
                 var title = ""
                 var description = ""
-                var action = ""
+                var actionText = ""
                 var url: String? = nil
                 
                 for line in lines {
@@ -478,14 +423,14 @@ class GeminiService: ObservableObject {
                     } else if line.hasPrefix("Description:") {
                         description = String(line.dropFirst(12)).trimmingCharacters(in: .whitespaces)
                     } else if line.hasPrefix("Action:") {
-                        action = String(line.dropFirst(7)).trimmingCharacters(in: .whitespaces)
+                        actionText = String(line.dropFirst(7)).trimmingCharacters(in: .whitespaces)
                     } else if line.hasPrefix("URL:") {
                         let urlString = String(line.dropFirst(4)).trimmingCharacters(in: .whitespaces)
                         url = urlString == "none" ? nil : urlString
                     }
                 }
                 
-                guard !title.isEmpty, !description.isEmpty, !action.isEmpty else {
+                guard !title.isEmpty, !description.isEmpty, !actionText.isEmpty else {
                     return nil
                 }
                 
@@ -494,7 +439,7 @@ class GeminiService: ObservableObject {
                     description: description,
                     type: type,
                     priority: priority,
-                    actionText: action,
+                    actionText: actionText,
                     actionURL: url
                 )
             }
@@ -804,17 +749,7 @@ class GeminiService: ObservableObject {
     }
 }
 
-// MARK: - User Stats Helper
-struct UserStats {
-    let totalSubmissions: Int
-    let acceptedSubmissions: Int
-    let acceptanceRate: Double
-    let mostUsedLanguage: String
-    let currentStreak: Int
-    let weeklySubmissions: Int
-    let topTopics: [String]
-    let recentPerformance: String
-}
+
 
 // MARK: - SUGGESTION: For best quota usage, use Gemini only to generate problem ideas (offline or cached),
 // fetch URLs/resources yourself using HTTP APIs or scraping, and pass only minimal context to Gemini.

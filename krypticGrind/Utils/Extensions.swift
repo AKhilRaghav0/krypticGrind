@@ -135,6 +135,9 @@ extension Color {
         }
     }
     
+    // MARK: - Additional Colors
+    static let gold = Color(red: 1.0, green: 0.84, blue: 0.0)
+    
     // MARK: - Hex Color Support
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -637,5 +640,41 @@ class ThemeManager: ObservableObject {
         }
         
         return isDark ? theme.darkColors : theme.lightColors
+    }
+}
+
+// MARK: - Button Styles
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Modern Button Style
+struct ModernButtonStyle: ButtonStyle {
+    let color: Color
+    let isSecondary: Bool
+    
+    init(color: Color = .blue, isSecondary: Bool = false) {
+        self.color = color
+        self.isSecondary = isSecondary
+    }
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundColor(isSecondary ? color : .white)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isSecondary ? color.opacity(0.1) : color)
+                    .stroke(isSecondary ? color : Color.clear, lineWidth: 1)
+            )
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }

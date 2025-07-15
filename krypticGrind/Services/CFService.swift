@@ -780,4 +780,11 @@ extension CFService {
             error = nil
         }
     }
+    
+    func clearAllData() {
+        clearCache()
+        // Also clear UserDefaults
+        UserDefaults.standard.removeObject(forKey: "saved_handle")
+        UserDefaults.standard.removeObject(forKey: "daily_goal")
+    }
 }
