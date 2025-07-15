@@ -47,11 +47,22 @@ struct SubmissionsView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Dungeon Title Bar
-                    DungeonTitleBar(
-                        title: "Battle Logs",
-                        subtitle: userSubtitle
-                    )
+                    // Simple Centered Title (blends with top)
+                    VStack(spacing: 0) {
+                        Spacer()
+                            .frame(height: 8) // Blend with safe area
+                        
+                        HStack {
+                            Spacer()
+                            Text("Battle Logs")
+                                .font(.custom("TTPhobosTrial-Bold", size: 20))
+                                .foregroundColor(colorThemeManager.current.textPrimary)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 16)
+                    }
+                    .background(colorThemeManager.current.background)
                     
                     ScrollView {
                         VStack(spacing: 20) {

@@ -28,6 +28,7 @@ struct ColorTheme: Identifiable, Equatable, Hashable {
     var successColor: Color { success ?? Color.green }
     var errorColor: Color { error ?? Color.red }
     var warning: Color { Color.orange }
+    var highlight: Color { accent.opacity(0.2) }
     
     // Hashable conformance
     func hash(into hasher: inout Hasher) {
