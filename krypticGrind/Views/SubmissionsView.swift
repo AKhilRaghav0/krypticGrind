@@ -221,7 +221,7 @@ struct BattleStatsDashboard: View {
                     title: "Victories",
                     value: "\(acceptedCount)",
                     subtitle: "Problems solved",
-                    color: colorThemeManager.current.success
+                    color: colorThemeManager.current.successColor
                 )
                 
                 BattleStatCard(

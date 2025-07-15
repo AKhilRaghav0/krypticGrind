@@ -468,7 +468,7 @@ struct PowerLevelBattleDetails: View {
                         Text("\(ratingChange.newRating - ratingChange.oldRating)")
                     }
                     .font(.custom("TTPhobosTrial-Bold", size: 10))
-                    .foregroundColor(ratingChange.newRating > ratingChange.oldRating ? colorThemeManager.current.success : colorThemeManager.current.error)
+                    .foregroundColor(ratingChange.newRating > ratingChange.oldRating ? colorThemeManager.current.successColor : colorThemeManager.current.errorColor)
                 }
             }
         }
@@ -627,8 +627,8 @@ struct AchievementCard: View {
         .padding(.vertical, 16)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(achievement.isUnlocked ? colorThemeManager.current.success.opacity(0.1) : colorThemeManager.current.surface.opacity(0.5))
-                .stroke(achievement.isUnlocked ? colorThemeManager.current.success.opacity(0.3) : colorThemeManager.current.divider, lineWidth: 1)
+                .fill(achievement.isUnlocked ? colorThemeManager.current.successColor.opacity(0.1) : colorThemeManager.current.surface.opacity(0.5))
+                .stroke(achievement.isUnlocked ? colorThemeManager.current.successColor.opacity(0.3) : colorThemeManager.current.divider, lineWidth: 1)
         )
         .scaleEffect(achievement.isUnlocked ? 1.0 : 0.95)
         .animation(.easeInOut(duration: 0.2), value: achievement.isUnlocked)
@@ -746,7 +746,7 @@ struct RatingHistoryCard: View {
                     Text("\(ratingChange.newRating - ratingChange.oldRating)")
                 }
                 .font(.custom("TTPhobosTrial-Bold", size: 10))
-                .foregroundColor(ratingChange.newRating > ratingChange.oldRating ? colorThemeManager.current.success : colorThemeManager.current.error)
+                .foregroundColor(ratingChange.newRating > ratingChange.oldRating ? colorThemeManager.current.successColor : colorThemeManager.current.errorColor)
             }
         }
         .padding(12)
