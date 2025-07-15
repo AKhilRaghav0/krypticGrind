@@ -7,13 +7,20 @@
 
 import SwiftUI
 
-struct SubmissionsView: View {
+struct SubmissionsView_DISABLED: View {
     @StateObject private var cfService = CFService.shared
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var selectedFilter: BattleFilter = .all
     @State private var searchText = ""
     @State private var filteredSubmissions: [CFSubmission] = []
     @State private var isLoading = false
+    @State private var currentPage = 0
+    @State private var isLoadingMore = false
+    @State private var hasMoreData = true
+    
+    // Performance optimization constants
+    private let pageSize = 20
+    private let maxCachedItems = 100
     
     enum BattleFilter: String, CaseIterable {
         case all = "All Battles"
@@ -65,33 +72,43 @@ struct SubmissionsView: View {
                     .background(colorThemeManager.current.background)
                     
                     ScrollView {
-                        VStack(spacing: 20) {
-                            // Battle Statistics Dashboard
+                        LazyVStack(spacing: 16) {
+                            // Lightweight Stats
                             if !cfService.recentSubmissions.isEmpty {
-                                BattleStatsDashboard(submissions: cfService.recentSubmissions)
-                                    .padding(.horizontal, 20)
-                                    .padding(.top, 20)
-                            }
-                            
-                            // Search and Filter Section
-                            VStack(spacing: 16) {
-                                BattleSearchBar(searchText: $searchText)
-                                    .padding(.horizontal, 20)
-                                
-                                BattleFilterTabs(selectedFilter: $selectedFilter)
+                                LightweightStatsRow()
                                     .padding(.horizontal, 20)
                             }
                             
-                            // Battle Logs List
-                            if isLoading {
-                                BattleLoadingView()
+                            // Simple Search and Filter - DISABLED FOR PERFORMANCE
+                            // VStack(spacing: 12) {
+                            //     LightweightSearchBar(searchText: $searchText)
+                            //         .padding(.horizontal, 20)
+                            //     
+                            //     LightweightFilterTabs(selectedFilter: $selectedFilter)
+                            // }
+                            
+                            // Simple Battle List
+                            if isLoading && currentPage == 0 {
+                                ProgressView("Loading battles...")
                                     .frame(height: 200)
-                            } else if filteredSubmissions.isEmpty {
-                                EmptyBattleLogsView(filter: selectedFilter)
-                                    .frame(height: 300)
+                            } else if filteredSubmissions.isEmpty && !isLoading {
+                                VStack(spacing: 16) {
+                                    Text("⚔️")
+                                        .font(.system(size: 48))
+                                        .opacity(0.5)
+                                    Text("No battles found")
+                                        .font(.custom("TTPhobosTrial-Regular", size: 16))
+                                        .foregroundColor(colorThemeManager.current.textSecondary)
+                                }
+                                .frame(height: 200)
                             } else {
-                                BattleLogsList(submissions: filteredSubmissions)
-                                    .padding(.horizontal, 20)
+                                LazyVStack(spacing: 12) {
+                                    ForEach(filteredSubmissions.prefix(50), id: \.id) { submission in
+                                        // LightweightBattleCard(submission: submission) - Disabled for performance
+                                        UltraLightweightBattleLogCard(submission: submission)
+                                            .padding(.horizontal, 20)
+                                    }
+                                }
                             }
                         }
                         .padding(.bottom, 100)
@@ -104,25 +121,66 @@ struct SubmissionsView: View {
         .environmentObject(colorThemeManager)
         .task {
             if let handle = UserDefaults.standard.savedHandle {
-                await cfService.fetchUserSubmissions(handle: handle, count: 100)
-                await filterSubmissions()
+                await loadInitialData(handle: handle)
             }
         }
         .onChange(of: selectedFilter) { _, _ in
-            Task {
-                await filterSubmissions()
-            }
+            resetAndFilter()
         }
         .onChange(of: searchText) { _, _ in
-            Task {
-                await filterSubmissions()
-            }
+            resetAndFilter()
         }
         .onChange(of: cfService.recentSubmissions) { _, _ in
-            Task {
-                await filterSubmissions()
-            }
+            resetAndFilter()
         }
+    }
+    
+    // MARK: - Optimized Data Loading Methods
+    
+    @MainActor
+    private func loadInitialData(handle: String) async {
+        isLoading = true
+        currentPage = 0
+        hasMoreData = true
+        
+        await cfService.fetchUserSubmissions(handle: handle, count: maxCachedItems)
+        await filterSubmissions()
+        
+        isLoading = false
+    }
+    
+    private func resetAndFilter() {
+        currentPage = 0
+        hasMoreData = true
+        Task {
+            await filterSubmissions()
+        }
+    }
+    
+    private func loadMoreSubmissions() {
+        guard !isLoadingMore && hasMoreData else { return }
+        
+        Task {
+            await loadMoreData()
+        }
+    }
+    
+    @MainActor
+    private func loadMoreData() async {
+        isLoadingMore = true
+        currentPage += 1
+        
+        // Simulate pagination - in a real app, this would fetch more data from the API
+        let startIndex = currentPage * pageSize
+        let endIndex = min(startIndex + pageSize, cfService.recentSubmissions.count)
+        
+        if startIndex >= cfService.recentSubmissions.count {
+            hasMoreData = false
+        } else {
+            await filterSubmissions()
+        }
+        
+        isLoadingMore = false
     }
     
     private var userSubtitle: String {
@@ -132,12 +190,14 @@ struct SubmissionsView: View {
         return "Combat History"
     }
     
-    // Async filtering to prevent UI hangs
+    // Async filtering to prevent UI hangs with pagination
     @MainActor
     private func filterSubmissions() async {
-        isLoading = true
+        if currentPage == 0 {
+            isLoading = true
+        }
         
-        let filtered = await Task.detached(priority: .userInitiated) { [cfService, selectedFilter, searchText] in
+        let filtered = await Task.detached(priority: .userInitiated) { [cfService, selectedFilter, searchText, currentPage, pageSize] in
             var submissions = cfService.recentSubmissions
             
             // Apply filter
@@ -152,19 +212,28 @@ struct SubmissionsView: View {
                 submissions = submissions.todaysSubmissions()
             }
             
-            // Apply search
+            // Apply search with optimized filtering
             if !searchText.isEmpty {
+                let lowercaseSearch = searchText.lowercased()
                 submissions = submissions.filter { submission in
-                    submission.problem.name.localizedCaseInsensitiveContains(searchText) ||
-                    submission.problem.index.localizedCaseInsensitiveContains(searchText) ||
-                    submission.programmingLanguage.localizedCaseInsensitiveContains(searchText)
+                    submission.problem.name.lowercased().contains(lowercaseSearch) ||
+                    submission.problem.index.lowercased().contains(lowercaseSearch) ||
+                    submission.programmingLanguage.lowercased().contains(lowercaseSearch)
                 }
             }
             
-            return submissions
+            // Apply pagination
+            let startIndex = 0
+            let endIndex = min((currentPage + 1) * pageSize, submissions.count)
+            return Array(submissions[startIndex..<endIndex])
         }.value
         
-        filteredSubmissions = filtered
+        if currentPage == 0 {
+            filteredSubmissions = filtered
+        } else {
+            filteredSubmissions.append(contentsOf: filtered.suffix(from: currentPage * pageSize))
+        }
+        
         isLoading = false
     }
 }
@@ -215,7 +284,6 @@ struct DungeonTitleBar: View {
 struct BattleStatsDashboard: View {
     let submissions: [CFSubmission]
     @EnvironmentObject var colorThemeManager: ColorThemeManager
-    @State private var isAnimating = false
     
     var body: some View {
         VStack(spacing: 20) {
@@ -251,8 +319,6 @@ struct BattleStatsDashboard: View {
                     
                     Text("📊")
                         .font(.system(size: 18))
-                        .scaleEffect(isAnimating ? 1.1 : 1.0)
-                        .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: isAnimating)
                 }
                 
                 Text("Battle Statistics")
@@ -355,9 +421,6 @@ struct BattleStatsDashboard: View {
         }
         .shadow(color: colorThemeManager.current.accent.opacity(0.1), radius: 12, x: 0, y: 4)
         .shadow(color: .black.opacity(0.05), radius: 20, x: 0, y: 8)
-        .onAppear {
-            isAnimating = true
-        }
     }
     
     private var acceptedCount: Int {
@@ -383,7 +446,6 @@ struct BattleStatCard: View {
     let color: Color
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var isHovered = false
-    @State private var animationOffset = 0.0
     
     var body: some View {
         VStack(spacing: 12) {
@@ -419,12 +481,6 @@ struct BattleStatCard: View {
                 
                 Text(icon)
                     .font(.system(size: 20))
-                    .offset(y: animationOffset)
-                    .animation(
-                        .easeInOut(duration: 1.5)
-                        .repeatForever(autoreverses: true),
-                        value: animationOffset
-                    )
             }
             
             // Value with gradient text
@@ -511,9 +567,6 @@ struct BattleStatCard: View {
                     isHovered = false
                 }
             }
-        }
-        .onAppear {
-            animationOffset = -2
         }
     }
 }
@@ -633,13 +686,13 @@ struct BattleSearchBar: View {
 
 // MARK: - Battle Filter Tabs
 struct BattleFilterTabs: View {
-    @Binding var selectedFilter: SubmissionsView.BattleFilter
+    @Binding var selectedFilter: SubmissionsView_DISABLED.BattleFilter
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                ForEach(SubmissionsView.BattleFilter.allCases, id: \.self) { filter in
+                ForEach(SubmissionsView_DISABLED.BattleFilter.allCases, id: \.self) { filter in
                     BattleFilterTab(
                         filter: filter,
                         isSelected: selectedFilter == filter
@@ -656,7 +709,7 @@ struct BattleFilterTabs: View {
 }
 
 struct BattleFilterTab: View {
-    let filter: SubmissionsView.BattleFilter
+    let filter: SubmissionsView_DISABLED.BattleFilter
     let isSelected: Bool
     let action: () -> Void
     @EnvironmentObject var colorThemeManager: ColorThemeManager
@@ -789,6 +842,43 @@ struct BattleLogsList: View {
         LazyVStack(spacing: 16) {
             ForEach(submissions, id: \.id) { submission in
                 BattleLogCard(submission: submission)
+            }
+        }
+    }
+}
+
+// MARK: - Optimized Battle Logs List with Pagination
+struct OptimizedBattleLogsList: View {
+    let submissions: [CFSubmission]
+    let isLoadingMore: Bool
+    let hasMoreData: Bool
+    let onLoadMore: () -> Void
+    
+    var body: some View {
+        LazyVStack(spacing: 16) {
+            ForEach(submissions, id: \.id) { submission in
+                BattleLogCard(submission: submission)
+                    .onAppear {
+                        // Load more when near the end
+                        if submission.id == submissions.last?.id && hasMoreData && !isLoadingMore {
+                            onLoadMore()
+                        }
+                    }
+            }
+            
+            // Loading indicator at bottom
+            if isLoadingMore {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .tint(Color.blue)
+                    Text("Loading more battles...")
+                        .font(.custom("TTPhobosTrial-Regular", size: 12))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+                .padding(.vertical, 20)
             }
         }
     }
@@ -1098,7 +1188,7 @@ struct BattleLogCard: View {
 struct BattleStatusBadge: View {
     let verdict: String?
     @EnvironmentObject var colorThemeManager: ColorThemeManager
-    @State private var glowIntensity: Double = 0.5
+    // Removed glowIntensity for performance
     
     var body: some View {
         Text(verdictDisplayText)
@@ -1119,29 +1209,13 @@ struct BattleStatusBadge: View {
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
-                        )
-                    
-                    // Glow effect
+                        )                                    // Simple highlight (no animation for performance)
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.verdictColor(for: verdict ?? "").opacity(glowIntensity * 0.3),
-                                    Color.clear
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .animation(
-                            .easeInOut(duration: 1.5).repeatForever(autoreverses: true),
-                            value: glowIntensity
-                        )
+                        .fill(Color.verdictColor(for: verdict ?? "").opacity(0.15))
                 }
             }
-            .shadow(color: Color.verdictColor(for: verdict ?? "").opacity(0.4), radius: 4, x: 0, y: 2)
             .onAppear {
-                glowIntensity = 0.8
+                // Remove animated glow for performance
             }
     }
     
@@ -1186,7 +1260,7 @@ struct BattleStatItem: View {
             }
             
             Text(value)
-                .font(.custom("TTPhobosTrial-DemiBold", size: 11))
+                .font(.custom("TTPhobosTrial-Bold", size: 11))
                 .foregroundStyle(
                     LinearGradient(
                         colors: [
@@ -1214,12 +1288,10 @@ struct BattleStatItem: View {
 struct EmptyBattleLogsView: View {
     let filter: SubmissionsView.BattleFilter
     @EnvironmentObject var colorThemeManager: ColorThemeManager
-    @State private var animationOffset: CGFloat = 0
-    @State private var isAnimating = false
     
     var body: some View {
         VStack(spacing: 28) {
-            // Animated icon with enhanced styling
+            // Static icon with enhanced styling
             ZStack {
                 Circle()
                     .fill(
@@ -1252,12 +1324,6 @@ struct EmptyBattleLogsView: View {
                 Text(emptyIcon)
                     .font(.system(size: 56))
                     .opacity(0.7)
-                    .offset(y: animationOffset)
-                    .animation(
-                        .easeInOut(duration: 2)
-                        .repeatForever(autoreverses: true),
-                        value: animationOffset
-                    )
             }
             
             VStack(spacing: 12) {
@@ -1311,19 +1377,9 @@ struct EmptyBattleLogsView: View {
                     .shadow(color: colorThemeManager.current.accent.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
                 .buttonStyle(ScaleButtonStyle())
-                .scaleEffect(isAnimating ? 1.05 : 1.0)
-                .animation(
-                    .easeInOut(duration: 1.5)
-                    .repeatForever(autoreverses: true),
-                    value: isAnimating
-                )
             }
         }
         .padding(40)
-        .onAppear {
-            animationOffset = -8
-            isAnimating = true
-        }
     }
     
     private var emptyIcon: String {
@@ -1331,7 +1387,6 @@ struct EmptyBattleLogsView: View {
         case .all: return "📜"
         case .victories: return "🏆"
         case .defeats: return "💀"
-        case .today: return "🌅"
         }
     }
     
@@ -1340,7 +1395,6 @@ struct EmptyBattleLogsView: View {
         case .all: return "No Battle Logs"
         case .victories: return "No Victories Yet"
         case .defeats: return "No Defeats"
-        case .today: return "No Battles Today"
         }
     }
     
@@ -1349,7 +1403,242 @@ struct EmptyBattleLogsView: View {
         case .all: return "Start solving problems to see your battle history here. Every submission tells a story of your coding journey."
         case .victories: return "Keep fighting! Your victories will appear here. Each solved problem is a step towards mastery."
         case .defeats: return "Great! No defeats found for this filter. Your persistence is paying off."
-        case .today: return "Haven't fought any battles today. Time to start your coding adventure!"
         }
     }
 }
+
+// MARK: - Lightweight Performance Components
+
+struct LightweightStatsRow: View {
+    @StateObject private var cfService = CFService.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            LightweightStatItem(title: "Victories", value: "\(acceptedCount)", color: .green)
+            LightweightStatItem(title: "Total", value: "\(cfService.recentSubmissions.count)", color: .blue)
+            LightweightStatItem(title: "Rate", value: "\(winRate)%", color: .orange)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .background(colorThemeManager.current.surface.opacity(0.5))
+        .cornerRadius(12)
+    }
+    
+    private var acceptedCount: Int {
+        cfService.recentSubmissions.filter { $0.isAccepted }.count
+    }
+    
+    private var winRate: Int {
+        guard cfService.recentSubmissions.count > 0 else { return 0 }
+        return Int(Double(acceptedCount) / Double(cfService.recentSubmissions.count) * 100)
+    }
+}
+
+struct LightweightStatItem: View {
+    let title: String
+    let value: String
+    let color: Color
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.custom("TTPhobosTrial-Bold", size: 18))
+                .foregroundColor(color)
+            
+            Text(title)
+                .font(.custom("TTPhobosTrial-Regular", size: 12))
+                .foregroundColor(colorThemeManager.current.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+    }
+}
+
+struct UltraLightweightBattleLogCard: View {
+    let submission: CFSubmission
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Simple status indicator
+            Text(submission.isAccepted ? "✓" : "✗")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(submission.isAccepted ? Color.green : Color.red)
+                .frame(width: 20)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(submission.problem.name)
+                    .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                    .foregroundColor(colorThemeManager.current.textPrimary)
+                    .lineLimit(1)
+                
+                Text("\(submission.problem.index) • \(submission.programmingLanguage)")
+                    .font(.custom("TTPhobosTrial-Regular", size: 12))
+                    .foregroundColor(colorThemeManager.current.textSecondary)
+                    .lineLimit(1)
+            }
+            
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(colorThemeManager.current.surface.opacity(0.2))
+        .cornerRadius(6)
+    }
+}
+
+// MARK: - Ultra-Lightweight SubmissionsView (MAXIMUM PERFORMANCE)
+struct SubmissionsView: View {
+    @StateObject private var cfService = CFService.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @State private var selectedFilter: BattleFilter = .all
+    @State private var filteredSubmissions: [CFSubmission] = []
+    @State private var isLoading = false
+    @State private var searchText = ""
+    
+    enum BattleFilter: String, CaseIterable {
+        case all = "All"
+        case victories = "✓ Wins"
+        case defeats = "✗ Losses"
+        
+        var displayName: String { rawValue }
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colorThemeManager.current.background
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Simple title bar
+                    HStack {
+                        Spacer()
+                        Text("Battle Logs")
+                            .font(.custom("TTPhobosTrial-Bold", size: 20))
+                            .foregroundColor(colorThemeManager.current.textPrimary)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 16)
+                    .background(colorThemeManager.current.background)
+                    
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            // Lightweight stats
+                            if !cfService.recentSubmissions.isEmpty {
+                                LightweightStatsRow()
+                                    .padding(.horizontal, 20)
+                            }
+                            
+                            // Simple search
+                            HStack {
+                                TextField("Search...", text: $searchText)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(colorThemeManager.current.surface.opacity(0.5))
+                                    .cornerRadius(8)
+                            }
+                            .padding(.horizontal, 20)
+                            
+                            // Minimal filter tabs
+                            HStack(spacing: 8) {
+                                ForEach(BattleFilter.allCases, id: \.self) { filter in
+                                    Button(filter.displayName) {
+                                        selectedFilter = filter
+                                    }
+                                    .font(.custom("TTPhobosTrial-Regular", size: 12))
+                                    .foregroundColor(selectedFilter == filter ? .white : colorThemeManager.current.textSecondary)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(selectedFilter == filter ? colorThemeManager.current.accent : Color.clear)
+                                    .cornerRadius(6)
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            
+                            // Lightweight battle logs list
+                            if isLoading {
+                                ProgressView("Loading...")
+                                    .frame(height: 200)
+                            } else if filteredSubmissions.isEmpty && !isLoading {
+                                VStack(spacing: 16) {
+                                    Text("📜")
+                                        .font(.system(size: 48))
+                                        .opacity(0.6)
+                                    
+                                    Text("No battles found")
+                                        .font(.custom("TTPhobosTrial-Bold", size: 16))
+                                        .foregroundColor(colorThemeManager.current.textPrimary)
+                                }
+                                .frame(height: 200)
+                            } else {
+                                LazyVStack(spacing: 6) {
+                                    ForEach(filteredSubmissions.prefix(15), id: \.id) { submission in
+                                        UltraLightweightBattleLogCard(submission: submission)
+                                    }
+                                    
+                                    if filteredSubmissions.count > 15 {
+                                        Text("+ \(filteredSubmissions.count - 15) more battles")
+                                            .font(.custom("TTPhobosTrial-Regular", size: 12))
+                                            .foregroundColor(colorThemeManager.current.textSecondary)
+                                            .padding(.vertical, 12)
+                                    }
+                                }
+                                .padding(.horizontal, 20)
+                            }
+                        }
+                        .padding(.bottom, 100)
+                    }
+                }
+            }
+        }
+        .navigationBarHidden(true)
+        .tint(colorThemeManager.current.accent)
+        .environmentObject(colorThemeManager)
+        .task {
+            if let handle = UserDefaults.standard.savedHandle {
+                await loadInitialData(handle: handle)
+            }
+        }
+        .onChange(of: selectedFilter) { _, _ in
+            Task { await filterSubmissions() }
+        }
+        .onChange(of: cfService.recentSubmissions) { _, _ in
+            Task { await filterSubmissions() }
+        }
+    }
+    
+    // MARK: - Lightweight Data Loading
+    @MainActor
+    private func loadInitialData(handle: String) async {
+        isLoading = true
+        await cfService.fetchUserSubmissions(handle: handle, count: 30) // Reduced to 30 for maximum performance
+        await filterSubmissions()
+        isLoading = false
+    }
+    
+    @MainActor
+    private func filterSubmissions() async {
+        // Ultra-lightweight processing - only process first 20 items
+        let submissions = Array(cfService.recentSubmissions.prefix(20))
+        
+        var filtered = submissions
+        
+        // Apply filter (ultra-simplified)
+        switch selectedFilter {
+        case .all:
+            break
+        case .victories:
+            filtered = filtered.filter { $0.isAccepted }
+        case .defeats:
+            filtered = filtered.filter { !$0.isAccepted }
+        }
+        
+        filteredSubmissions = filtered
+    }
+}
+
+
