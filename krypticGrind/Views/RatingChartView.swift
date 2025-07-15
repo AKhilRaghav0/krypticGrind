@@ -18,24 +18,41 @@ struct RatingChartView: View {
                 colorThemeManager.current.background
                     .ignoresSafeArea()
                 
-                ScrollView {
-                    LazyVStack(spacing: 20) {
-                        // Chart Section
-                        RatingChart()
-                        
-                        // Stats Section
-                        RatingStatsCard()
-                        
-                        // Contest History
-                        ContestHistoryList()
+                VStack(spacing: 0) {
+                    // Power Level Title Bar
+                    PowerLevelTitleBar()
+                    
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Power Level Header (if user exists)
+                            if let user = cfService.currentUser {
+                                PowerLevelHeader(user: user)
+                                    .padding(.horizontal, 20)
+                                    .padding(.top, 20)
+                            }
+                            
+                            // Power Level Chart
+                            if !cfService.ratingHistory.isEmpty {
+                                PowerLevelChart()
+                                    .padding(.horizontal, 20)
+                            }
+                            
+                            // Achievement System
+                            if let user = cfService.currentUser {
+                                PowerLevelAchievements(user: user, submissions: cfService.recentSubmissions)
+                                    .padding(.horizontal, 20)
+                            }
+                            
+                            // Rating History List
+                            RatingHistorySection()
+                                .padding(.horizontal, 20)
+                        }
+                        .padding(.bottom, 100)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
                 }
             }
-            .navigationTitle("Rating History")
-            .navigationBarTitleDisplayMode(.inline)
         }
+        .navigationBarHidden(true)
         .tint(colorThemeManager.current.accent)
         .task {
             if let handle = UserDefaults.standard.savedHandle {
@@ -45,264 +62,614 @@ struct RatingChartView: View {
     }
 }
 
-struct RatingChart: View {
-    @StateObject private var cfService = CFService.shared
+// MARK: - Power Level Title Bar
+struct PowerLevelTitleBar: View {
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(spacing: 8) {
             HStack {
-                Text("Rating Progress")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(colorThemeManager.current.text)
+                Text("⚡")
+                    .font(.system(size: 24))
+                
+                Text("Power Level")
+                    .font(.custom("TTPhobosTrial-Bold", size: 24))
+                    .foregroundColor(colorThemeManager.current.text)
                 
                 Spacer()
                 
-                if cfService.isLoading {
-                    ProgressView()
-                        .scaleEffect(0.8)
+                Text("📊")
+                    .font(.system(size: 20))
+            }
+            
+            HStack {
+                if let handle = UserDefaults.standard.savedHandle {
+                    Text("\(handle)'s Journey")
+                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                        .foregroundColor(colorThemeManager.current.textSecondary)
+                } else {
+                    Text("Rating Journey")
+                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                        .foregroundColor(colorThemeManager.current.textSecondary)
+                }
+                
+                Spacer()
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 0)
+                .fill(colorThemeManager.current.surface)
+                .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+        )
+    }
+}
+
+// MARK: - Power Level Header
+struct PowerLevelHeader: View {
+    let user: CFUser
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Power Level Display
+            VStack(spacing: 8) {
+                Text("⚡ Power Level")
+                    .font(.custom("TTPhobosTrial-Bold", size: 16))
+                    .foregroundColor(colorThemeManager.current.textSecondary)
+                
+                HStack(spacing: 8) {
+                    Text("\(user.rating)")
+                        .font(.custom("TTPhobosTrial-Bold", size: 48))
+                        .foregroundColor(Color.ratingColor(for: user.rating))
+                    
+                    Text(rankTitle)
+                        .font(.custom("TTPhobosTrial-Bold", size: 16))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.ratingColor(for: user.rating))
+                        )
+                }
+                
+                // Power Level Progress
+                PowerLevelProgressBar(currentRating: user.rating)
+            }
+            
+            // Rank Achievement Badges
+            HStack(spacing: 12) {
+                ForEach(achievedRanks, id: \.self) { rank in
+                    RankBadge(rank: rank)
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.ratingColor(for: user.rating).opacity(0.1),
+                            colorThemeManager.current.surface.opacity(0.8)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .stroke(Color.ratingColor(for: user.rating), lineWidth: 1)
+        )
+    }
+    
+    private var rankTitle: String {
+        switch user.rating {
+        case 0..<1200: return "Novice"
+        case 1200..<1400: return "Pupil"
+        case 1400..<1600: return "Specialist"
+        case 1600..<1900: return "Expert"
+        case 1900..<2100: return "Candidate Master"
+        case 2100..<2300: return "Master"
+        case 2300..<2400: return "International Master"
+        case 2400...: return "Grandmaster"
+        default: return "Unranked"
+        }
+    }
+    
+    private var achievedRanks: [String] {
+        let rating = user.rating
+        var ranks: [String] = []
+        
+        if rating >= 1200 { ranks.append("🎯") }
+        if rating >= 1400 { ranks.append("⭐") }
+        if rating >= 1600 { ranks.append("💎") }
+        if rating >= 1900 { ranks.append("👑") }
+        if rating >= 2100 { ranks.append("🏆") }
+        if rating >= 2300 { ranks.append("🔱") }
+        if rating >= 2400 { ranks.append("⚡") }
+        
+        return ranks
+    }
+}
+
+// MARK: - Power Level Progress Bar
+struct PowerLevelProgressBar: View {
+    let currentRating: Int
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Text("Next Rank: \(nextRankTitle)")
+                    .font(.custom("TTPhobosTrial-DemiBold", size: 12))
+                    .foregroundColor(colorThemeManager.current.textSecondary)
+                
+                Spacer()
+                
+                Text("\(currentRating) / \(nextRankThreshold)")
+                    .font(.custom("TTPhobosTrial-DemiBold", size: 12))
+                    .foregroundColor(colorThemeManager.current.textSecondary)
+            }
+            
+            ProgressView(value: progressToNextRank)
+                .progressViewStyle(LinearProgressViewStyle(tint: Color.ratingColor(for: currentRating)))
+                .scaleEffect(y: 2)
+        }
+    }
+    
+    private var nextRankThreshold: Int {
+        if currentRating < 1200 { return 1200 }
+        if currentRating < 1400 { return 1400 }
+        if currentRating < 1600 { return 1600 }
+        if currentRating < 1900 { return 1900 }
+        if currentRating < 2100 { return 2100 }
+        if currentRating < 2300 { return 2300 }
+        if currentRating < 2400 { return 2400 }
+        return currentRating + 100
+    }
+    
+    private var nextRankTitle: String {
+        if currentRating < 1200 { return "Pupil" }
+        if currentRating < 1400 { return "Specialist" }
+        if currentRating < 1600 { return "Expert" }
+        if currentRating < 1900 { return "Candidate Master" }
+        if currentRating < 2100 { return "Master" }
+        if currentRating < 2300 { return "International Master" }
+        if currentRating < 2400 { return "Grandmaster" }
+        return "Legend"
+    }
+    
+    private var progressToNextRank: Double {
+        let previousThreshold = {
+            if currentRating < 1200 { return 0 }
+            if currentRating < 1400 { return 1200 }
+            if currentRating < 1600 { return 1400 }
+            if currentRating < 1900 { return 1600 }
+            if currentRating < 2100 { return 1900 }
+            if currentRating < 2300 { return 2100 }
+            if currentRating < 2400 { return 2300 }
+            return 2400
+        }()
+        
+        let progress = Double(currentRating - previousThreshold) / Double(nextRankThreshold - previousThreshold)
+        return max(0, min(1, progress))
+    }
+}
+
+// MARK: - Rank Badge
+struct RankBadge: View {
+    let rank: String
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        Text(rank)
+            .font(.system(size: 20))
+            .frame(width: 40, height: 40)
+            .background(
+                Circle()
+                    .fill(colorThemeManager.current.surface)
+                    .stroke(colorThemeManager.current.accent, lineWidth: 2)
+            )
+    }
+}
+
+// MARK: - Power Level Chart
+struct PowerLevelChart: View {
+    @StateObject private var cfService = CFService.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @State private var selectedRating: CFRatingChange?
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text("📈 Power Level Journey")
+                    .font(.custom("TTPhobosTrial-Bold", size: 18))
+                    .foregroundColor(colorThemeManager.current.textPrimary)
+                
+                Spacer()
+                
+                if !cfService.ratingHistory.isEmpty {
+                    Text("\(cfService.ratingHistory.count) battles")
+                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                        .foregroundColor(colorThemeManager.current.textSecondary)
                 }
             }
             
-            if cfService.ratingHistory.isEmpty {
-                VStack(spacing: 20) {
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                        .font(.system(size: 48, weight: .light))
-                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
-                    
-                    VStack(spacing: 8) {
-                        Text("No Contest History")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(colorThemeManager.current.text)
-                        
-                        Text("Your rating changes will appear here after participating in contests")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                .frame(height: 200)
-                .frame(maxWidth: .infinity)
-            } else {
-                Chart {
-                    ForEach(cfService.ratingHistory) { change in
+            // Enhanced Chart
+            ZStack {
+                if !cfService.ratingHistory.isEmpty {
+                    Chart(cfService.ratingHistory, id: \.contestId) { ratingChange in
                         LineMark(
-                            x: .value("Date", change.updateDate),
-                            y: .value("Rating", change.newRating)
+                            x: .value("Contest", ratingChange.ratingUpdateTimeSeconds),
+                            y: .value("Rating", ratingChange.newRating)
                         )
-                        .foregroundStyle(colorThemeManager.current.accent.gradient)
-                        .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round))
+                        .foregroundStyle(Color.ratingColor(for: ratingChange.newRating))
+                        .lineStyle(StrokeStyle(lineWidth: 3))
                         
                         AreaMark(
-                            x: .value("Date", change.updateDate),
-                            y: .value("Rating", change.newRating)
+                            x: .value("Contest", ratingChange.ratingUpdateTimeSeconds),
+                            y: .value("Rating", ratingChange.newRating)
                         )
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [colorThemeManager.current.accent.opacity(0.3), colorThemeManager.current.accent.opacity(0.05)],
+                                colors: [
+                                    Color.ratingColor(for: ratingChange.newRating).opacity(0.3),
+                                    Color.ratingColor(for: ratingChange.newRating).opacity(0.1)
+                                ],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
                         )
                         
-                        PointMark(
-                            x: .value("Date", change.updateDate),
-                            y: .value("Rating", change.newRating)
-                        )
-                        .foregroundStyle(colorThemeManager.current.accent)
-                        .symbolSize(25)
-                    }
-                }
-                .frame(height: 200)
-                .chartYScale(domain: .automatic(includesZero: false))
-                .chartXAxis {
-                    AxisMarks(values: .automatic) { _ in
-                        AxisGridLine()
-                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6).opacity(0.3))
-                        AxisTick()
-                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
-                        AxisValueLabel()
-                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                }
-                .chartYAxis {
-                    AxisMarks(values: .automatic) { _ in
-                        AxisGridLine()
-                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6).opacity(0.3))
-                        AxisTick()
-                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
-                        AxisValueLabel()
-                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                }
-                .chartBackground { _ in
-                    Color.clear
-                }
-            }
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(colorThemeManager.current.tabBar.opacity(0.9))
-                .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
-        )
-    }
-}
-
-struct RatingStatsCard: View {
-    @StateObject private var cfService = CFService.shared
-    @EnvironmentObject var colorThemeManager: ColorThemeManager
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Statistics")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(colorThemeManager.current.text)
-            
-            if let user = cfService.currentUser {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
-                    ModernStatCard(
-                        title: "Current Rating",
-                        value: "\(user.rating)",
-                        icon: "star.fill",
-                        color: Color.ratingColor(for: user.rating),
-                        subtitle: user.rank
-                    )
-                    
-                    ModernStatCard(
-                        title: "Max Rating",
-                        value: "\(user.maxRating)",
-                        icon: "trophy.fill",
-                        color: Color.ratingColor(for: user.maxRating),
-                        subtitle: user.maxRank
-                    )
-                    
-                    if !cfService.ratingHistory.isEmpty {
-                        ModernStatCard(
-                            title: "Contests",
-                            value: "\(cfService.ratingHistory.count)",
-                            icon: "calendar",
-                            color: colorThemeManager.current.accent,
-                            subtitle: "participated"
-                        )
-                        
-                        if let bestChange = cfService.ratingHistory.max(by: { $0.delta < $1.delta }) {
-                            ModernStatCard(
-                                title: "Best Gain",
-                                value: bestChange.deltaString,
-                                icon: "arrow.up.circle.fill",
-                                color: Color.green,
-                                subtitle: "in one contest"
-                            )
+                        if let selectedRating = selectedRating,
+                           selectedRating.contestId == ratingChange.contestId {
+                            RuleMark(x: .value("Contest", ratingChange.ratingUpdateTimeSeconds))
+                                .foregroundStyle(colorThemeManager.current.accent)
+                                .lineStyle(StrokeStyle(lineWidth: 2, dash: [5]))
                         }
                     }
-                }
-            } else {
-                VStack(spacing: 20) {
-                    Image(systemName: "chart.bar")
-                        .font(.system(size: 48, weight: .light))
-                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
-                    
-                    VStack(spacing: 8) {
-                        Text("No User Data")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(colorThemeManager.current.text)
-                        
-                        Text("Enter your Codeforces handle to see statistics")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
-                            .multilineTextAlignment(.center)
+                    .frame(height: 250)
+                    .chartXScale(domain: .automatic)
+                    .chartYScale(domain: .automatic)
+                    .chartXAxis {
+                        AxisMarks(values: .automatic) { _ in
+                            AxisGridLine()
+                            AxisTick()
+                        }
                     }
+                    .chartYAxis {
+                        AxisMarks(values: .automatic) { value in
+                            AxisGridLine()
+                            AxisTick()
+                            AxisValueLabel {
+                                if let rating = value.as(Int.self) {
+                                    Text("\(rating)")
+                                        .font(.custom("TTPhobosTrial-Regular", size: 10))
+                                        .foregroundColor(colorThemeManager.current.textSecondary)
+                                }
+                            }
+                        }
+                    }
+                    .chartAngleSelection(value: .constant(nil))
+                    .chartBackground { chartProxy in
+                        GeometryReader { geometry in
+                            Rectangle()
+                                .fill(Color.clear)
+                                .contentShape(Rectangle())
+                                .onTapGesture { location in
+                                    if let contestId = findNearestContest(at: location, geometry: geometry, proxy: chartProxy) {
+                                        selectedRating = cfService.ratingHistory.first { $0.contestId == contestId }
+                                    }
+                                }
+                        }
+                    }
+                } else {
+                    EmptyPowerLevelChart()
+                        .frame(height: 250)
                 }
-                .frame(height: 200)
-                .frame(maxWidth: .infinity)
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(colorThemeManager.current.surface.opacity(0.6))
+            )
+            
+            // Selected Battle Details
+            if let selectedRating = selectedRating {
+                PowerLevelBattleDetails(ratingChange: selectedRating)
             }
         }
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground).opacity(0.9))
-                .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
+                .fill(colorThemeManager.current.surface.opacity(0.9))
+                .stroke(colorThemeManager.current.divider, lineWidth: 1)
         )
+    }
+    
+    private func findNearestContest(at location: CGPoint, geometry: GeometryProxy, proxy: ChartProxy) -> Int? {
+        // Simplified nearest contest finding logic
+        guard !cfService.ratingHistory.isEmpty else { return nil }
+        
+        let relativeX = location.x / geometry.size.width
+        let index = Int(relativeX * Double(cfService.ratingHistory.count))
+        let clampedIndex = max(0, min(cfService.ratingHistory.count - 1, index))
+        
+        return cfService.ratingHistory[clampedIndex].contestId
     }
 }
 
-struct ModernStatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    let subtitle: String
+struct EmptyPowerLevelChart: View {
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 16) {
+            Text("📊")
+                .font(.system(size: 48))
+                .opacity(0.6)
+            
+            Text("No Power Level Data")
+                .font(.custom("TTPhobosTrial-Bold", size: 16))
+                .foregroundColor(colorThemeManager.current.textPrimary)
+            
+            Text("Participate in contests to see your power level journey")
+                .font(.custom("TTPhobosTrial-Regular", size: 14))
+                .foregroundColor(colorThemeManager.current.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+}
+
+// MARK: - Power Level Battle Details
+struct PowerLevelBattleDetails: View {
+    let ratingChange: CFRatingChange
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 8) {
             HStack {
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(color)
+                Text("⚔️ Battle Details")
+                    .font(.custom("TTPhobosTrial-Bold", size: 14))
+                    .foregroundColor(colorThemeManager.current.textPrimary)
                 
                 Spacer()
             }
             
-            VStack(alignment: .leading, spacing: 4) {
-                Text(value)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(colorThemeManager.current.text)
+            HStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Contest \(ratingChange.contestId)")
+                        .font(.custom("TTPhobosTrial-DemiBold", size: 12))
+                        .foregroundColor(colorThemeManager.current.textPrimary)
+                    
+                    Text("Rank: \(ratingChange.rank)")
+                        .font(.custom("TTPhobosTrial-Regular", size: 10))
+                        .foregroundColor(colorThemeManager.current.textSecondary)
+                }
                 
-                Text(title)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+                Spacer()
                 
-                Text(subtitle)
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+                VStack(alignment: .trailing, spacing: 4) {
+                    HStack(spacing: 4) {
+                        Text("\(ratingChange.oldRating)")
+                            .font(.custom("TTPhobosTrial-DemiBold", size: 12))
+                            .foregroundColor(Color.ratingColor(for: ratingChange.oldRating))
+                        
+                        Text("→")
+                            .font(.custom("TTPhobosTrial-Regular", size: 12))
+                            .foregroundColor(colorThemeManager.current.textSecondary)
+                        
+                        Text("\(ratingChange.newRating)")
+                            .font(.custom("TTPhobosTrial-DemiBold", size: 12))
+                            .foregroundColor(Color.ratingColor(for: ratingChange.newRating))
+                    }
+                    
+                    HStack(spacing: 4) {
+                        Text(ratingChange.newRating > ratingChange.oldRating ? "+" : "")
+                        Text("\(ratingChange.newRating - ratingChange.oldRating)")
+                    }
+                    .font(.custom("TTPhobosTrial-Bold", size: 10))
+                    .foregroundColor(ratingChange.newRating > ratingChange.oldRating ? colorThemeManager.current.success : colorThemeManager.current.error)
+                }
             }
         }
-        .padding(16)
+        .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.systemBackground).opacity(0.9))
-                .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(colorThemeManager.current.surface)
+                .stroke(colorThemeManager.current.divider, lineWidth: 1)
         )
     }
 }
 
-struct ContestHistoryList: View {
+// MARK: - Power Level Achievements
+struct PowerLevelAchievements: View {
+    let user: CFUser
+    let submissions: [CFSubmission]
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text("🏅 Battle Achievements")
+                    .font(.custom("TTPhobosTrial-Bold", size: 18))
+                    .foregroundColor(colorThemeManager.current.textPrimary)
+                
+                Spacer()
+            }
+            
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
+                ForEach(achievements, id: \.id) { achievement in
+                    AchievementCard(achievement: achievement)
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(colorThemeManager.current.surface.opacity(0.9))
+                .stroke(colorThemeManager.current.divider, lineWidth: 1)
+        )
+    }
+    
+    private var achievements: [Achievement] {
+        var result: [Achievement] = []
+        
+        // Rating-based achievements
+        let rating = user.rating
+        if rating >= 1200 {
+                result.append(Achievement(
+                    id: "pupil",
+                    icon: "🎯",
+                    title: "First Steps",
+                    description: "Reached Pupil rank",
+                    isUnlocked: true
+                ))
+            }
+            
+            if rating >= 1600 {
+                result.append(Achievement(
+                    id: "expert",
+                    icon: "💎", 
+                    title: "Expert Warrior",
+                    description: "Reached Expert rank",
+                    isUnlocked: true
+                ))
+            }
+            
+            if rating >= 2100 {
+                result.append(Achievement(
+                    id: "master",
+                    icon: "👑",
+                    title: "Master of the Arena",
+                    description: "Reached Master rank",
+                    isUnlocked: true
+                ))
+            }
+        
+        // Submission-based achievements
+        let acceptedCount = submissions.filter { $0.isAccepted }.count
+        if acceptedCount >= 50 {
+            result.append(Achievement(
+                id: "soldier",
+                icon: "⚔️",
+                title: "Veteran Warrior",
+                description: "Solved 50 problems",
+                isUnlocked: true
+            ))
+        }
+        
+        if acceptedCount >= 100 {
+            result.append(Achievement(
+                id: "century",
+                icon: "💯",
+                title: "Centurion",
+                description: "Solved 100 problems",
+                isUnlocked: true
+            ))
+        }
+        
+        if acceptedCount >= 500 {
+            result.append(Achievement(
+                id: "legend",
+                icon: "🏆",
+                title: "Legendary Hero",
+                description: "Solved 500 problems",
+                isUnlocked: true
+            ))
+        }
+        
+        // Add some locked achievements for motivation
+        if acceptedCount < 1000 {
+            result.append(Achievement(
+                id: "grandmaster_solver",
+                icon: "⚡",
+                title: "Grandmaster Solver",
+                description: "Solve 1000 problems",
+                isUnlocked: false
+            ))
+        }
+        
+        return result
+    }
+}
+
+struct Achievement {
+    let id: String
+    let icon: String
+    let title: String
+    let description: String
+    let isUnlocked: Bool
+}
+
+struct AchievementCard: View {
+    let achievement: Achievement
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(achievement.icon)
+                .font(.system(size: 32))
+                .opacity(achievement.isUnlocked ? 1.0 : 0.3)
+            
+            VStack(spacing: 4) {
+                Text(achievement.title)
+                    .font(.custom("TTPhobosTrial-DemiBold", size: 12))
+                    .foregroundColor(achievement.isUnlocked ? colorThemeManager.current.textPrimary : colorThemeManager.current.textSecondary)
+                    .multilineTextAlignment(.center)
+                
+                Text(achievement.description)
+                    .font(.custom("TTPhobosTrial-Regular", size: 10))
+                    .foregroundColor(colorThemeManager.current.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(achievement.isUnlocked ? colorThemeManager.current.success.opacity(0.1) : colorThemeManager.current.surface.opacity(0.5))
+                .stroke(achievement.isUnlocked ? colorThemeManager.current.success.opacity(0.3) : colorThemeManager.current.divider, lineWidth: 1)
+        )
+        .scaleEffect(achievement.isUnlocked ? 1.0 : 0.95)
+        .animation(.easeInOut(duration: 0.2), value: achievement.isUnlocked)
+    }
+}
+
+// MARK: - Rating History Section
+struct RatingHistorySection: View {
     @StateObject private var cfService = CFService.shared
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Recent Contests")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(colorThemeManager.current.text)
+        VStack(spacing: 16) {
+            HStack {
+                Text("📜 Battle Chronicle")
+                    .font(.custom("TTPhobosTrial-Bold", size: 18))
+                    .foregroundColor(colorThemeManager.current.textPrimary)
+                
+                Spacer()
+                
+                if !cfService.ratingHistory.isEmpty {
+                    Text("\(cfService.ratingHistory.count) contests")
+                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                        .foregroundColor(colorThemeManager.current.textSecondary)
+                }
+            }
             
             if cfService.ratingHistory.isEmpty {
-                VStack(spacing: 20) {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 48, weight: .light))
-                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
-                    
-                    VStack(spacing: 8) {
-                        Text("No Contest History")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(colorThemeManager.current.text)
-                        
-                        Text("Participate in contests to see your history here")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                .frame(height: 200)
-                .frame(maxWidth: .infinity)
+                EmptyRatingHistoryView()
+                    .frame(height: 200)
             } else {
                 LazyVStack(spacing: 12) {
-                    ForEach(cfService.ratingHistory.prefix(10)) { change in
-                        ContestHistoryCard(change: change)
+                    ForEach(cfService.ratingHistory.prefix(10), id: \.contestId) { ratingChange in
+                        RatingHistoryCard(ratingChange: ratingChange)
+                    }
+                    
+                    if cfService.ratingHistory.count > 10 {
+                        Text("... and \(cfService.ratingHistory.count - 10) more contests")
+                            .font(.custom("TTPhobosTrial-Regular", size: 12))
+                            .foregroundColor(colorThemeManager.current.textSecondary)
+                            .padding(.top, 8)
                     }
                 }
             }
@@ -310,58 +677,83 @@ struct ContestHistoryList: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemBackground).opacity(0.9))
-                .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
+                .fill(colorThemeManager.current.surface.opacity(0.9))
+                .stroke(colorThemeManager.current.divider, lineWidth: 1)
         )
     }
 }
 
-struct ContestHistoryCard: View {
-    let change: CFRatingChange
+struct EmptyRatingHistoryView: View {
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
-        HStack(spacing: 16) {
-            // Contest info
+        VStack(spacing: 16) {
+            Text("📜")
+                .font(.system(size: 48))
+                .opacity(0.6)
+            
+            Text("No Battle Chronicle")
+                .font(.custom("TTPhobosTrial-Bold", size: 16))
+                .foregroundColor(colorThemeManager.current.textPrimary)
+            
+            Text("Your contest history will appear here once you participate in rated contests")
+                .font(.custom("TTPhobosTrial-Regular", size: 14))
+                .foregroundColor(colorThemeManager.current.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+}
+
+struct RatingHistoryCard: View {
+    let ratingChange: CFRatingChange
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Battle Result Icon
+            Text(ratingChange.newRating > ratingChange.oldRating ? "⬆️" : "⬇️")
+                .font(.system(size: 16))
+            
             VStack(alignment: .leading, spacing: 4) {
-                Text(change.contestName)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(colorThemeManager.current.text)
-                    .lineLimit(1)
+                Text("Contest \(ratingChange.contestId)")
+                    .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                    .foregroundColor(colorThemeManager.current.textPrimary)
                 
-                Text(change.updateDate.formatted(date: .abbreviated, time: .omitted))
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+                Text("Rank: \(ratingChange.rank)")
+                    .font(.custom("TTPhobosTrial-Regular", size: 12))
+                    .foregroundColor(colorThemeManager.current.textSecondary)
             }
             
             Spacer()
             
-            // Rating change
             VStack(alignment: .trailing, spacing: 4) {
                 HStack(spacing: 8) {
-                    Text("\(change.oldRating)")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+                    Text("\(ratingChange.oldRating)")
+                        .font(.custom("TTPhobosTrial-DemiBold", size: 12))
+                        .foregroundColor(Color.ratingColor(for: ratingChange.oldRating))
                     
-                    Image(systemName: change.delta > 0 ? "arrow.up" : "arrow.down")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(change.delta > 0 ? .green : .red)
+                    Text("→")
+                        .font(.custom("TTPhobosTrial-Regular", size: 12))
+                        .foregroundColor(colorThemeManager.current.textSecondary)
                     
-                    Text("\(change.newRating)")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(colorThemeManager.current.text)
+                    Text("\(ratingChange.newRating)")
+                        .font(.custom("TTPhobosTrial-Bold", size: 12))
+                        .foregroundColor(Color.ratingColor(for: ratingChange.newRating))
                 }
                 
-                Text(change.deltaString)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(change.delta > 0 ? .green : .red)
+                HStack(spacing: 4) {
+                    Text(ratingChange.newRating > ratingChange.oldRating ? "+" : "")
+                    Text("\(ratingChange.newRating - ratingChange.oldRating)")
+                }
+                .font(.custom("TTPhobosTrial-Bold", size: 10))
+                .foregroundColor(ratingChange.newRating > ratingChange.oldRating ? colorThemeManager.current.success : colorThemeManager.current.error)
             }
         }
-        .padding(16)
+        .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.systemBackground).opacity(0.9))
-                .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(colorThemeManager.current.surface)
+                .stroke(colorThemeManager.current.divider, lineWidth: 1)
         )
     }
 }

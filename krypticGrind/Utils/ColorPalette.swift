@@ -19,6 +19,13 @@ struct ColorTheme: Identifiable, Equatable, Hashable {
     let error: Color?
     let link: Color?
     
+    // Additional computed properties for better naming
+    var textPrimary: Color { text }
+    var textSecondary: Color { secondary }
+    var surface: Color { tabBar }
+    var divider: Color { secondary.opacity(0.3) }
+    var success: Color { error ?? Color.green }
+    
     // Hashable conformance
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)

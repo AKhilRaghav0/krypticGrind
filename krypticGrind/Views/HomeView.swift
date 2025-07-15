@@ -1912,6 +1912,45 @@ struct SettingsActionRow: View {
     }
 }
 
+// MARK: - Modern Stat Card Component
+struct ModernStatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    let subtitle: String
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 20, weight: .medium))
+                .foregroundColor(color)
+            
+            Text(value)
+                .font(.custom("TTPhobosTrial-Bold", size: 18))
+                .foregroundColor(colorThemeManager.current.text)
+            
+            VStack(spacing: 2) {
+                Text(title)
+                    .font(.custom("TTPhobosTrial-DemiBold", size: 11))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                Text(subtitle)
+                    .font(.custom("TTPhobosTrial-Regular", size: 9))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(color.opacity(0.1))
+                .stroke(color.opacity(0.3), lineWidth: 1)
+        )
+    }
+}
+
 #Preview {
     HomeView()
 }
