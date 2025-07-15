@@ -56,24 +56,7 @@ struct DungeonPracticeView: View {
     }
     
     private var currentStreak: Int {
-        let submissions = cfService.recentSubmissions
-            .filter { $0.isAccepted }
-            .sorted { $0.submissionDate > $1.submissionDate }
-        
-        var streak = 0
-        var currentDate = Calendar.current.startOfDay(for: Date())
-        
-        for submission in submissions {
-            let submissionDate = Calendar.current.startOfDay(for: submission.submissionDate)
-            if submissionDate == currentDate {
-                streak += 1
-                currentDate = Calendar.current.date(byAdding: .day, value: -1, to: currentDate)!
-            } else if submissionDate < currentDate {
-                break
-            }
-        }
-        
-        return streak
+        cfService.recentSubmissions.calculateStreak()
     }
     
     private var weakestTopics: [String] {

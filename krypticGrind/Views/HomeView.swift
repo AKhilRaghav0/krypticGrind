@@ -768,7 +768,7 @@ struct StreakCard: View {
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     private var currentStreak: Int {
-        calculateCurrentStreak()
+        cfService.recentSubmissions.calculateStreak()
     }
     
     private var todaysSolved: Int {
@@ -892,45 +892,6 @@ struct StreakCard: View {
         default:
             return Color.gold
         }
-    }
-    
-    private func calculateCurrentStreak() -> Int {
-        let calendar = Calendar.current
-        var streak = 0
-        var currentDate = calendar.startOfDay(for: Date())
-        
-        // Check if today has submissions first
-        let today = calendar.startOfDay(for: Date())
-        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
-        let hasTodaySubmission = cfService.recentSubmissions.contains { submission in
-            let submissionDate = calendar.startOfDay(for: submission.submissionDate)
-            return submissionDate >= today && submissionDate < tomorrow && 
-                   (submission.verdict == "OK" || submission.verdict == "ACCEPTED")
-        }
-        
-        if hasTodaySubmission {
-            streak = 1
-            currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate)!
-        }
-        
-        // Check previous days
-        for _ in 0..<29 {
-            let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
-            let hasSubmission = cfService.recentSubmissions.contains { submission in
-                let submissionDate = calendar.startOfDay(for: submission.submissionDate)
-                return submissionDate >= currentDate && submissionDate < nextDate && 
-                       (submission.verdict == "OK" || submission.verdict == "ACCEPTED")
-            }
-            
-            if hasSubmission {
-                streak += 1
-                currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate)!
-            } else {
-                break
-            }
-        }
-        
-        return streak
     }
 }
 
@@ -1119,7 +1080,7 @@ struct AISuggestionsCard: View {
             acceptedSubmissions: acceptedSubmissions.count,
             acceptanceRate: acceptanceRate,
             mostUsedLanguage: mostUsedLanguage,
-            currentStreak: calculateCurrentStreak(),
+            currentStreak: cfService.recentSubmissions.calculateStreak(),
             weeklySubmissions: cfService.recentSubmissions.filter { $0.submissionDate > Date().addingTimeInterval(-7*24*60*60) }.count,
             topTopics: topTopics,
             recentPerformance: "Recent performance analysis"
@@ -1130,33 +1091,6 @@ struct AISuggestionsCard: View {
             submissions: cfService.recentSubmissions,
             user: user
         )
-    }
-    
-    private func calculateCurrentStreak() -> Int {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        
-        let acceptedSubmissions = cfService.recentSubmissions
-            .filter { $0.isAccepted }
-            .sorted { $0.submissionDate > $1.submissionDate }
-        
-        var streak = 0
-        var currentDate = today
-        
-        for _ in 0..<30 { // Check last 30 days
-            let hasSubmissionThisDay = acceptedSubmissions.contains { submission in
-                calendar.isDate(submission.submissionDate, inSameDayAs: currentDate)
-            }
-            
-            if hasSubmissionThisDay {
-                streak += 1
-                currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate)!
-            } else {
-                break
-            }
-        }
-        
-        return streak
     }
 }
 
@@ -1283,7 +1217,7 @@ struct EnhancedStreakCard: View {
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     private var currentStreak: Int {
-        calculateCurrentStreak()
+        cfService.recentSubmissions.calculateStreak()
     }
     
     private var todaysSolved: Int {
@@ -1438,45 +1372,6 @@ struct EnhancedStreakCard: View {
         default:
             return Color.gold
         }
-    }
-    
-    private func calculateCurrentStreak() -> Int {
-        let calendar = Calendar.current
-        var streak = 0
-        var currentDate = calendar.startOfDay(for: Date())
-        
-        // Check if today has submissions first
-        let today = calendar.startOfDay(for: Date())
-        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
-        let hasTodaySubmission = cfService.recentSubmissions.contains { submission in
-            let submissionDate = calendar.startOfDay(for: submission.submissionDate)
-            return submissionDate >= today && submissionDate < tomorrow && 
-                   (submission.verdict == "OK" || submission.verdict == "ACCEPTED")
-        }
-        
-        if hasTodaySubmission {
-            streak = 1
-            currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate)!
-        }
-        
-        // Check previous days
-        for _ in 0..<29 {
-            let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
-            let hasSubmission = cfService.recentSubmissions.contains { submission in
-                let submissionDate = calendar.startOfDay(for: submission.submissionDate)
-                return submissionDate >= currentDate && submissionDate < nextDate && 
-                       (submission.verdict == "OK" || submission.verdict == "ACCEPTED")
-            }
-            
-            if hasSubmission {
-                streak += 1
-                currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate)!
-            } else {
-                break
-            }
-        }
-        
-        return streak
     }
 }
 

@@ -100,34 +100,11 @@ struct AISuggestionsView: View {
             acceptedSubmissions: acceptedSubmissions,
             acceptanceRate: acceptanceRate,
             mostUsedLanguage: mostUsedLanguage,
-            currentStreak: calculateStreak(),
+            currentStreak: cfService.recentSubmissions.calculateStreak(),
             weeklySubmissions: weeklySubmissions,
             topTopics: topTopics,
             recentPerformance: calculateRecentPerformance()
         )
-    }
-    
-    private func calculateStreak() -> Int {
-        let calendar = Calendar.current
-        var streak = 0
-        var currentDate = calendar.startOfDay(for: Date())
-        
-        for _ in 0..<30 {
-            let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
-            let hasSubmission = cfService.recentSubmissions.contains { submission in
-                let submissionDate = calendar.startOfDay(for: submission.submissionDate)
-                return submissionDate >= currentDate && submissionDate < nextDate
-            }
-            
-            if hasSubmission {
-                streak += 1
-                currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate)!
-            } else {
-                break
-            }
-        }
-        
-        return streak
     }
     
     private func calculateRecentPerformance() -> String {

@@ -335,6 +335,51 @@ extension Array where Element == CFSubmission {
     func acceptedSubmissions() -> [CFSubmission] {
         return self.filter { $0.isAccepted }
     }
+    
+    func calculateStreak() -> Int {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let acceptedSubmissions = self.filter { $0.isAccepted }
+        
+        // Group submissions by date
+        let submissionsByDate = Dictionary(grouping: acceptedSubmissions) { submission in
+            calendar.startOfDay(for: submission.submissionDate)
+        }
+        
+        var streak = 0
+        var checkDate = today
+        
+        // Check if there's a submission today
+        if submissionsByDate[today] != nil {
+            streak = 1
+            checkDate = calendar.date(byAdding: .day, value: -1, to: today)!
+        } else {
+            // If no submission today, check yesterday to maintain streak
+            let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+            if submissionsByDate[yesterday] != nil {
+                checkDate = yesterday
+            } else {
+                // No recent activity, streak is 0
+                return 0
+            }
+        }
+        
+        // Count consecutive days going backwards
+             	        while checkDate >= calendar.date(byAdding: .day, value: -30, to: today)! {
+            
+            if submissionsByDate[checkDate] != nil {
+                streak += 1
+                guard let nextDate = calendar.date(byAdding: .day, value: -1, to: checkDate) else {
+                    break
+                }
+                checkDate = nextDate
+            } else {
+                break
+            }
+        }
+        
+        return streak
+    }
 }
 
 // MARK: - Array Extensions for Threading
