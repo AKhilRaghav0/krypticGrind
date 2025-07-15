@@ -789,6 +789,9 @@ struct PowerLevelBattleDetails: View {
         )
     }
 }
+
+// MARK: - Power Level Achievements
+struct PowerLevelAchievements: View {
     let user: CFUser
     let submissions: [CFSubmission]
     @EnvironmentObject var colorThemeManager: ColorThemeManager
