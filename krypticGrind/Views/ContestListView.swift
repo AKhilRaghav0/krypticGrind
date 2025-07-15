@@ -204,7 +204,7 @@ struct FinishedContestsList: View {
 struct UpcomingContestCard: View {
     let contest: CFContest
     @EnvironmentObject var colorThemeManager: ColorThemeManager
-    @State private var showingDetails = false
+    @State private var showingLiveSheet = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -286,7 +286,7 @@ struct UpcomingContestCard: View {
                 Button(action: {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                     impactFeedback.impactOccurred()
-                    showingDetails = true
+                    showingLiveSheet = true
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "info.circle.fill")
@@ -387,8 +387,8 @@ struct UpcomingContestCard: View {
                 .fill(colorThemeManager.current.tabBar.opacity(0.9))
                 .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
         )
-        .sheet(isPresented: $showingDetails) {
-            BattleDetailsSheet(contest: contest)
+        .sheet(isPresented: $showingLiveSheet) {
+            LiveContestSheet(contest: contest)
         }
     }
     
@@ -1059,7 +1059,8 @@ struct PastConquestsView: View {
 struct BattleCard: View {
     let contest: CFContest
     @EnvironmentObject var colorThemeManager: ColorThemeManager
-    @State private var showingDetails = false
+    @State private var showingLiveSheet = false
+    @State private var showingAnalysisSheet = false
     @State private var timeUntilStart: String = ""
     @State private var timer: Timer?
     
@@ -1125,7 +1126,13 @@ struct BattleCard: View {
                 Button(action: {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                     impactFeedback.impactOccurred()
-                    showingDetails = true
+                    
+                    // Show different sheets based on contest phase
+                    if contest.phase == "FINISHED" {
+                        showingAnalysisSheet = true
+                    } else {
+                        showingLiveSheet = true
+                    }
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "info.circle.fill")
@@ -1258,42 +1265,9 @@ struct BattleCard: View {
                     }
                     .buttonStyle(ScaleButtonStyle())
                 } else {
-                    // For finished contests - show results
-                    Button(action: {
-                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                        impactFeedback.impactOccurred()
-                        if let url = URL(string: contest.standingsUrl) {
-                            UIApplication.shared.open(url)
-                        }
-                    }) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "chart.bar.fill")
-                                .font(.system(size: 15, weight: .semibold))
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Results")
-                                    .font(.custom("TTPhobosTrial-Bold", size: 14))
-                                Text("View standings")
-                                    .font(.custom("TTPhobosTrial-Regular", size: 11))
-                                    .opacity(0.8)
-                            }
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.gray, Color.gray.opacity(0.8)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .shadow(color: Color.gray.opacity(0.3), radius: 4, x: 0, y: 2)
-                        )
-                    }
-                    .buttonStyle(ScaleButtonStyle())
+                    // For finished contests - space for future features
+                    Spacer()
+                        .frame(width: 0)
                 }
                 
                 Spacer()
@@ -1312,8 +1286,11 @@ struct BattleCard: View {
         .onDisappear {
             timer?.invalidate()
         }
-        .sheet(isPresented: $showingDetails) {
-            BattleDetailsSheet(contest: contest)
+        .sheet(isPresented: $showingLiveSheet) {
+            LiveContestSheet(contest: contest)
+        }
+        .sheet(isPresented: $showingAnalysisSheet) {
+            BattleAnalysisSheet(contest: contest)
         }
     }
     
@@ -1415,6 +1392,7 @@ struct BattleCard: View {
 struct ConquestCard: View {
     let contest: CFContest
     @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @State private var showingAnalysisSheet = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -1467,43 +1445,35 @@ struct ConquestCard: View {
                 // Warrior count info removed as participantCount not available in API
             }
             
-            // Action button
+            // Action buttons
             HStack(spacing: 12) {
-                if let url = URL(string: contest.standingsUrl) {
-                    Link(destination: url) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "chart.bar.fill")
-                                .font(.system(size: 14))
-                            Text("Standings")
-                                .font(.custom("TTPhobosTrial-DemiBold", size: 14))
-                        }
-                        .foregroundColor(colorThemeManager.current.text)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(colorThemeManager.current.tabBar.opacity(0.6))
-                        )
+                // Details button for analysis
+                Button(action: {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
+                    showingAnalysisSheet = true
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 14))
+                        Text("Details")
+                            .font(.custom("TTPhobosTrial-DemiBold", size: 14))
                     }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(
+                                LinearGradient(
+                                    colors: [colorThemeManager.current.accent, colorThemeManager.current.accent.opacity(0.8)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    )
                 }
-                
-                if let url = URL(string: contest.contestUrl) {
-                    Link(destination: url) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "scroll.fill")
-                                .font(.system(size: 14))
-                            Text("View Results")
-                                .font(.custom("TTPhobosTrial-DemiBold", size: 14))
-                        }
-                        .foregroundColor(colorThemeManager.current.text)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(colorThemeManager.current.tabBar.opacity(0.6))
-                        )
-                    }
-                }
+                .buttonStyle(ScaleButtonStyle())
                 
                 Spacer()
             }
@@ -1515,6 +1485,9 @@ struct ConquestCard: View {
                 .stroke(Color.green.opacity(0.2), lineWidth: 1)
                 .shadow(color: Color.green.opacity(0.08), radius: 8, y: 2)
         )
+        .sheet(isPresented: $showingAnalysisSheet) {
+            BattleAnalysisSheet(contest: contest)
+        }
     }
 }
 
@@ -1770,16 +1743,264 @@ struct EmptyConquestsView: View {
     }
 }
 
-// MARK: - Enhanced Battle Details Sheet
+// MARK: - Contest Status Badge
+struct ContestStatusBadge: View {
+    let contest: CFContest
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(contest.statusEmoji)
+                .font(.system(size: 16))
+            
+            Text(contest.phaseDisplayText.uppercased())
+                .font(.custom("TTPhobosTrial-Bold", size: 12))
+                .foregroundColor(contest.phaseColorValue)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(contest.phaseColorValue.opacity(0.1))
+                .stroke(contest.phaseColorValue.opacity(0.3), lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - Simple Live Contest Sheet (for upcoming/running contests)
+struct LiveContestSheet: View {
+    let contest: CFContest
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colorThemeManager.current.background
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 24) {
+                    // Contest Header
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Text("⚔️")
+                                .font(.system(size: 40))
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(contest.name)
+                                    .font(.custom("TTPhobosTrial-Bold", size: 20))
+                                    .foregroundColor(colorThemeManager.current.text)
+                                    .lineLimit(3)
+                                
+                                ContestStatusBadge(contest: contest)
+                            }
+                            
+                            Spacer()
+                        }
+                        
+                        // Basic info
+                        if let startDate = contest.startDate {
+                            HStack {
+                                Image(systemName: "clock.fill")
+                                    .foregroundColor(colorThemeManager.current.accent)
+                                Text(startDate.formatted(date: .abbreviated, time: .shortened))
+                                    .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                                    .foregroundColor(colorThemeManager.current.text)
+                                
+                                Spacer()
+                                
+                                Text("Duration: \(formatDuration(contest.durationSeconds))")
+                                    .font(.custom("TTPhobosTrial-Regular", size: 14))
+                                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                            }
+                        }
+                        
+                        if contest.isUpcoming, let timeUntilStart = contest.timeUntilStart {
+                            HStack {
+                                Image(systemName: "timer")
+                                    .foregroundColor(.orange)
+                                Text("Starts in: \(timeUntilStart)")
+                                    .font(.custom("TTPhobosTrial-Bold", size: 16))
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                    }
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(colorThemeManager.current.tabBar.opacity(0.6))
+                    )
+                    
+                    Spacer()
+                    
+                    // Action buttons
+                    VStack(spacing: 16) {
+                        if contest.phase == "CODING" {
+                            // Live contest - show join button
+                            Button(action: {
+                                if let url = URL(string: contest.contestUrl) {
+                                    UIApplication.shared.open(url)
+                                }
+                                dismiss()
+                            }) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "bolt.circle.fill")
+                                        .font(.system(size: 20, weight: .bold))
+                                    
+                                    Text("Join Live Contest")
+                                        .font(.custom("TTPhobosTrial-Bold", size: 18))
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Color.green, Color.green.opacity(0.8)],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .shadow(color: Color.green.opacity(0.4), radius: 8, x: 0, y: 4)
+                                )
+                            }
+                            .buttonStyle(ScaleButtonStyle())
+                        }
+                        
+                        // Notification button
+                        Button(action: {
+                            scheduleContestNotifications()
+                            dismiss()
+                        }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "bell.badge.fill")
+                                    .font(.system(size: 20, weight: .bold))
+                                
+                                Text("Set Smart Notifications")
+                                    .font(.custom("TTPhobosTrial-Bold", size: 18))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color.orange, Color.orange.opacity(0.8)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .shadow(color: Color.orange.opacity(0.4), radius: 8, x: 0, y: 4)
+                            )
+                        }
+                        .buttonStyle(ScaleButtonStyle())
+                        
+                        if contest.isUpcoming {
+                            // Registration button for upcoming contests
+                            Button(action: {
+                                if let url = URL(string: contest.registrationUrl) {
+                                    UIApplication.shared.open(url)
+                                }
+                            }) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "person.badge.plus.fill")
+                                        .font(.system(size: 18, weight: .bold))
+                                    
+                                    Text("Register for Contest")
+                                        .font(.custom("TTPhobosTrial-DemiBold", size: 16))
+                                }
+                                .foregroundColor(colorThemeManager.current.text)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(colorThemeManager.current.accent, lineWidth: 2)
+                                )
+                            }
+                            .buttonStyle(ScaleButtonStyle())
+                        }
+                    }
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+            }
+            .navigationTitle("Battle Ready")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(colorThemeManager.current.accent)
+                }
+            }
+        }
+    }
+    
+    private func scheduleContestNotifications() {
+        guard let startDate = contest.startDate else { return }
+        
+        // 1 day before
+        let oneDayBefore = startDate.addingTimeInterval(-24 * 60 * 60)
+        if oneDayBefore > Date() {
+            NotificationManager.shared.scheduleNotification(
+                title: "Contest Tomorrow! 📅",
+                body: "\(contest.name) starts tomorrow",
+                date: oneDayBefore,
+                identifier: "contest_\(contest.id)_1day"
+            )
+        }
+        
+        // 1 hour before
+        let oneHourBefore = startDate.addingTimeInterval(-60 * 60)
+        if oneHourBefore > Date() {
+            NotificationManager.shared.scheduleNotification(
+                title: "Contest Starting Soon! ⚔️",
+                body: "\(contest.name) starts in 1 hour",
+                date: oneHourBefore,
+                identifier: "contest_\(contest.id)_1hour"
+            )
+        }
+        
+        // 15 minutes before
+        let fifteenMinBefore = startDate.addingTimeInterval(-15 * 60)
+        if fifteenMinBefore > Date() {
+            NotificationManager.shared.scheduleNotification(
+                title: "Final Call! 🔔",
+                body: "\(contest.name) starts in 15 minutes!",
+                date: fifteenMinBefore,
+                identifier: "contest_\(contest.id)_15min"
+            )
+        }
+    }
+    
+    private func formatDuration(_ seconds: Int) -> String {
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        
+        if hours > 0 && minutes > 0 {
+            return "\(hours)h \(minutes)m"
+        } else if hours > 0 {
+            return "\(hours)h"
+        } else {
+            return "\(minutes)m"
+        }
+    }
+}
+
+// MARK: - Battle Details Sheet (for finished contests)
 struct BattleDetailsSheet: View {
     let contest: CFContest
     @EnvironmentObject var colorThemeManager: ColorThemeManager
-    @EnvironmentObject var cfService: CFService
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var cfService = CFService.shared
     @State private var selectedTab: DetailTab = .overview
-    @State private var showingStandings = false
     @State private var contestProblems: [CFProblem] = []
     @State private var isLoadingProblems = false
+    @State private var problemsError: String?
     
     enum DetailTab: String, CaseIterable {
         case overview = "Overview"
@@ -1788,7 +2009,7 @@ struct BattleDetailsSheet: View {
         
         var icon: String {
             switch self {
-            case .overview: return "info.circle.fill"
+            case .overview: return "doc.text.fill"
             case .analytics: return "chart.bar.fill"
             case .actions: return "bolt.fill"
             }
@@ -2123,20 +2344,6 @@ struct BattleDetailsSheet: View {
                         color: colorThemeManager.current.accent
                     )
                     
-                    QuickLinkRow(
-                        title: "Live Standings",
-                        icon: "chart.bar.fill",
-                        url: contest.standingsUrl,
-                        color: .orange
-                    )
-                    
-                    QuickLinkRow(
-                        title: "Problem Set",
-                        icon: "list.bullet.rectangle.fill",
-                        url: contest.problemsUrl,
-                        color: .blue
-                    )
-                    
                     if contest.isUpcoming {
                         QuickLinkRow(
                             title: "Registration",
@@ -2408,22 +2615,6 @@ struct BattleDetailsSheet: View {
                     }
                     
                     ActionRow(
-                        title: "View Standings",
-                        subtitle: "Check current rankings and results",
-                        icon: "chart.bar.fill",
-                        color: .orange,
-                        url: contest.standingsUrl
-                    )
-                    
-                    ActionRow(
-                        title: "Problems",
-                        subtitle: "View all contest problems",
-                        icon: "list.bullet.rectangle.fill",
-                        color: .blue,
-                        url: contest.problemsUrl
-                    )
-                    
-                    ActionRow(
                         title: "Announcements",
                         subtitle: "Read contest announcements and updates",
                         icon: "megaphone.fill",
@@ -2441,9 +2632,9 @@ struct BattleDetailsSheet: View {
             ) {
                 VStack(spacing: 16) {
                     StrategyActionRow(
-                        title: "AI Analysis",
-                        subtitle: "Get AI-powered contest insights and tips",
-                        icon: "brain.head.profile.fill",
+                        title: "Details & Analysis",
+                        subtitle: "Get detailed contest insights and tips",
+                        icon: "info.circle.fill",
                         color: .cyan
                     ) {
                         // Add AI analysis action
@@ -3403,30 +3594,386 @@ struct HistoricalStatRow: View {
     }
 }
 
-struct ContestStatusBadge: View {
+// MARK: - Battle Analysis Sheet
+struct BattleAnalysisSheet: View {
     let contest: CFContest
     @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var cfService = CFService.shared
+    @StateObject private var geminiService = GeminiService.shared
+    @State private var selectedTab = 0
+    @State private var contestProblems: [CFProblem] = []
+    @State private var isLoadingProblems = false
+    @State private var problemsError: String?
+    @State private var aiAnalysis: String?
+    @State private var isLoadingAnalysis = false
+    @State private var analysisError: String?
+    
+    private let tabs = ["📊 Overview", "🧩 Problems", "🧠 Details"]
     
     var body: some View {
-        HStack(spacing: 8) {
-            Text(contest.statusEmoji)
-                .font(.system(size: 16))
-            
-            Text(contest.phaseDisplayText)
-                .font(.custom("TTPhobosTrial-Bold", size: 14))
-                .foregroundColor(contest.phaseColorValue)
+        NavigationStack {
+            ZStack {
+                colorThemeManager.current.background
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Contest Header
+                    VStack(spacing: 16) {
+                        Text("🏆")
+                            .font(.system(size: 40))
+                        
+                        Text(contest.name)
+                            .font(.custom("TTPhobosTrial-Bold", size: 22))
+                            .foregroundColor(colorThemeManager.current.text)
+                            .multilineTextAlignment(.center)
+                        
+                        Text("CONQUEST COMPLETED")
+                            .font(.custom("TTPhobosTrial-Bold", size: 12))
+                            .foregroundColor(.green)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.green.opacity(0.1))
+                            )
+                    }
+                    .padding(.top, 20)
+                    .padding(.horizontal, 20)
+                    
+                    // Custom Tab Selector
+                    HStack(spacing: 0) {
+                        ForEach(0..<tabs.count, id: \.self) { index in
+                            Button(action: {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    selectedTab = index
+                                }
+                            }) {
+                                Text(tabs[index])
+                                    .font(.custom("TTPhobosTrial-Bold", size: 14))
+                                    .foregroundColor(selectedTab == index ? colorThemeManager.current.text : colorThemeManager.current.text.opacity(0.6))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                            .fill(selectedTab == index ? colorThemeManager.current.accent.opacity(0.1) : Color.clear)
+                                    )
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 24)
+                    
+                    // Tab Content
+                    TabView(selection: $selectedTab) {
+                        // Overview Tab
+                        OverviewTabContent()
+                            .tag(0)
+                        
+                        // Problems Tab
+                        ProblemsTabContent()
+                            .tag(1)
+                        
+                        // Details Tab
+                        DetailsTabContent()
+                            .tag(2)
+                    }
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                }
+            }
+            .navigationTitle("Battle Analysis")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(colorThemeManager.current.accent)
+                    .font(.custom("TTPhobosTrial-Bold", size: 16))
+                }
+            }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(contest.phaseColorValue.opacity(0.1))
-                .stroke(contest.phaseColorValue.opacity(0.3), lineWidth: 1)
-        )
+        .task {
+            await loadContestProblems()
+        }
+        .onChange(of: selectedTab) { _, newTab in
+            if newTab == 2 && aiAnalysis == nil && !isLoadingAnalysis {
+                Task {
+                    await generateAIAnalysis()
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func OverviewTabContent() -> some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                // Contest Info Cards
+                VStack(spacing: 16) {
+                    if let startDate = contest.startDate {
+                        InfoRow(title: "Completed", value: startDate.formatted(date: .abbreviated, time: .omitted))
+                    }
+                    
+                    InfoRow(title: "Duration", value: formatDuration(contest.durationSeconds))
+                    InfoRow(title: "Type", value: contest.type)
+                }
+                .padding(20)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(colorThemeManager.current.tabBar.opacity(0.8))
+                )
+                
+                // Quick Actions
+                VStack(spacing: 12) {
+                    Text("⚡ Quick Actions")
+                        .font(.custom("TTPhobosTrial-Bold", size: 18))
+                        .foregroundColor(colorThemeManager.current.text)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    HStack(spacing: 12) {
+                        ActionButton(
+                            title: "View Contest",
+                            icon: "doc.text.fill",
+                            color: colorThemeManager.current.accent,
+                            action: {
+                                if let url = URL(string: contest.contestUrl) {
+                                    UIApplication.shared.open(url)
+                                }
+                            }
+                        )
+                        
+                        ActionButton(
+                            title: "Details",
+                            icon: "info.circle.fill",
+                            color: .blue,
+                            action: {
+                                // Additional details action if needed
+                            }
+                        )
+                    }
+                }
+                .padding(20)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(colorThemeManager.current.tabBar.opacity(0.8))
+                )
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+        }
+    }
+    
+    @ViewBuilder
+    private func ProblemsTabContent() -> some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                if isLoadingProblems {
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.2)
+                        Text("Loading contest problems...")
+                            .font(.custom("TTPhobosTrial-Regular", size: 16))
+                            .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                    }
+                    .padding(.top, 50)
+                } else if let error = problemsError {
+                    VStack(spacing: 16) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 40))
+                            .foregroundColor(.red)
+                        
+                        Text("Unable to load problems")
+                            .font(.custom("TTPhobosTrial-Bold", size: 18))
+                            .foregroundColor(colorThemeManager.current.text)
+                        
+                        Text(error)
+                            .font(.custom("TTPhobosTrial-Regular", size: 14))
+                            .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                            .multilineTextAlignment(.center)
+                        
+                        Button("Retry") {
+                            Task {
+                                await loadContestProblems()
+                            }
+                        }
+                        .foregroundColor(colorThemeManager.current.accent)
+                        .font(.custom("TTPhobosTrial-Bold", size: 16))
+                    }
+                    .padding(.top, 50)
+                } else if contestProblems.isEmpty {
+                    VStack(spacing: 16) {
+                        Text("🧩")
+                            .font(.system(size: 40))
+                        
+                        Text("No problems available")
+                            .font(.custom("TTPhobosTrial-Bold", size: 18))
+                            .foregroundColor(colorThemeManager.current.text)
+                        
+                        Text("Contest problems couldn't be retrieved")
+                            .font(.custom("TTPhobosTrial-Regular", size: 14))
+                            .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                    }
+                    .padding(.top, 50)
+                } else {
+                    LazyVStack(spacing: 12) {
+                        ForEach(contestProblems, id: \.id) { problem in
+                            ProblemRow(problem: problem, index: 0, contestId: contest.id)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+        }
+    }
+    
+    @ViewBuilder
+    private func DetailsTabContent() -> some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                if isLoadingAnalysis {
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.2)
+                        Text("Generating analysis...")
+                            .font(.custom("TTPhobosTrial-Regular", size: 16))
+                            .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                    }
+                    .padding(.top, 50)
+                } else if let error = analysisError {
+                    VStack(spacing: 16) {
+                        Image(systemName: "brain.head.profile")
+                            .font(.system(size: 40))
+                            .foregroundColor(.red)
+                        
+                        Text("Analysis Failed")
+                            .font(.custom("TTPhobosTrial-Bold", size: 18))
+                            .foregroundColor(colorThemeManager.current.text)
+                        
+                        Text(error)
+                            .font(.custom("TTPhobosTrial-Regular", size: 14))
+                            .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                            .multilineTextAlignment(.center)
+                        
+                        Button("Retry Analysis") {
+                            Task {
+                                await generateAIAnalysis()
+                            }
+                        }
+                        .foregroundColor(colorThemeManager.current.accent)
+                        .font(.custom("TTPhobosTrial-Bold", size: 16))
+                    }
+                    .padding(.top, 50)
+                } else if let analysis = aiAnalysis {
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Text("🧠")
+                                .font(.system(size: 24))
+                            
+                            Text("Analysis")
+                                .font(.custom("TTPhobosTrial-Bold", size: 20))
+                                .foregroundColor(colorThemeManager.current.text)
+                        }
+                        
+                        Text(analysis)
+                            .font(.custom("TTPhobosTrial-Regular", size: 16))
+                            .foregroundColor(colorThemeManager.current.text)
+                            .lineSpacing(4)
+                    }
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(colorThemeManager.current.tabBar.opacity(0.8))
+                    )
+                } else {
+                    VStack(spacing: 16) {
+                        Text("🧠")
+                            .font(.system(size: 40))
+                        
+                        Text("Analysis Ready")
+                            .font(.custom("TTPhobosTrial-Bold", size: 18))
+                            .foregroundColor(colorThemeManager.current.text)
+                        
+                        Button("Generate Analysis") {
+                            Task {
+                                await generateAIAnalysis()
+                            }
+                        }
+                        .foregroundColor(.white)
+                        .font(.custom("TTPhobosTrial-Bold", size: 16))
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(colorThemeManager.current.accent)
+                        )
+                    }
+                    .padding(.top, 50)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+        }
+    }
+    
+    private func loadContestProblems() async {
+        isLoadingProblems = true
+        problemsError = nil
+        
+        do {
+            let problems = try await cfService.fetchContestProblems(contestId: contest.id)
+            await MainActor.run {
+                self.contestProblems = problems
+                self.isLoadingProblems = false
+            }
+        } catch {
+            await MainActor.run {
+                self.problemsError = error.localizedDescription
+                self.isLoadingProblems = false
+            }
+        }
+    }
+    
+    private func generateAIAnalysis() async {
+        isLoadingAnalysis = true
+        analysisError = nil
+        
+        let contestData = """
+        Contest: \(contest.name)
+        Type: \(contest.type)
+        Duration: \(formatDuration(contest.durationSeconds))
+        Problems: \(contestProblems.count) problems
+        \(contestProblems.map { "- \($0.name) (Rating: \($0.rating ?? 0))" }.joined(separator: "\n"))
+        """
+        
+        do {
+            let analysis = try await geminiService.analyzeContest(contestData: contestData)
+            await MainActor.run {
+                self.aiAnalysis = analysis
+                self.isLoadingAnalysis = false
+            }
+        } catch {
+            await MainActor.run {
+                self.analysisError = error.localizedDescription
+                self.isLoadingAnalysis = false
+            }
+        }
+    }
+    
+    private func formatDuration(_ seconds: Int) -> String {
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        } else {
+            return "\(minutes)m"
+        }
     }
 }
 
-// MARK: - Custom Button Style for Better UX
+// MARK: - Custom Button Style
 struct ScaleButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label

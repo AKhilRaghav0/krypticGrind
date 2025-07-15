@@ -777,6 +777,31 @@ class GeminiService: ObservableObject {
             }
         }
     }
+    
+    // MARK: - Contest Analysis
+    func analyzeContest(contestData: String) async throws -> String {
+        let prompt = """
+        As an expert competitive programming coach, analyze this completed contest and provide comprehensive insights:
+        
+        Contest Data:
+        \(contestData)
+        
+        Please provide a detailed analysis covering:
+        
+        1. **Contest Overview**: Brief description of the contest type and characteristics
+        2. **Problem Difficulty Analysis**: Breakdown of problem ratings and difficulty progression
+        3. **Strategic Insights**: Key strategies that would have been effective for this contest
+        4. **Learning Opportunities**: What skills and topics this contest tested
+        5. **Preparation Tips**: How to prepare for similar contests in the future
+        6. **Performance Factors**: What typically separates good and excellent performance in such contests
+        
+        Format your response as a well-structured analysis using clear sections with emoji headers. Keep it practical and actionable for competitive programmers looking to improve.
+        
+        Limit response to 500-600 words maximum.
+        """
+        
+        return try await callGeminiAPI(prompt: prompt)
+    }
 }
 
 // MARK: - User Stats Helper
