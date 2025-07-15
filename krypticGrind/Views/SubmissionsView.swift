@@ -799,7 +799,7 @@ struct BattleLogCard: View {
     let submission: CFSubmission
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var isExpanded = false
-    @State private var shimmerOffset: CGFloat = -200
+    @State private var pulseScale: Double = 1.0
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -823,6 +823,12 @@ struct BattleLogCard: View {
                         .overlay(
                             Circle()
                                 .stroke(battleStatusColor.opacity(0.4), lineWidth: 1)
+                        )
+                        .scaleEffect(pulseScale)
+                        .animation(
+                            .easeInOut(duration: 2.5)
+                            .repeatForever(autoreverses: true),
+                            value: pulseScale
                         )
                     
                     Text(battleResultIcon)
@@ -997,23 +1003,55 @@ struct BattleLogCard: View {
                         )
                     )
                 
-                // Shimmer effect overlay
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.clear,
-                                colorThemeManager.current.textPrimary.opacity(0.03),
-                                Color.clear
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .offset(x: shimmerOffset)
-                    .mask(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    )
+                // RPG-style corner accents (instead of shimmer)
+                VStack {
+                    HStack {
+                        // Top-left corner accent
+                        Path { path in
+                            path.move(to: CGPoint(x: 0, y: 20))
+                            path.addLine(to: CGPoint(x: 0, y: 0))
+                            path.addLine(to: CGPoint(x: 20, y: 0))
+                        }
+                        .stroke(battleStatusColor.opacity(0.4), lineWidth: 2)
+                        .frame(width: 20, height: 20)
+                        
+                        Spacer()
+                        
+                        // Top-right corner accent
+                        Path { path in
+                            path.move(to: CGPoint(x: 0, y: 0))
+                            path.addLine(to: CGPoint(x: 20, y: 0))
+                            path.addLine(to: CGPoint(x: 20, y: 20))
+                        }
+                        .stroke(battleStatusColor.opacity(0.4), lineWidth: 2)
+                        .frame(width: 20, height: 20)
+                    }
+                    
+                    Spacer()
+                    
+                    HStack {
+                        // Bottom-left corner accent
+                        Path { path in
+                            path.move(to: CGPoint(x: 20, y: 20))
+                            path.addLine(to: CGPoint(x: 0, y: 20))
+                            path.addLine(to: CGPoint(x: 0, y: 0))
+                        }
+                        .stroke(battleStatusColor.opacity(0.4), lineWidth: 2)
+                        .frame(width: 20, height: 20)
+                        
+                        Spacer()
+                        
+                        // Bottom-right corner accent
+                        Path { path in
+                            path.move(to: CGPoint(x: 0, y: 20))
+                            path.addLine(to: CGPoint(x: 20, y: 20))
+                            path.addLine(to: CGPoint(x: 20, y: 0))
+                        }
+                        .stroke(battleStatusColor.opacity(0.4), lineWidth: 2)
+                        .frame(width: 20, height: 20)
+                    }
+                }
+                .padding(12)
                 
                 // Enhanced border
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -1034,10 +1072,8 @@ struct BattleLogCard: View {
         .shadow(color: battleStatusColor.opacity(0.12), radius: 12, x: 0, y: 4)
         .shadow(color: .black.opacity(0.06), radius: 20, x: 0, y: 8)
         .onAppear {
-            // Trigger shimmer animation
-            withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
-                shimmerOffset = 400
-            }
+            // Trigger subtle pulse animation for status icon
+            pulseScale = 1.05
         }
     }
     
