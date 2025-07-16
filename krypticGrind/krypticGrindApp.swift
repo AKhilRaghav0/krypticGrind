@@ -10,9 +10,12 @@ import UserNotifications
 
 @main
 struct KrypticGrindApp: App {
-    @StateObject private var themeManager = ThemeManager.shared
+    @StateObject private var colorThemeManager = ColorThemeManager()
     
     init() {
+        // Register custom fonts
+        Font.registerFonts()
+        
         NotificationManager.shared.requestAuthorization()
         UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
     }
@@ -20,7 +23,7 @@ struct KrypticGrindApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(themeManager)
+                .environmentObject(colorThemeManager)
         }
     }
 }

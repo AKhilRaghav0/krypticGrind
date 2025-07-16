@@ -47,62 +47,7 @@ struct GeminiResponse: Codable {
     }
 }
 
-// MARK: - AI Suggestion Models
-struct AISuggestion {
-    let id = UUID()
-    let title: String
-    let description: String
-    let type: SuggestionType
-    let priority: Priority
-    let actionText: String
-    let actionURL: String?
-    
-    enum SuggestionType {
-        case practice, improvement, topic, contest, streak
-        
-        var icon: String {
-            switch self {
-            case .practice: return "book.fill"
-            case .improvement: return "chart.line.uptrend.xyaxis"
-            case .topic: return "tag.fill"
-            case .contest: return "trophy.fill"
-            case .streak: return "flame.fill"
-            }
-        }
-        
-        var color: String {
-            switch self {
-            case .practice: return "blue"
-            case .improvement: return "green"
-            case .topic: return "purple"
-            case .contest: return "orange"
-            case .streak: return "red"
-            }
-        }
-        
-        var displayText: String {
-            switch self {
-            case .practice: return "Practice"
-            case .improvement: return "Improvement"
-            case .topic: return "Topic"
-            case .contest: return "Contest"
-            case .streak: return "Streak"
-            }
-        }
-    }
-    
-    enum Priority: Int, CaseIterable {
-        case low = 1, medium = 2, high = 3
-        
-        var displayText: String {
-            switch self {
-            case .low: return "Low"
-            case .medium: return "Medium"
-            case .high: return "High"
-            }
-        }
-    }
-}
+
 
 // MARK: - Problem Recommendation Model
 struct ProblemRecommendation: Identifiable {
@@ -143,6 +88,10 @@ class GeminiService: ObservableObject {
     private let apiKey = "AIzaSyAc7AWHChXO40dNnjw2wvwCndXrd-hwQPI"
     private let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
     
+    // Background queue for AI processing
+    private let backgroundQueue = DispatchQueue(label: "com.krypticgrind.gemini", qos: .userInitiated)
+    private let session: URLSession
+    
     @Published var isLoading = false
     @Published var suggestions: [AISuggestion] = []
     @Published var error: String?
@@ -169,28 +118,48 @@ class GeminiService: ObservableObject {
         }
     }
     
-    private init() {}
+    private init() {
+        // Configure URLSession for background operations
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 60
+        config.waitsForConnectivity = true
+        self.session = URLSession(configuration: config)
+    }
     
-    // MARK: - Generate AI Suggestions
+    // MARK: - Generate AI Suggestions (with background threading)
     func generateSuggestions(
         userStats: UserStats,
         submissions: [CFSubmission],
         user: CFUser?
     ) async {
-        isLoading = true
-        error = nil
-        
-        do {
-            let prompt = createPrompt(userStats: userStats, submissions: submissions, user: user)
-            let response = try await callGeminiAPI(prompt: prompt)
-            let parsedSuggestions = parseSuggestions(from: response)
-            
-            self.suggestions = parsedSuggestions
-        } catch {
-            self.error = "Failed to generate suggestions: \(error.localizedDescription)"
+        // Update UI on main thread
+        await MainActor.run {
+            isLoading = true
+            error = nil
         }
         
-        isLoading = false
+        do {
+            // Heavy processing on background queue
+            let prompt = await createPrompt(userStats: userStats, submissions: submissions, user: user)
+            let response = try await callGeminiAPI(prompt: prompt)
+            let parsedSuggestions = await parseSuggestions(from: response)
+            
+            // Update UI on main thread
+            await MainActor.run {
+                self.suggestions = parsedSuggestions
+            }
+        } catch {
+            // Update UI on main thread
+            await MainActor.run {
+                self.error = "Failed to generate suggestions: \(error.localizedDescription)"
+            }
+        }
+        
+        // Update loading state on main thread
+        await MainActor.run {
+            isLoading = false
+        }
     }
     
     // MARK: - Create Intelligent Prompt
@@ -363,7 +332,7 @@ class GeminiService: ObservableObject {
     }
     
     // MARK: - API Call
-    private func callGeminiAPI(prompt: String) async throws -> String {
+    func callGeminiAPI(prompt: String) async throws -> String {
         guard let url = URL(string: "\(baseURL)?key=\(apiKey)") else {
             throw URLError(.badURL)
         }
@@ -427,7 +396,7 @@ class GeminiService: ObservableObject {
                 var priority: AISuggestion.Priority = .medium
                 var title = ""
                 var description = ""
-                var action = ""
+                var actionText = ""
                 var url: String? = nil
                 
                 for line in lines {
@@ -454,14 +423,14 @@ class GeminiService: ObservableObject {
                     } else if line.hasPrefix("Description:") {
                         description = String(line.dropFirst(12)).trimmingCharacters(in: .whitespaces)
                     } else if line.hasPrefix("Action:") {
-                        action = String(line.dropFirst(7)).trimmingCharacters(in: .whitespaces)
+                        actionText = String(line.dropFirst(7)).trimmingCharacters(in: .whitespaces)
                     } else if line.hasPrefix("URL:") {
                         let urlString = String(line.dropFirst(4)).trimmingCharacters(in: .whitespaces)
                         url = urlString == "none" ? nil : urlString
                     }
                 }
                 
-                guard !title.isEmpty, !description.isEmpty, !action.isEmpty else {
+                guard !title.isEmpty, !description.isEmpty, !actionText.isEmpty else {
                     return nil
                 }
                 
@@ -470,7 +439,7 @@ class GeminiService: ObservableObject {
                     description: description,
                     type: type,
                     priority: priority,
-                    actionText: action,
+                    actionText: actionText,
                     actionURL: url
                 )
             }
@@ -694,19 +663,93 @@ class GeminiService: ObservableObject {
         }
         task.resume()
     }
+    
+    // MARK: - Async version for better performance
+    func getPersonalizedPracticeSuggestionAsync(problemsSummary: String) async throws -> String {
+        return try await withCheckedThrowingContinuation { continuation in
+            Task {
+                let prompt = "Here are my 10 most recent competitive programming problems and their results. Based on this, give me only the single most important, actionable topic or area to focus on. Respond with just the topic or advice, no extra explanation or generic statements.\n\n" + problemsSummary
+                
+                let request = GeminiRequest(
+                    contents: [
+                        .init(parts: [.init(text: prompt)])
+                    ],
+                    generationConfig: .init(temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: 60)
+                )
+                
+                guard let url = URL(string: self.baseURL + "?key=" + self.apiKey) else {
+                    continuation.resume(throwing: NSError(domain: "GeminiService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"]))
+                    return
+                }
+                
+                var urlRequest = URLRequest(url: url)
+                urlRequest.httpMethod = "POST"
+                urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                
+                do {
+                    urlRequest.httpBody = try JSONEncoder().encode(request)
+                } catch {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                
+                let task = self.session.dataTask(with: urlRequest) { data, response, error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                        return
+                    }
+                    
+                    guard let data = data else {
+                        continuation.resume(throwing: NSError(domain: "GeminiService", code: 2, userInfo: [NSLocalizedDescriptionKey: "No data received"]))
+                        return
+                    }
+                    
+                    do {
+                        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
+                        var suggestion = geminiResponse.candidates.first?.content.parts.first?.text ?? "No suggestion available."
+                        
+                        // Post-process: Only keep the first actionable sentence or phrase
+                        if let firstLine = suggestion.components(separatedBy: .newlines).first(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) {
+                            suggestion = firstLine
+                        }
+                        
+                        continuation.resume(returning: suggestion)
+                    } catch {
+                        continuation.resume(throwing: error)
+                    }
+                }
+                task.resume()
+            }
+        }
+    }
+    
+    // MARK: - Contest Analysis
+    func analyzeContest(contestData: String) async throws -> String {
+        let prompt = """
+        As an expert competitive programming coach, analyze this completed contest and provide comprehensive insights:
+        
+        Contest Data:
+        \(contestData)
+        
+        Please provide a detailed analysis covering:
+        
+        1. **Contest Overview**: Brief description of the contest type and characteristics
+        2. **Problem Difficulty Analysis**: Breakdown of problem ratings and difficulty progression
+        3. **Strategic Insights**: Key strategies that would have been effective for this contest
+        4. **Learning Opportunities**: What skills and topics this contest tested
+        5. **Preparation Tips**: How to prepare for similar contests in the future
+        6. **Performance Factors**: What typically separates good and excellent performance in such contests
+        
+        Format your response as a well-structured analysis using clear sections with emoji headers. Keep it practical and actionable for competitive programmers looking to improve.
+        
+        Limit response to 500-600 words maximum.
+        """
+        
+        return try await callGeminiAPI(prompt: prompt)
+    }
 }
 
-// MARK: - User Stats Helper
-struct UserStats {
-    let totalSubmissions: Int
-    let acceptedSubmissions: Int
-    let acceptanceRate: Double
-    let mostUsedLanguage: String
-    let currentStreak: Int
-    let weeklySubmissions: Int
-    let topTopics: [String]
-    let recentPerformance: String
-}
+
 
 // MARK: - SUGGESTION: For best quota usage, use Gemini only to generate problem ideas (offline or cached),
 // fetch URLs/resources yourself using HTTP APIs or scraping, and pass only minimal context to Gemini.

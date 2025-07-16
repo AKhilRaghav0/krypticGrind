@@ -10,14 +10,14 @@ import SwiftUI
 struct AISuggestionsView: View {
     @StateObject private var geminiService = GeminiService.shared
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     @State private var showingAppearanceSettings = false
     
     var body: some View {
         NavigationStack {
             ZStack {
-                themeManager.colors.background
+                colorThemeManager.current.background
                     .ignoresSafeArea()
                 
                 if geminiService.isLoading {
@@ -54,7 +54,7 @@ struct AISuggestionsView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
-                            .foregroundStyle(themeManager.colors.accent)
+                            .foregroundStyle(colorThemeManager.current.accent)
                     }
                 }
             }
@@ -100,34 +100,11 @@ struct AISuggestionsView: View {
             acceptedSubmissions: acceptedSubmissions,
             acceptanceRate: acceptanceRate,
             mostUsedLanguage: mostUsedLanguage,
-            currentStreak: calculateStreak(),
+            currentStreak: cfService.recentSubmissions.calculateStreak(),
             weeklySubmissions: weeklySubmissions,
             topTopics: topTopics,
             recentPerformance: calculateRecentPerformance()
         )
-    }
-    
-    private func calculateStreak() -> Int {
-        let calendar = Calendar.current
-        var streak = 0
-        var currentDate = calendar.startOfDay(for: Date())
-        
-        for _ in 0..<30 {
-            let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
-            let hasSubmission = cfService.recentSubmissions.contains { submission in
-                let submissionDate = calendar.startOfDay(for: submission.submissionDate)
-                return submissionDate >= currentDate && submissionDate < nextDate
-            }
-            
-            if hasSubmission {
-                streak += 1
-                currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate)!
-            } else {
-                break
-            }
-        }
-        
-        return streak
     }
     
     private func calculateRecentPerformance() -> String {
@@ -154,7 +131,7 @@ struct AISuggestionsView: View {
 // MARK: - Suggestions List View
 struct SuggestionsListView: View {
     let suggestions: [AISuggestion]
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         ScrollView {
@@ -164,7 +141,7 @@ struct SuggestionsListView: View {
                     HStack {
                         Image(systemName: "brain.head.profile")
                             .font(.title2)
-                            .foregroundStyle(themeManager.colors.accent.gradient)
+                            .foregroundStyle(colorThemeManager.current.accent.gradient)
                         
                         Text("AI Coach Recommendations")
                             .font(.title2.bold())
@@ -258,7 +235,7 @@ struct SuggestionSection: View {
 // MARK: - Suggestion Card
 struct SuggestionCard: View {
     let suggestion: AISuggestion
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -346,26 +323,26 @@ struct SuggestionCard: View {
 
 // MARK: - Loading View
 struct LoadingView: View {
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 24) {
             // Animated AI Brain
             ZStack {
                 Circle()
-                    .stroke(themeManager.colors.accent.opacity(0.3), lineWidth: 4)
+                    .stroke(colorThemeManager.current.accent.opacity(0.3), lineWidth: 4)
                     .frame(width: 80, height: 80)
                 
                 Circle()
                     .trim(from: 0, to: 0.7)
-                    .stroke(themeManager.colors.accent.gradient, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .stroke(colorThemeManager.current.accent.gradient, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                     .frame(width: 80, height: 80)
                     .rotationEffect(.degrees(-90))
                     .animation(.linear(duration: 1.5).repeatForever(autoreverses: false), value: UUID())
                 
                 Image(systemName: "brain.head.profile")
                     .font(.system(size: 30))
-                    .foregroundStyle(themeManager.colors.accent)
+                    .foregroundStyle(colorThemeManager.current.accent)
             }
             
             VStack(spacing: 8) {
@@ -387,14 +364,14 @@ struct LoadingView: View {
 // MARK: - Empty AI Suggestions View
 struct EmptyAISuggestionsView: View {
     let onRefresh: () async -> Void
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 24) {
             VStack(spacing: 16) {
                 Image(systemName: "brain.head.profile")
                     .font(.system(size: 60))
-                    .foregroundStyle(themeManager.colors.accent.gradient)
+                    .foregroundStyle(colorThemeManager.current.accent.gradient)
                 
                 VStack(spacing: 8) {
                     Text("AI Coach Ready")
@@ -420,7 +397,7 @@ struct EmptyAISuggestionsView: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
-                .background(themeManager.colors.accent.gradient, in: RoundedRectangle(cornerRadius: 12))
+                .background(colorThemeManager.current.accent.gradient, in: RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
         }
@@ -433,7 +410,7 @@ struct EmptyAISuggestionsView: View {
 struct ErrorView: View {
     let error: String
     let onRetry: () async -> Void
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 24) {
@@ -466,7 +443,7 @@ struct ErrorView: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
-                .background(themeManager.colors.accent.gradient, in: RoundedRectangle(cornerRadius: 12))
+                .background(colorThemeManager.current.accent.gradient, in: RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
         }

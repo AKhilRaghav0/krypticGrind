@@ -8,187 +8,107 @@
 import SwiftUI
 
 struct ThemeSelectorSheet: View {
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var themeManager = ThemeManager.shared
-    @State private var selectedAppearance: ColorScheme?
     
-    init() {
-        _selectedAppearance = State(initialValue: ThemeManager.shared.colorScheme)
-    }
+    private let themeNames = ["Ocean", "Sunset", "Forest", "Cosmic", "Minimal"]
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                // Large, bold title
-                HStack {
-                    Text("Appearance")
-                        .font(.largeTitle.bold())
-                        .padding(.top, 24)
-                    Spacer()
-                    Button("Done") { 
-                        themeManager.colorScheme = selectedAppearance
-                        dismiss() 
-                    }
-                    .fontWeight(.semibold)
-                    .padding(.top, 24)
-                }
-                .padding(.horizontal)
+        NavigationView {
+            ZStack {
+                colorThemeManager.current.background
+                    .ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 32) {
-                        // Appearance Mode Selector
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Appearance")
-                                .font(.headline)
-                                .padding(.horizontal, 8)
-                            HStack(spacing: 16) {
-                                AppearanceButton(
-                                    title: "System",
-                                    icon: "circle.lefthalf.filled",
-                                    isSelected: selectedAppearance == nil
-                                ) {
-                                    withAnimation {
-                                        selectedAppearance = nil
-                                        themeManager.colorScheme = nil
+                VStack(spacing: 24) {
+                    Text("Choose Theme")
+                        .font(.title2.bold())
+                        .foregroundColor(colorThemeManager.current.text)
+                        .padding(.top)
+                    
+                    LazyVGrid(columns: [
+                        GridItem(.flexible(), spacing: 16),
+                        GridItem(.flexible(), spacing: 16)
+                    ], spacing: 16) {
+                        ForEach(Array(themeNames.enumerated()), id: \.offset) { index, name in
+                            ThemeSelectorCard(
+                                themeName: name,
+                                isSelected: index == colorThemeManager.currentThemeIndex,
+                                action: {
+                                    withAnimation(.spring()) {
+                                        colorThemeManager.setTheme(index: index)
                                     }
                                 }
-                                AppearanceButton(
-                                    title: "Light",
-                                    icon: "sun.max.fill",
-                                    isSelected: selectedAppearance == .light
-                                ) {
-                                    withAnimation {
-                                        selectedAppearance = .light
-                                        themeManager.colorScheme = .light
-                                    }
-                                }
-                                AppearanceButton(
-                                    title: "Dark",
-                                    icon: "moon.fill",
-                                    isSelected: selectedAppearance == .dark
-                                ) {
-                                    withAnimation {
-                                        selectedAppearance = .dark
-                                        themeManager.colorScheme = .dark
-                                    }
-                                }
-                            }
+                            )
                         }
-                        .padding()
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                        .padding(.horizontal)
                     }
-                    .padding(.vertical)
+                    .padding(.horizontal)
+                    
+                    Spacer()
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Themes")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(colorThemeManager.current.accent)
+                }
+            }
         }
     }
 }
 
-struct AppearanceButton: View {
-    let title: String
-    let icon: String
+struct ThemeSelectorCard: View {
+    let themeName: String
     let isSelected: Bool
     let action: () -> Void
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 20))
-                    .foregroundStyle(isSelected ? .blue : .primary)
-                
-                Text(title)
-                    .font(.caption)
-                    .foregroundStyle(isSelected ? .blue : .secondary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
-            )
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-struct ThemeCard: View {
-    let theme: AppTheme
-    let isSelected: Bool
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 16) {
-                // Theme Color Preview
+            VStack(spacing: 12) {
+                // Theme preview
                 HStack(spacing: 4) {
                     Circle()
-                        .fill(theme.colors.accent)
-                        .frame(width: 12, height: 12)
-                    Circle()
-                        .fill(theme.colors.highlight)
-                        .frame(width: 12, height: 12)
-                    Circle()
-                        .fill(theme.colors.success)
-                        .frame(width: 12, height: 12)
-                    Circle()
-                        .fill(theme.colors.warning)
-                        .frame(width: 12, height: 12)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
-                
-                // Theme Info
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(theme.displayName)
-                        .font(.headline)
-                        .foregroundStyle(.primary)
+                        .fill(colorThemeManager.current.background)
+                        .frame(width: 16, height: 16)
                     
-                    Text(theme.description)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    Circle()
+                        .fill(colorThemeManager.current.accent)
+                        .frame(width: 16, height: 16)
+                    
+                    Circle()
+                        .fill(colorThemeManager.current.tabBar)
+                        .frame(width: 16, height: 16)
+                    
+                    Circle()
+                        .fill(colorThemeManager.current.text)
+                        .frame(width: 16, height: 16)
                 }
                 
-                Spacer()
-                
-                // Selection Indicator
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.title3)
-                        .foregroundStyle(Color.accentColor)
-                        .scaleEffect(isSelected ? 1.1 : 1.0)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
-                } else {
-                    Image(systemName: "circle")
-                        .font(.title3)
-                        .foregroundStyle(.tertiary)
-                }
+                Text(themeName)
+                    .font(.caption.weight(.medium))
+                    .foregroundColor(colorThemeManager.current.text)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-            .overlay(
+            .padding()
+            .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+                    .fill(colorThemeManager.current.tabBar)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(isSelected ? colorThemeManager.current.accent : Color.clear, lineWidth: 2)
+                    )
             )
-            .scaleEffect(isSelected ? 1.02 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
         }
         .buttonStyle(.plain)
-        .onTapGesture {
-            // Add haptic feedback manually if needed
-            #if os(iOS)
-            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-            impactFeedback.impactOccurred()
-            #endif
-        }
+        .scaleEffect(isSelected ? 1.05 : 1.0)
+        .animation(.spring(response: 0.3), value: isSelected)
     }
 }
 
 #Preview {
     ThemeSelectorSheet()
+        .environmentObject(ColorThemeManager())
 }

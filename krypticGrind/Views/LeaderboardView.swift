@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LeaderboardView: View {
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @StateObject private var leaderboardManager = LeaderboardManager.shared
     @State private var showingAddHandle = false
     @State private var searchText = ""
@@ -18,37 +18,26 @@ struct LeaderboardView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                themeManager.colors.background
+                colorThemeManager.current.background
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     // Search Bar
                     SearchBar(searchText: $searchText)
-                        .padding()
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
                     
                     if leaderboardManager.handles.isEmpty {
-                        EmptyLeaderboardView()
+                        EmptyLeaderboardView(showingAddHandle: $showingAddHandle)
                     } else {
                         LeaderboardList(handles: filteredHandles)
                     }
                 }
             }
-            .background(themeManager.colors.background)
             .navigationTitle("Leaderboard")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingAddHandle = true
-                    }) {
-                        Image(systemName: "person.badge.plus")
-                            .foregroundStyle(themeManager.colors.accent)
-                    }
-                }
-            }
+            .navigationBarTitleDisplayMode(.inline)
         }
+        .tint(colorThemeManager.current.accent)
         .sheet(isPresented: $showingAddHandle) {
             AddHandleSheet()
         }
@@ -60,7 +49,7 @@ struct LeaderboardView: View {
 
 struct LeaderboardList: View {
     let handles: [LeaderboardHandle]
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var sortedHandles: [LeaderboardHandle] {
         handles.sorted { handle1, handle2 in
@@ -74,12 +63,13 @@ struct LeaderboardList: View {
     
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
+            LazyVStack(spacing: 16) {
                 ForEach(Array(sortedHandles.enumerated()), id: \.element.id) { index, handle in
                     LeaderboardCard(handle: handle, rank: index + 1)
                 }
             }
-            .padding()
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
         }
     }
 }
@@ -87,7 +77,7 @@ struct LeaderboardList: View {
 struct LeaderboardCard: View {
     let handle: LeaderboardHandle
     let rank: Int
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @StateObject private var leaderboardManager = LeaderboardManager.shared
     
     private var rankColor: Color {
@@ -95,7 +85,7 @@ struct LeaderboardCard: View {
         case 1: return .yellow
         case 2: return .gray
         case 3: return .orange
-        default: return .blue
+        default: return colorThemeManager.current.accent
         }
     }
     
@@ -109,22 +99,22 @@ struct LeaderboardCard: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             // Header with rank and handle
             HStack {
-                HStack(spacing: 8) {
+                HStack(spacing: 12) {
                     Text(rankIcon)
-                        .font(.title2)
+                        .font(.system(size: 24, weight: .bold))
                     
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(handle.handle)
-                            .font(.headline.weight(.medium))
-                            .foregroundStyle(.primary)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(colorThemeManager.current.text)
                         
                         if let firstName = handle.firstName {
                             Text(firstName)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                         }
                     }
                 }
@@ -143,7 +133,8 @@ struct LeaderboardCard: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+                        .font(.system(size: 18))
                 }
             }
             
@@ -153,29 +144,34 @@ struct LeaderboardCard: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 12) {
-                StatItem(title: "Rating", value: "\(handle.rating)", icon: "chart.line.uptrend.xyaxis", color: .blue)
-                StatItem(title: "Problems", value: "\(handle.problemsSolved)", icon: "checkmark.circle", color: .green)
-                StatItem(title: "Contests", value: "\(handle.contestsParticipated)", icon: "trophy", color: .orange)
+                StatItem(title: "Rating", value: "\(handle.rating)", icon: "chart.line.uptrend.xyaxis", color: Color.ratingColor(for: handle.rating))
+                StatItem(title: "Problems", value: "\(handle.problemsSolved)", icon: "checkmark.circle.fill", color: .green)
+                StatItem(title: "Contests", value: "\(handle.contestsParticipated)", icon: "trophy.fill", color: .orange)
             }
             
             // Rating change
             if handle.ratingChange != 0 {
-                HStack {
+                HStack(spacing: 8) {
                     Image(systemName: handle.ratingChange > 0 ? "arrow.up.circle.fill" : "arrow.down.circle.fill")
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(handle.ratingChange > 0 ? .green : .red)
                     
                     Text("\(handle.ratingChange > 0 ? "+" : "")\(handle.ratingChange)")
-                        .font(.subheadline.weight(.medium))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(handle.ratingChange > 0 ? .green : .red)
                     
                     Spacer()
                 }
             }
         }
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
+        )
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .stroke(rankColor.opacity(0.3), lineWidth: rank <= 3 ? 2 : 0)
         )
     }
@@ -186,64 +182,116 @@ struct StatItem: View {
     let value: String
     let icon: String
     let color: Color
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.subheadline)
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(color)
             
             Text(value)
-                .font(.headline.weight(.bold))
-                .foregroundStyle(.primary)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(colorThemeManager.current.text)
             
             Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
+        )
     }
 }
 
 struct EmptyLeaderboardView: View {
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @Binding var showingAddHandle: Bool
     
     var body: some View {
-        VStack(spacing: 24) {
-            VStack(spacing: 16) {
-                Image(systemName: "trophy")
-                    .font(.system(size: 60))
-                    .foregroundStyle(.orange.gradient)
+        VStack(spacing: 20) {
+            Spacer()
+            
+            Image(systemName: "trophy")
+                .font(.system(size: 48, weight: .light))
+                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+            
+            VStack(spacing: 8) {
+                Text("No Handles Added")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(colorThemeManager.current.text)
                 
-                VStack(spacing: 8) {
-                    Text("No Handles Added")
-                        .font(.title2.bold())
-                        .foregroundStyle(.primary)
-                    
-                    Text("Add Codeforces handles to compare your progress with friends and other coders.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
+                Text("Add Codeforces handles to start tracking your leaderboard")
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+                    .multilineTextAlignment(.center)
             }
             
-            Button("Add First Handle") {
-                // This will be handled by the sheet
+            Button(action: { showingAddHandle = true }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                    
+                    Text("Add Handle")
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(colorThemeManager.current.accent)
+                )
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .buttonStyle(.plain)
+            
+            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
+        .padding(.horizontal, 40)
+    }
+}
+
+struct SearchBar: View {
+    @Binding var searchText: String
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+                .font(.system(size: 16, weight: .medium))
+            
+            TextField("Search handles...", text: $searchText)
+                .foregroundStyle(colorThemeManager.current.text)
+                .font(.system(size: 16, weight: .regular))
+            
+            if !searchText.isEmpty {
+                Button(action: {
+                    searchText = ""
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+                        .font(.system(size: 16))
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.05), radius: 8, y: 2)
+        )
     }
 }
 
 struct AddHandleSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @StateObject private var leaderboardManager = LeaderboardManager.shared
     @State private var handleText = ""
     @State private var isLoading = false
@@ -252,7 +300,7 @@ struct AddHandleSheet: View {
     var body: some View {
         NavigationView {
             ZStack {
-                themeManager.colors.background
+                colorThemeManager.current.background
                     .ignoresSafeArea()
                 
                 VStack(spacing: 20) {
@@ -317,7 +365,7 @@ struct AddHandleSheet: View {
                     Button("Add") {
                         addHandle()
                     }
-                    .foregroundStyle(themeManager.colors.accent)
+                    .foregroundStyle(colorThemeManager.current.accent)
                     .disabled(handleText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
                 }
             }

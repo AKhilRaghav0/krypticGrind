@@ -10,7 +10,7 @@ import Charts
 
 struct PracticeTrackerView: View {
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var selectedAnalysis: AnalysisType = .tags
     
     enum AnalysisType: String, CaseIterable {
@@ -40,42 +40,47 @@ struct PracticeTrackerView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Analysis Type Selector
-                AnalysisSelector(selectedAnalysis: $selectedAnalysis)
-                    .padding()
+            ZStack {
+                colorThemeManager.current.background
+                    .ignoresSafeArea()
                 
-                ScrollView {
-                    LazyVStack(spacing: 20) {
-                        // Main Chart
-                        AnalysisChart(analysisType: selectedAnalysis)
-                        
-                        // Statistics Cards
-                        PracticeStatsGrid()
-                        
-                        // Recommendations
-                        if selectedAnalysis == .tags {
-                            RecommendationsCard()
+                VStack(spacing: 0) {
+                    // Analysis Type Selector
+                    AnalysisSelector(selectedAnalysis: $selectedAnalysis)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                    
+                    ScrollView {
+                        LazyVStack(spacing: 20) {
+                            // Main Chart
+                            AnalysisChart(analysisType: selectedAnalysis)
+                            
+                            // Statistics Cards
+                            PracticeStatsGrid()
+                            
+                            // Recommendations
+                            if selectedAnalysis == .tags {
+                                RecommendationsCard()
+                            }
+                            
+                            // Review Later Card
+                            ReviewLaterPreviewCard()
+                            
+                            // Topic Progression
+                            TopicProgressionCard()
+                            
+                            // Progress Insights
+                            ProgressInsightsCard()
                         }
-                        
-                        // Review Later Card
-                        ReviewLaterPreviewCard()
-                        
-                        // Topic Progression
-                        TopicProgressionCard()
-                        
-                        // Progress Insights
-                        ProgressInsightsCard()
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
                     }
-                    .padding()
                 }
             }
-            .background(themeManager.colors.background)
             .navigationTitle("Practice Tracker")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.inline)
         }
+        .tint(colorThemeManager.current.accent)
         .task {
             if let handle = UserDefaults.standard.savedHandle {
                 await cfService.fetchUserSubmissions(handle: handle, count: 200)
@@ -86,11 +91,11 @@ struct PracticeTrackerView: View {
 
 struct AnalysisSelector: View {
     @Binding var selectedAnalysis: PracticeTrackerView.AnalysisType
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: 12) {
                 ForEach(PracticeTrackerView.AnalysisType.allCases, id: \.self) { type in
                     AnalysisTab(
                         type: type,
@@ -100,7 +105,7 @@ struct AnalysisSelector: View {
                     }
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 4)
         }
     }
 }
@@ -109,29 +114,24 @@ struct AnalysisTab: View {
     let type: PracticeTrackerView.AnalysisType
     let isSelected: Bool
     let action: () -> Void
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: type.systemImage)
-                    .font(.subheadline)
+                    .font(.system(size: 14, weight: .medium))
                 
                 Text(type.rawValue)
-                    .font(.subheadline.weight(.medium))
+                    .font(.system(size: 14, weight: .medium))
             }
-            .foregroundStyle(isSelected ? .white : .primary)
+            .foregroundStyle(isSelected ? .white : colorThemeManager.current.text)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(
-                Capsule().fill(
-                    isSelected ? AnyShapeStyle(type.color) : AnyShapeStyle(.ultraThinMaterial)
-            )
-            )
-
-            .overlay(
-                Capsule()
-                    .stroke(isSelected ? Color.clear : Color.gray.opacity(0.15), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(isSelected ? type.color : Color(.systemBackground).opacity(0.9))
+                    .shadow(color: isSelected ? type.color.opacity(0.3) : Color.black.opacity(0.05), radius: 8, y: 2)
             )
         }
         .buttonStyle(.plain)
@@ -143,32 +143,22 @@ struct AnalysisTab: View {
 struct AnalysisChart: View {
     let analysisType: PracticeTrackerView.AnalysisType
     @StateObject private var cfService = CFService.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
-    var chartData: [(String, Int)] {
-        switch analysisType {
-        case .tags:
-            return Array(cfService.getTagStatistics()
-                .sorted { $0.value > $1.value }
-                .prefix(10))
-        case .languages:
-            return Array(cfService.getLanguageStatistics()
-                .sorted { $0.value > $1.value }
-                .prefix(8))
-        case .verdicts:
-            return Array(cfService.getVerdictStatistics()
-                .sorted { $0.value > $1.value })
-        case .difficulty:
-            return getDifficultyStatistics()
-        }
-    }
+    @State private var chartData: [(String, Int)] = []
+    @State private var isLoadingData = true
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label("\(analysisType.rawValue) Analysis", systemImage: analysisType.systemImage)
-                .font(.headline.bold())
-                .foregroundStyle(.primary)
+            Text("\(analysisType.rawValue) Analysis")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(colorThemeManager.current.text)
             
-            if chartData.isEmpty {
+            if isLoadingData {
+                ProgressView()
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .foregroundStyle(colorThemeManager.current.text)
+            } else if chartData.isEmpty {
                 EmptyChartView(analysisType: analysisType)
             } else {
                 switch analysisType {
@@ -181,85 +171,98 @@ struct AnalysisChart: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.08), radius: 8, y: 2)
+        )
+        .task {
+            await loadChartData()
+        }
     }
     
-    private func getDifficultyStatistics() -> [(String, Int)] {
-        var difficultyCounts: [String: Int] = [:]
+    private func loadChartData() async {
+        isLoadingData = true
         
-        for submission in cfService.recentSubmissions where submission.isAccepted {
-            let difficulty = submission.problem.difficulty
-            difficultyCounts[difficulty, default: 0] += 1
+        let data: [String: Int]
+        
+        switch analysisType {
+        case .tags:
+            data = await cfService.getTagStatisticsAsync()
+        case .languages:
+            data = await cfService.getLanguageStatisticsAsync()
+        case .verdicts:
+            data = await cfService.getVerdictStatisticsAsync()
+        case .difficulty:
+            data = await cfService.getDifficultyStatisticsAsync()
         }
         
-        let difficultyOrder = ["Unrated", "Beginner", "Easy", "Medium", "Hard", "Expert"]
-        return difficultyOrder.compactMap { difficulty in
-            guard let count = difficultyCounts[difficulty], count > 0 else { return nil }
-            return (difficulty, count)
+        await MainActor.run {
+            switch analysisType {
+            case .tags:
+                chartData = Array(data.sorted { $0.value > $1.value }.prefix(10))
+            case .languages:
+                chartData = Array(data.sorted { $0.value > $1.value }.prefix(8))
+            case .verdicts, .difficulty:
+                chartData = Array(data.sorted { $0.value > $1.value })
+            }
+            isLoadingData = false
         }
+    }
+}
+
+struct EmptyChartView: View {
+    let analysisType: PracticeTrackerView.AnalysisType
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: analysisType.systemImage)
+                .font(.system(size: 48, weight: .light))
+                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+            
+            VStack(spacing: 8) {
+                Text("No \(analysisType.rawValue) Data")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(colorThemeManager.current.text)
+                
+                Text("Start solving problems to see your \(analysisType.rawValue.lowercased()) analysis")
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(height: 200)
+        .frame(maxWidth: .infinity)
     }
 }
 
 struct HorizontalBarChart: View {
     let data: [(String, Int)]
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
-        Chart {
-            ForEach(Array(data.enumerated()), id: \ .offset) { index, item in
-                BarMark(
-                    x: .value("Count", item.1),
-                    y: .value("Category", item.0)
-                )
-                .foregroundStyle(Color.accentColor)
-                .cornerRadius(4)
-            }
-        }
-        .frame(height: max(200, CGFloat(data.count * 25)))
-        .chartXAxis {
-            AxisMarks(values: .automatic) { _ in
-                AxisGridLine()
-                    .foregroundStyle(.gray.opacity(0.3))
-                AxisValueLabel()
-                    .foregroundStyle(.gray)
-            }
-        }
-        .chartYAxis {
-            AxisMarks(values: .automatic) { _ in
-                AxisValueLabel()
-                    .foregroundStyle(.primary)
-            }
-        }
-    }
-}
-
-struct VerticalBarChart: View {
-    let data: [(String, Int)]
-    
-    var body: some View {
-        Chart {
-            ForEach(Array(data.enumerated()), id: \ .offset) { index, item in
-                BarMark(
-                    x: .value("Category", item.0),
-                    y: .value("Count", item.1)
-                )
-                .foregroundStyle(Color.accentColor)
-                .cornerRadius(4)
-            }
-        }
-        .frame(height: 200)
-        .chartXAxis {
-            AxisMarks(values: .automatic) { _ in
-                AxisValueLabel()
-                    .foregroundStyle(.primary)
-            }
-        }
-        .chartYAxis {
-            AxisMarks(values: .automatic) { _ in
-                AxisGridLine()
-                    .foregroundStyle(.gray.opacity(0.3))
-                AxisValueLabel()
-                    .foregroundStyle(.gray)
+        VStack(spacing: 12) {
+            ForEach(data.prefix(8), id: \.0) { item in
+                HStack {
+                    Text(item.0)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(colorThemeManager.current.text)
+                        .frame(width: 80, alignment: .leading)
+                    
+                    GeometryReader { geometry in
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(colorThemeManager.current.accent.gradient)
+                            .frame(width: geometry.size.width * CGFloat(item.1) / CGFloat(data.first?.1 ?? 1))
+                    }
+                    .frame(height: 20)
+                    
+                    Text("\(item.1)")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(colorThemeManager.current.text)
+                        .frame(width: 30, alignment: .trailing)
+                }
             }
         }
     }
@@ -267,138 +270,109 @@ struct VerticalBarChart: View {
 
 struct PieChartView: View {
     let data: [(String, Int)]
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
-        VStack(spacing: 16) {
-            // Simple pie chart representation using progress circles
-            VStack(spacing: 12) {
-                ForEach(Array(data.enumerated()), id: \.offset) { index, item in
-                    PieSliceRow(
-                        label: item.0,
-                        value: item.1,
-                        total: data.reduce(0) { $0 + $1.1 },
-                        color: pieColor(for: index)
-                    )
+        HStack {
+            // Simple pie chart representation
+            ZStack {
+                Circle()
+                    .stroke(colorThemeManager.current.accent.opacity(0.2), lineWidth: 20)
+                    .frame(width: 120, height: 120)
+                
+                Circle()
+                    .trim(from: 0, to: 0.7)
+                    .stroke(colorThemeManager.current.accent, style: StrokeStyle(lineWidth: 20, lineCap: .round))
+                    .frame(width: 120, height: 120)
+                    .rotationEffect(.degrees(-90))
+            }
+            
+            Spacer()
+            
+            // Legend
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(data.prefix(5), id: \.0) { item in
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(colorThemeManager.current.accent)
+                            .frame(width: 8, height: 8)
+                        
+                        Text(item.0)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(colorThemeManager.current.text)
+                        
+                        Text("\(item.1)")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+                    }
                 }
             }
         }
     }
-    
-    private func pieColor(for index: Int) -> Color {
-        let colors: [Color] = [.blue, .green, .orange, .red, .yellow, .pink, .cyan, .purple]
-        return colors[index % colors.count]
-    }
 }
 
-struct PieSliceRow: View {
-    let label: String
-    let value: Int
-    let total: Int
-    let color: Color
-    
-    var percentage: Double {
-        Double(value) / Double(total) * 100
-    }
+struct VerticalBarChart: View {
+    let data: [(String, Int)]
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
-        HStack {
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(color)
-                    .frame(width: 12, height: 12)
-                
-                Text(label)
-                    .font(.subheadline)
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                Text("\(value)")
-                    .font(.subheadline.bold())
-                    .foregroundColor(.white)
-                
-                Text("(\(Int(percentage))%)")
-                    .font(.caption)
-                    .foregroundColor(.gray)
+        HStack(alignment: .bottom, spacing: 8) {
+            ForEach(data, id: \.0) { item in
+                VStack(spacing: 8) {
+                    Text("\(item.1)")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(colorThemeManager.current.text)
+                    
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .fill(colorThemeManager.current.accent.gradient)
+                        .frame(height: CGFloat(item.1) * 3 + 20)
+                    
+                    Text(item.0)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+                        .rotationEffect(.degrees(-45))
+                        .frame(height: 20)
+                }
             }
-            
-            ProgressView(value: percentage / 100)
-                .progressViewStyle(LinearProgressViewStyle(tint: color))
-                .frame(width: 60)
-        }
-    }
-}
-
-struct EmptyChartView: View {
-    let analysisType: PracticeTrackerView.AnalysisType
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: analysisType.systemImage)
-                .font(.system(size: 40))
-                .foregroundColor(.gray)
-            
-            Text("No data available")
-                .font(.subheadline)
-                .foregroundColor(.gray)
-            
-            Text("Submit some problems to see \(analysisType.rawValue.lowercased()) analysis")
-                .font(.caption)
-                .foregroundColor(.gray)
-                .multilineTextAlignment(.center)
         }
         .frame(height: 150)
-        .frame(maxWidth: .infinity)
     }
 }
 
 struct PracticeStatsGrid: View {
     @StateObject private var cfService = CFService.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Label("Practice Statistics", systemImage: "chart.bar.fill")
-                .font(.headline.bold())
-                .foregroundStyle(.primary)
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
+            PracticeStatCard(
+                title: "Total Submissions",
+                value: "\(cfService.recentSubmissions.count)",
+                icon: "doc.text.fill",
+                color: colorThemeManager.current.accent
+            )
             
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 12) {
-                PracticeStatCard(
-                    title: "Total Submissions",
-                    value: "\(cfService.recentSubmissions.count)",
-                    icon: "doc.text",
-                    color: .blue
-                )
-                
-                PracticeStatCard(
-                    title: "Accepted",
-                    value: "\(cfService.recentSubmissions.acceptedSubmissions().count)",
-                    icon: "checkmark.circle",
-                    color: .green
-                )
-                
-                let acceptanceRate = cfService.recentSubmissions.isEmpty ? 0 : 
-                    (Double(cfService.recentSubmissions.acceptedSubmissions().count) / Double(cfService.recentSubmissions.count) * 100)
-                
-                PracticeStatCard(
-                    title: "Acceptance Rate",
-                    value: "\(Int(acceptanceRate))%",
-                    icon: "percent",
-                    color: acceptanceRate >= 50 ? .green : .orange
-                )
-                
-                PracticeStatCard(
-                    title: "Unique Problems",
-                    value: "\(Set(cfService.recentSubmissions.map { $0.problem.name }).count)",
-                    icon: "puzzlepiece",
-                    color: .purple
-                )
-            }
+            PracticeStatCard(
+                title: "Accepted",
+                value: "\(cfService.recentSubmissions.filter { $0.isAccepted }.count)",
+                icon: "checkmark.circle.fill",
+                color: .green
+            )
+            
+            PracticeStatCard(
+                title: "Accuracy",
+                value: "\(Int((Double(cfService.recentSubmissions.filter { $0.isAccepted }.count) / Double(max(cfService.recentSubmissions.count, 1))) * 100))%",
+                icon: "percent",
+                color: .blue
+            )
+            
+            PracticeStatCard(
+                title: "Languages",
+                value: "\(Set(cfService.recentSubmissions.map { $0.programmingLanguage }).count)",
+                icon: "chevron.left.forwardslash.chevron.right",
+                color: .purple
+            )
         }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -407,31 +381,40 @@ struct PracticeStatCard: View {
     let value: String
     let icon: String
     let color: Color
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(color)
+                
+                Spacer()
+            }
             
-            Text(value)
-                .font(.title3.bold())
-                .foregroundColor(.primary)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(value)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(colorThemeManager.current.text)
+                
+                Text(title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.9))
+                .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
+        )
     }
 }
 
 struct RecommendationsCard: View {
     @StateObject private var cfService = CFService.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var geminiSuggestion: String? = nil
     @State private var isLoadingGemini = false
     @State private var geminiError: String? = nil
@@ -443,7 +426,7 @@ struct RecommendationsCard: View {
         VStack(alignment: .leading, spacing: 22) {
             Label("Recommendations", systemImage: "lightbulb.fill")
                 .font(.headline.bold())
-                .foregroundStyle(.primary)
+                .foregroundStyle(colorThemeManager.current.text)
             
             // Gemini suggestion section
             Group {
@@ -458,14 +441,14 @@ struct RecommendationsCard: View {
                     Button(action: { /* TODO: Hook up action */ }) {
                         HStack(alignment: .top, spacing: 8) {
                             Image(systemName: "sparkle")
-                                .foregroundColor(.accentColor)
+                                .foregroundColor(colorThemeManager.current.accent)
                             Text(suggestion)
                                 .font(.body.weight(.semibold))
-                                .foregroundColor(.primary)
+                                .foregroundColor(colorThemeManager.current.text)
                                 .multilineTextAlignment(.leading)
                         }
                         .padding(10)
-                        .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .background(colorThemeManager.current.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                         .matchedGeometryEffect(id: "geminiSuggestion", in: animation)
                     }
                     .buttonStyle(.plain)
@@ -481,18 +464,18 @@ struct RecommendationsCard: View {
             if totalSolved == 0 {
                 Text("Start solving problems to get personalized recommendations!")
                     .font(.body)
-                    .foregroundColor(.gray)
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
             } else {
                 let weakTags = getTopWeakTags(tagStats: tagStats, limit: 2)
                 
                 if weakTags.isEmpty {
                     Text("Great work! You're well-balanced across different topics.")
                         .font(.body)
-                        .foregroundColor(.green)
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.6))
                 } else {
                     Text("Consider practicing these topics:")
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.6))
                         .padding(.bottom, 2)
 
                     FlexibleTagGrid(tags: weakTags, animation: animation)
@@ -501,7 +484,7 @@ struct RecommendationsCard: View {
             }
         }
         .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
         .onAppear {
             fetchAndSuggest()
         }
@@ -526,17 +509,18 @@ struct RecommendationsCard: View {
             isFetchingProblems = false
             isLoadingGemini = true
             let problemsSummary = cfService.recentProblemsSummary(count: 10)
-            GeminiService.shared.getPersonalizedPracticeSuggestion(problemsSummary: problemsSummary) { result in
-                DispatchQueue.main.async {
-                    isLoadingGemini = false
-                    switch result {
-                    case .success(let suggestion):
-                        withAnimation {
-                            geminiSuggestion = suggestion
-                        }
-                    case .failure:
-                        geminiError = "Could not fetch AI suggestion."
+            do {
+                let suggestion = try await GeminiService.shared.getPersonalizedPracticeSuggestionAsync(problemsSummary: problemsSummary)
+                await MainActor.run {
+                    withAnimation {
+                        geminiSuggestion = suggestion
                     }
+                    isLoadingGemini = false
+                }
+            } catch {
+                await MainActor.run {
+                    geminiError = "Could not fetch AI suggestion."
+                    isLoadingGemini = false
                 }
             }
         }
@@ -556,6 +540,7 @@ struct RecommendationsCard: View {
 struct FlexibleTagGrid: View {
     let tags: [String]
     var animation: Namespace.ID? = nil
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     var body: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 80), spacing: 8)], spacing: 8) {
             ForEach(tags, id: \.self) { tag in
@@ -564,8 +549,8 @@ struct FlexibleTagGrid: View {
                         .font(.caption.weight(.medium))
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(Color.orange.opacity(0.18), in: Capsule())
-                        .foregroundColor(.orange)
+                        .background(colorThemeManager.current.accent.opacity(0.18), in: Capsule())
+                        .foregroundColor(colorThemeManager.current.accent)
                         .shadow(color: .black.opacity(0.04), radius: 2, x: 0, y: 1)
                         .scaleEffect(0.98)
                         .matchedGeometryEffect(id: tag, in: animation ?? Namespace().wrappedValue)
@@ -578,12 +563,13 @@ struct FlexibleTagGrid: View {
 
 struct ProgressInsightsCard: View {
     @StateObject private var cfService = CFService.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Label("Progress Insights", systemImage: "chart.line.uptrend.xyaxis")
                 .font(.headline.bold())
-                .foregroundStyle(.primary)
+                .foregroundStyle(colorThemeManager.current.text)
             
             VStack(spacing: 8) {
                 InsightRow(
@@ -612,7 +598,7 @@ struct ProgressInsightsCard: View {
             }
         }
         .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
     }
     
     private func getMostUsedLanguage() -> String {
@@ -665,17 +651,18 @@ struct InsightRow: View {
     let title: String
     let value: String
     let icon: String
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         HStack {
             Image(systemName: icon)
                 .font(.subheadline)
-                .foregroundStyle(.blue)
+                .foregroundStyle(colorThemeManager.current.accent)
                 .frame(width: 20)
             
             Text(title)
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundColor(colorThemeManager.current.text.opacity(0.6))
             
             Spacer()
             
@@ -689,6 +676,7 @@ struct InsightRow: View {
 struct ReviewLaterPreviewCard: View {
     @StateObject private var problemDataManager = ProblemDataManager.shared
     @StateObject private var cfService = CFService.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var showingReviewLaterView = false
     
     var reviewLaterCount: Int {
@@ -700,14 +688,14 @@ struct ReviewLaterPreviewCard: View {
             HStack {
                 Label("Review Later", systemImage: "bookmark")
                     .font(.headline.bold())
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(colorThemeManager.current.text)
                 
                 Spacer()
                 
                 if reviewLaterCount > 0 {
                     Text("\(reviewLaterCount)")
                         .font(.headline.bold())
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(colorThemeManager.current.accent)
                 }
             }
             
@@ -715,16 +703,16 @@ struct ReviewLaterPreviewCard: View {
                 VStack(spacing: 12) {
                     Image(systemName: "bookmark")
                         .font(.system(size: 40))
-                        .foregroundStyle(.orange.opacity(0.6))
+                        .foregroundStyle(colorThemeManager.current.accent.opacity(0.6))
                     
                     VStack(spacing: 4) {
                         Text("No Problems to Review")
                             .font(.subheadline.bold())
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(colorThemeManager.current.text)
                         
                         Text("Mark problems from your submissions to review them later")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                             .multilineTextAlignment(.center)
                     }
                 }
@@ -742,7 +730,7 @@ struct ReviewLaterPreviewCard: View {
                     if reviewLaterCount > 3 {
                         Text("+ \(reviewLaterCount - 3) more")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                     }
                 }
             }
@@ -759,14 +747,14 @@ struct ReviewLaterPreviewCard: View {
                     Image(systemName: "chevron.right")
                         .font(.caption)
                 }
-                .foregroundStyle(.orange)
+                .foregroundStyle(colorThemeManager.current.accent)
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
-                .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                .background(colorThemeManager.current.accent.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
             }
         }
         .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
         .sheet(isPresented: $showingReviewLaterView) {
             ReviewLaterView()
         }
@@ -776,7 +764,7 @@ struct ReviewLaterPreviewCard: View {
 struct ReviewLaterPreviewRow: View {
     let submission: CFSubmission
     let reviewLater: ProblemReviewLater
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         HStack(spacing: 12) {
@@ -784,7 +772,7 @@ struct ReviewLaterPreviewRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(submission.problem.name)
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(colorThemeManager.current.text)
                     .lineLimit(1)
                 
                 HStack(spacing: 8) {
@@ -792,8 +780,8 @@ struct ReviewLaterPreviewRow: View {
                         .font(.caption.weight(.semibold))
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(.blue.opacity(0.15), in: RoundedRectangle(cornerRadius: 4))
-                        .foregroundStyle(.blue)
+                        .background(colorThemeManager.current.accent.opacity(0.15), in: RoundedRectangle(cornerRadius: 4))
+                        .foregroundStyle(colorThemeManager.current.accent)
                     
                     if let rating = submission.problem.rating {
                         Text("\(rating)")
@@ -815,16 +803,17 @@ struct ReviewLaterPreviewRow: View {
             // Bookmark icon
             Image(systemName: "bookmark.fill")
                 .font(.caption)
-                .foregroundStyle(.orange)
+                .foregroundStyle(colorThemeManager.current.accent)
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 8))
     }
 }
 
 struct TopicProgressionCard: View {
     @StateObject private var cfService = CFService.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var showingAllTopics = false
     
     var topTopics: [(String, Int)] {
@@ -838,7 +827,7 @@ struct TopicProgressionCard: View {
             HStack {
                 Label("Topic Progression", systemImage: "chart.bar.fill")
                     .font(.headline.bold())
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(colorThemeManager.current.text)
                 
                 Spacer()
                 
@@ -847,7 +836,7 @@ struct TopicProgressionCard: View {
                         showingAllTopics = true
                     }
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(colorThemeManager.current.accent)
                 }
             }
             
@@ -855,16 +844,16 @@ struct TopicProgressionCard: View {
                 VStack(spacing: 12) {
                     Image(systemName: "chart.bar")
                         .font(.system(size: 40))
-                        .foregroundStyle(.blue.opacity(0.6))
+                        .foregroundStyle(colorThemeManager.current.accent.opacity(0.6))
                     
                     VStack(spacing: 4) {
                         Text("No Topic Data")
                             .font(.subheadline.bold())
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(colorThemeManager.current.text)
                         
                         Text("Solve more problems to see your topic progression")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                             .multilineTextAlignment(.center)
                     }
                 }
@@ -879,7 +868,7 @@ struct TopicProgressionCard: View {
             }
         }
         .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
         .sheet(isPresented: $showingAllTopics) {
             TopicProgressionView()
         }
@@ -890,7 +879,7 @@ struct TopicProgressRow: View {
     let topic: String
     let count: Int
     let maxCount: Int
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     private var progress: Double {
         guard maxCount > 0 else { return 0 }
@@ -908,7 +897,7 @@ struct TopicProgressRow: View {
             HStack {
                 Text(topic.capitalized())
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(colorThemeManager.current.text)
                 
                 Spacer()
                 
@@ -937,7 +926,7 @@ struct TopicProgressRow: View {
 
 struct TopicProgressionView: View {
     @StateObject private var cfService = CFService.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
     
@@ -957,12 +946,12 @@ struct TopicProgressionView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                themeManager.colors.background
+                colorThemeManager.current.background
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     // Search Bar
-                    SearchBar(searchText: $searchText)
+                    PracticeSearchBar(searchText: $searchText)
                         .padding()
                     
                     if filteredTopics.isEmpty {
@@ -974,14 +963,14 @@ struct TopicProgressionView: View {
             }
             .navigationTitle("Topic Progression")
             .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+            .toolbarBackground(colorThemeManager.current.tabBar, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundStyle(themeManager.colors.accent)
+                    .foregroundStyle(colorThemeManager.current.accent)
                 }
             }
         }
@@ -995,7 +984,7 @@ struct TopicProgressionView: View {
 
 struct TopicProgressionList: View {
     let topics: [(String, Int)]
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var maxCount: Int {
         topics.first?.1 ?? 1
@@ -1017,7 +1006,7 @@ struct TopicProgressionDetailCard: View {
     let topic: String
     let count: Int
     let maxCount: Int
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @StateObject private var cfService = CFService.shared
     
     private var progress: Double {
@@ -1044,11 +1033,11 @@ struct TopicProgressionDetailCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(topic.capitalized())
                         .font(.headline.bold())
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(colorThemeManager.current.text)
                     
                     Text("\(count) problems solved")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                 }
                 
                 Spacer()
@@ -1078,13 +1067,13 @@ struct TopicProgressionDetailCard: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Recent Problems")
                         .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(colorThemeManager.current.text)
                     
                     ForEach(Array(problemsInTopic.prefix(3)), id: \.id) { submission in
                         HStack {
                             Text(submission.problem.name)
                                 .font(.caption)
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(colorThemeManager.current.text)
                                 .lineLimit(1)
                             
                             Spacer()
@@ -1100,35 +1089,35 @@ struct TopicProgressionDetailCard: View {
                         }
                         .padding(.vertical, 4)
                         .padding(.horizontal, 8)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+                        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 6))
                     }
                 }
             }
         }
         .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
 struct EmptyTopicProgressionView: View {
     let searchText: String
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
         VStack(spacing: 24) {
             VStack(spacing: 16) {
                 Image(systemName: "chart.bar")
                     .font(.system(size: 60))
-                    .foregroundStyle(.blue.gradient)
+                    .foregroundStyle(colorThemeManager.current.accent.gradient)
                 
                 VStack(spacing: 8) {
                     Text(emptyTitle)
                         .font(.title2.bold())
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(colorThemeManager.current.text)
                     
                     Text(emptyMessage)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
@@ -1165,32 +1154,33 @@ struct EmptyTopicProgressionView: View {
     }
 }
 
-// MARK: - Reusable SearchBar
-struct SearchBar: View {
+
+
+struct PracticeSearchBar: View {
     @Binding var searchText: String
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-                .font(.subheadline)
+                .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
             
             TextField("Search topics...", text: $searchText)
-                .foregroundStyle(.primary)
+                .textFieldStyle(.plain)
+                .foregroundStyle(colorThemeManager.current.text)
             
             if !searchText.isEmpty {
                 Button(action: {
                     searchText = ""
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(colorThemeManager.current.text.opacity(0.6))
                 }
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .background(colorThemeManager.current.tabBar, in: RoundedRectangle(cornerRadius: 12))
     }
 }
 

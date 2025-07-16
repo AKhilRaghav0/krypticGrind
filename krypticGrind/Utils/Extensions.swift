@@ -111,28 +111,32 @@ extension Color {
     
     static func ratingColor(for rating: Int) -> Color {
         switch rating {
-        case 1200..<1400: return .cfGreen
-        case 1400..<1600: return .cfCyan
-        case 1600..<1900: return .cfBlue
-        case 1900..<2100: return .cfPurple
-        case 2100..<2300: return .cfOrange
-        case 2300..<2400: return .cfRed
-        case 2400...: return .cfRed
-        default: return .cfGray
+        case 0..<1200: return .gray
+        case 1200..<1400: return .green
+        case 1400..<1600: return .cyan
+        case 1600..<1900: return .blue
+        case 1900..<2100: return .purple
+        case 2100..<2300: return .orange
+        case 2300..<2400: return .red
+        case 2400...: return .red
+        default: return .gray
         }
     }
     
     static func verdictColor(for verdict: String) -> Color {
         switch verdict {
-        case "OK": return .acGreen
-        case "WRONG_ANSWER": return .waRed
-        case "TIME_LIMIT_EXCEEDED": return .tleOrange
-        case "MEMORY_LIMIT_EXCEEDED": return .mleOrange
-        case "RUNTIME_ERROR": return .rtePurple
-        case "COMPILATION_ERROR": return .ceGray
+        case "OK": return .green
+        case "WRONG_ANSWER": return .red
+        case "TIME_LIMIT_EXCEEDED": return .orange
+        case "MEMORY_LIMIT_EXCEEDED": return .orange
+        case "RUNTIME_ERROR": return .purple
+        case "COMPILATION_ERROR": return .gray
         default: return .blue
         }
     }
+    
+    // MARK: - Additional Colors
+    static let gold = Color(red: 1.0, green: 0.84, blue: 0.0)
     
     // MARK: - Hex Color Support
     init(hex: String) {
@@ -330,6 +334,60 @@ extension Array where Element == CFSubmission {
     
     func acceptedSubmissions() -> [CFSubmission] {
         return self.filter { $0.isAccepted }
+    }
+    
+    func calculateStreak() -> Int {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let acceptedSubmissions = self.filter { $0.isAccepted }
+        
+        // Group submissions by date
+        let submissionsByDate = Dictionary(grouping: acceptedSubmissions) { submission in
+            calendar.startOfDay(for: submission.submissionDate)
+        }
+        
+        var streak = 0
+        var checkDate = today
+        
+        // Check if there's a submission today
+        if submissionsByDate[today] != nil {
+            streak = 1
+            checkDate = calendar.date(byAdding: .day, value: -1, to: today)!
+        } else {
+            // If no submission today, check yesterday to maintain streak
+            let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+            if submissionsByDate[yesterday] != nil {
+                checkDate = yesterday
+            } else {
+                // No recent activity, streak is 0
+                return 0
+            }
+        }
+        
+        // Count consecutive days going backwards
+             	        while checkDate >= calendar.date(byAdding: .day, value: -30, to: today)! {
+            
+            if submissionsByDate[checkDate] != nil {
+                streak += 1
+                guard let nextDate = calendar.date(byAdding: .day, value: -1, to: checkDate) else {
+                    break
+                }
+                checkDate = nextDate
+            } else {
+                break
+            }
+        }
+        
+        return streak
+    }
+}
+
+// MARK: - Array Extensions for Threading
+extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        return stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
+        }
     }
 }
 
@@ -627,5 +685,41 @@ class ThemeManager: ObservableObject {
         }
         
         return isDark ? theme.darkColors : theme.lightColors
+    }
+}
+
+// MARK: - Button Styles
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Modern Button Style
+struct ModernButtonStyle: ButtonStyle {
+    let color: Color
+    let isSecondary: Bool
+    
+    init(color: Color = .blue, isSecondary: Bool = false) {
+        self.color = color
+        self.isSecondary = isSecondary
+    }
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundColor(isSecondary ? color : .white)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isSecondary ? color.opacity(0.1) : color)
+                    .stroke(isSecondary ? color : Color.clear, lineWidth: 1)
+            )
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }

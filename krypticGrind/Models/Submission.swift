@@ -13,7 +13,7 @@ struct CFSubmissionsResponse: Codable {
     let result: [CFSubmission]
 }
 
-struct CFSubmission: Codable, Identifiable {
+struct CFSubmission: Codable, Identifiable, Equatable {
     var id: Int { creationTimeSeconds }
     let contestId: Int?
     let creationTimeSeconds: Int
@@ -26,6 +26,13 @@ struct CFSubmission: Codable, Identifiable {
     let passedTestCount: Int
     let timeConsumedMillis: Int
     let memoryConsumedBytes: Int
+    
+    // Equatable conformance
+    static func == (lhs: CFSubmission, rhs: CFSubmission) -> Bool {
+        return lhs.creationTimeSeconds == rhs.creationTimeSeconds &&
+               lhs.contestId == rhs.contestId &&
+               lhs.problem.problemId == rhs.problem.problemId
+    }
     
     // Computed properties
     var submissionDate: Date {
@@ -70,7 +77,7 @@ struct CFSubmission: Codable, Identifiable {
     }
 }
 
-struct CFProblem: Codable {
+struct CFProblem: Codable, Equatable, Identifiable {
     let contestId: Int?
     let problemsetName: String?
     let index: String
@@ -79,6 +86,10 @@ struct CFProblem: Codable {
     let points: Double?
     let rating: Int?
     let tags: [String]
+    
+    var id: String {
+        "\(contestId ?? 0)_\(index)"
+    }
     
     // Computed properties
     var difficulty: String {
@@ -99,20 +110,4 @@ struct CFProblem: Codable {
         }
         return "https://codeforces.com/problemset/problem/\(index)"
     }
-}
-
-struct CFParty: Codable {
-    let contestId: Int?
-    let members: [CFMember]
-    let participantType: String
-    let teamId: Int?
-    let teamName: String?
-    let ghost: Bool
-    let room: Int?
-    let startTimeSeconds: Int?
-}
-
-struct CFMember: Codable {
-    let handle: String
-    let name: String?
 }
