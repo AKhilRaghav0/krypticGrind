@@ -538,16 +538,17 @@ struct PowerLevelChart: View {
                             )
                         )
                         .frame(height: 2)
-                        .padding(.horizontal, 40)
+                        .padding(.horizontal, 20)
                 }
 
                 // Enhanced Chart
-                ZStack {
+                VStack(spacing: 0) {
                     if !cfService.ratingHistory.isEmpty {
                         chartView
-                            .frame(height: 320)
+                            .frame(height: 280)
+                            .clipped() // Ensure chart doesn't overflow
                             .chartXAxis {
-                                AxisMarks(values: .automatic(desiredCount: 5)) { _ in
+                                AxisMarks(values: .automatic(desiredCount: 4)) { _ in
                                     AxisGridLine()
                                         .foregroundStyle(colorThemeManager.current.divider.opacity(0.2))
                                     AxisTick()
@@ -555,7 +556,7 @@ struct PowerLevelChart: View {
                                 }
                             }
                             .chartYAxis {
-                                AxisMarks(values: .automatic(desiredCount: 6)) { value in
+                                AxisMarks(values: .automatic(desiredCount: 5)) { value in
                                     AxisGridLine()
                                         .foregroundStyle(colorThemeManager.current.divider.opacity(0.2))
                                     AxisTick()
@@ -586,6 +587,7 @@ struct PowerLevelChart: View {
                             .frame(height: 280)
                     }
                 }
+                .frame(maxWidth: .infinity) // Constrain width
                 .background(
                     RoundedRectangle(cornerRadius: 16)
                         .fill(
@@ -609,7 +611,7 @@ struct PowerLevelChart: View {
                     PowerLevelBattleDetails(ratingChange: selectedRating)
                 }
             }
-            .padding(24)
+            .padding(20) // Reduced from 24 to 20 for better fit
         }
     }
     
@@ -648,6 +650,11 @@ struct PowerLevelChart: View {
         }
         .chartXScale(domain: chartXDomain)
         .chartYScale(domain: chartYDomain)
+        .chartPlotStyle { plotContent in
+            plotContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
+        }
     }
     
     private var chartXDomain: ClosedRange<Double> {
