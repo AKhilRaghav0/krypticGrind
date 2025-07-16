@@ -82,6 +82,11 @@ struct HomeView: View {
     @State private var showingProcessingOverlay = false
     @State private var isCameraActive = false
     @State private var showingFullAnalysis = false
+    @State private var showingExtractedText = false
+    
+    // RPG Alert State
+    @State private var showAlert = false
+    @State private var alertMessage = ""
     
     var body: some View {
         NavigationStack {
@@ -275,7 +280,7 @@ struct HomeView: View {
                         }
                     }
                 )
-                .presentationDetents([.height(280)])
+                .presentationDetents([.height(350)])
                 .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showingDocumentCamera) {
@@ -303,7 +308,26 @@ struct HomeView: View {
                         showingAIAnalysis = false
                     }
                 )
-            }        .sheet(isPresented: $showingFullAnalysis) {
+            }
+            .sheet(isPresented: $showingExtractedText) {
+                ExtractedTextPreviewSheet(
+                    extractedText: extractedText,
+                    selectedImage: selectedImage,
+                    onProceedWithAnalysis: {
+                        showingExtractedText = false
+                        showingAIAnalysis = true
+                        Task {
+                            await analyzeTextWithGemini()
+                        }
+                    },
+                    onDismiss: {
+                        showingExtractedText = false
+                    }
+                )
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $showingFullAnalysis) {
             AnalysisMarkdownView(content: aiAnalysisResult.isEmpty ? """
                 # 🔍 Analysis Status
                 
@@ -339,6 +363,19 @@ struct HomeView: View {
                 }
             }
         }
+        .overlay(
+            Group {
+                if showAlert {
+                    CustomRPGAlert(
+                        title: "⚔️ Warrior Status",
+                        message: alertMessage,
+                        onDismiss: { showAlert = false }
+                    )
+                    .transition(.scale.combined(with: .opacity))
+                    .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showAlert)
+                }
+            }
+        )
     }
     
     private func performSwordRefresh() async {
@@ -383,11 +420,9 @@ struct HomeView: View {
                 self.extractedText = recognizedStrings.joined(separator: "\n")
                 print("Extracted text: \(self.extractedText)")
                 if !self.extractedText.isEmpty {
-                    // Keep processing overlay until AI analysis starts
-                    self.showingAIAnalysis = true
-                    Task {
-                        await self.analyzeTextWithGemini()
-                    }
+                    // Show extracted text preview first
+                    self.showingProcessingOverlay = false
+                    self.showingExtractedText = true
                 } else {
                     self.showingProcessingOverlay = false
                     print("No text extracted from image")
@@ -1729,7 +1764,7 @@ struct EnhancedSettingsSheet: View {
                         
                         // Handle Section
                         VStack(alignment: .leading, spacing: 16) {
-                            Label("🏷️ Warrior Identity", systemImage: "person.circle")
+                            Label("Warrior Identity", systemImage: "person.circle")
                                 .font(.custom("TTPhobosTrial-Bold", size: 20))
                                 .foregroundColor(colorThemeManager.current.text)
                             
@@ -1798,7 +1833,7 @@ struct EnhancedSettingsSheet: View {
                         
                         // Theme Section
                         VStack(alignment: .leading, spacing: 16) {
-                            Label("🎨 Visual Enchantments", systemImage: "paintbrush")
+                            Label("Visual Enchantments", systemImage: "paintbrush")
                                 .font(.custom("TTPhobosTrial-Bold", size: 20))
                                 .foregroundColor(colorThemeManager.current.text)
                             
@@ -1852,33 +1887,20 @@ struct EnhancedSettingsSheet: View {
                 }
             }
             .navigationBarHidden(true)
-            .overlay(
-                // Close button
-                VStack {
-                    HStack {
-                        Spacer()
-                        Button(action: { dismiss() }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 30))
-                                .foregroundColor(colorThemeManager.current.text.opacity(0.6))
-                                .background(
-                                    Circle()
-                                        .fill(colorThemeManager.current.surface.opacity(0.8))
-                                        .blur(radius: 10)
-                                )
-                        }
-                        .padding(.trailing, 20)
-                        .padding(.top, 20)
-                    }
-                    Spacer()
+        }
+        .overlay(
+            Group {
+                if showAlert {
+                    CustomRPGAlert(
+                        title: "⚔️ Warrior Status",
+                        message: alertMessage,
+                        onDismiss: { showAlert = false }
+                    )
+                    .transition(.scale.combined(with: .opacity))
+                    .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showAlert)
                 }
-            )
-        }
-        .alert("Handle Update", isPresented: $showAlert) {
-            Button("OK") { }
-        } message: {
-            Text(alertMessage)
-        }
+            }
+        )
     }
     
     private func saveNewHandle() {
@@ -1916,22 +1938,31 @@ struct RPGCameraPickerSheet: View {
                     colorThemeManager.current.surface.opacity(0.3),
                     colorThemeManager.current.accent.opacity(0.1)
                 ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                startPoint: .top,
+                endPoint: .bottom
             )
             .ignoresSafeArea()
             
+            VStack(spacing: 0) {
+                Spacer().frame(height: 12) // Add extra space inside the card/header
+                Text("📜")
+                    .font(.system(size: 48))
+                    .padding(.top, 8) // Push emoji further down from the top border
+                // ...rest of your header and content...
+            }
+            
             // Floating mystical particles
-            ForEach(0..<12, id: \.self) { _ in
+            ForEach(0..<8, id: \.self) { _ in
                 FloatingParticle(
                     color: colorThemeManager.current.accent.opacity(0.4),
-                    size: CGFloat.random(in: 3...6)
+                    size: CGFloat.random(in: 2...4)
                 )
             }
             
-            VStack(spacing: 32) {
-                // Header with mystical styling
-                VStack(spacing: 16) {
+            VStack(spacing: 0) {
+                Spacer().frame(height: 16)
+                // Header with scroll emoji
+                VStack(spacing: 10) {
                     ZStack {
                         Circle()
                             .fill(
@@ -1941,99 +1972,222 @@ struct RPGCameraPickerSheet: View {
                                         colorThemeManager.current.accent.opacity(0.1)
                                     ],
                                     center: .center,
-                                    startRadius: 10,
-                                    endRadius: 40
+                                    startRadius: 8,
+                                    endRadius: 30
                                 )
                             )
-                            .frame(width: 80, height: 80)
-                        
+                            .frame(width: 60, height: 60)
                         Text("📜")
-                            .font(.system(size: 36))
+                            .font(.system(size: 28))
                             .scaleEffect(animateCards ? 1.1 : 1.0)
                             .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: animateCards)
                     }
-                    
-                    VStack(spacing: 8) {
-                        Text("🏰 Ancient Text Extraction")
-                            .font(.custom("TTPhobosTrial-Bold", size: 24))
-                            .foregroundColor(colorThemeManager.current.text)
-                            .multilineTextAlignment(.center)
-                        
-                        Text("Unlock the secrets hidden within mystical scrolls and ancient texts")
-                            .font(.custom("TTPhobosTrial-Regular", size: 16))
-                            .foregroundColor(colorThemeManager.current.text.opacity(0.7))
-                            .multilineTextAlignment(.center)
-                            .lineLimit(2)
-                    }
+                    Text("🏰 Ancient Text Extraction")
+                        .font(.custom("TTPhobosTrial-Bold", size: 24))
+                        .foregroundColor(colorThemeManager.current.textPrimary)
+                        .padding(.top, 0) // Remove or reduce top padding
+                    Text("Unlock the secrets hidden within mystical scrolls")
+                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                        .foregroundColor(colorThemeManager.current.textSecondary)
+                        .padding(.bottom, 4) // Reduce bottom padding
+                    // ...rest of your header and content...
                 }
-                .padding(.top, 20)
+                .padding(.bottom, 28)
                 
                 // Action cards
-                VStack(spacing: 20) {
-                    EnhancedRPGActionButton(
-                        icon: "📸",
-                        title: "Scan Ancient Scroll",
-                        subtitle: "Use the mystical camera to capture text",
-                        color: colorThemeManager.current.accent,
-                        gradient: [colorThemeManager.current.accent, colorThemeManager.current.accent.opacity(0.7)],
-                        action: {
-                            // Add haptic feedback
-                            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                            impactFeedback.impactOccurred()
-                            dismiss()
-                            onTakePhoto()
+                VStack(spacing: 18) {
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                        impactFeedback.impactOccurred()
+                        dismiss()
+                        onTakePhoto()
+                    }) {
+                        HStack(spacing: 16) {
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        RadialGradient(
+                                            colors: [
+                                                colorThemeManager.current.accent.opacity(0.3),
+                                                colorThemeManager.current.accent.opacity(0.1)
+                                            ],
+                                            center: .center,
+                                            startRadius: 4,
+                                            endRadius: 20
+                                        )
+                                    )
+                                    .frame(width: 40, height: 40)
+                                Text("📸")
+                                    .font(.system(size: 18))
+                            }
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Scan Ancient Scroll")
+                                    .font(.custom("TTPhobosTrial-Bold", size: 16))
+                                    .foregroundColor(colorThemeManager.current.text)
+                                Text("Use the mystical camera to capture text")
+                                    .font(.custom("TTPhobosTrial-Regular", size: 12))
+                                    .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                                    .lineLimit(2)
+                            }
+                            Spacer()
+                            Image(systemName: "arrow.right.circle.fill")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [colorThemeManager.current.accent, colorThemeManager.current.accent.opacity(0.7)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
                         }
-                    )
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            colorThemeManager.current.surface.opacity(0.9),
+                                            colorThemeManager.current.surface.opacity(0.6)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    colorThemeManager.current.accent.opacity(0.5),
+                                                    colorThemeManager.current.accent.opacity(0.2)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 1.5
+                                        )
+                                )
+                                .shadow(
+                                    color: colorThemeManager.current.accent.opacity(0.2),
+                                    radius: 6,
+                                    x: 0,
+                                    y: 3
+                                )
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
                     .scaleEffect(animateCards ? 1.0 : 0.9)
                     .opacity(animateCards ? 1.0 : 0.0)
                     .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1), value: animateCards)
                     
-                    EnhancedRPGActionButton(
-                        icon: "🗂️",
-                        title: "Choose from Grimoire",
-                        subtitle: "Select from your collection of texts",
-                        color: .purple,
-                        gradient: [.purple, .blue],
-                        action: {
-                            // Add haptic feedback
-                            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                            impactFeedback.impactOccurred()
-                            dismiss()
-                            onChooseFromGallery()
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                        impactFeedback.impactOccurred()
+                        dismiss()
+                        onChooseFromGallery()
+                    }) {
+                        HStack(spacing: 16) {
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        RadialGradient(
+                                            colors: [
+                                                Color.purple.opacity(0.3),
+                                                Color.purple.opacity(0.1)
+                                            ],
+                                            center: .center,
+                                            startRadius: 4,
+                                            endRadius: 20
+                                        )
+                                    )
+                                    .frame(width: 40, height: 40)
+                                Text("🗂️")
+                                    .font(.system(size: 18))
+                            }
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Choose from Grimoire")
+                                    .font(.custom("TTPhobosTrial-Bold", size: 16))
+                                    .foregroundColor(colorThemeManager.current.text)
+                                Text("Select from your collection of texts")
+                                    .font(.custom("TTPhobosTrial-Regular", size: 12))
+                                    .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                                    .lineLimit(2)
+                            }
+                            Spacer()
+                            Image(systemName: "arrow.right.circle.fill")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [Color.purple, Color.purple.opacity(0.7)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
                         }
-                    )
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.purple.opacity(0.13),
+                                            Color.purple.opacity(0.08)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.purple.opacity(0.4),
+                                                    Color.purple.opacity(0.2)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 1.5
+                                        )
+                                )
+                                .shadow(
+                                    color: Color.purple.opacity(0.13),
+                                    radius: 6,
+                                    x: 0,
+                                    y: 3
+                                )
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
                     .scaleEffect(animateCards ? 1.0 : 0.9)
                     .opacity(animateCards ? 1.0 : 0.0)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2), value: animateCards)
+                    .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.15), value: animateCards)
                 }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 8)
+                .padding(.top, 8)
                 
-                Spacer(minLength: 40)
-                
-                // Cancel button
+                // Cancel button closer to action buttons
                 Button(action: { dismiss() }) {
-                    HStack {
-                        Image(systemName: "xmark.circle")
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("Cancel Quest")
-                            .font(.custom("TTPhobosTrial-Bold", size: 16))
-                    }
-                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(
-                        Capsule()
-                            .fill(colorThemeManager.current.surface.opacity(0.6))
-                            .overlay(
-                                Capsule()
-                                    .stroke(colorThemeManager.current.text.opacity(0.2), lineWidth: 1)
-                            )
-                    )
+                    Text("Cancel Quest")
+                        .font(.custom("TTPhobosTrial-Bold", size: 16))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            Capsule()
+                                .fill(colorThemeManager.current.surface.opacity(0.5))
+                        )
                 }
-                .scaleEffect(animateCards ? 1.0 : 0.9)
+                .padding(.horizontal, 60)
+                .padding(.top, 8)
+                .padding(.bottom, 16)
                 .opacity(animateCards ? 1.0 : 0.0)
-                .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.3), value: animateCards)
+                .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2), value: animateCards)
             }
-            .padding(.horizontal, 24)
         }
         .onAppear {
             withAnimation {
@@ -2074,7 +2228,7 @@ struct EnhancedRPGActionButton: View {
                         .frame(width: 50, height: 50)
                     
                     Text(icon)
-                        .font(.system(size: 24))
+                        .font(.system(size: 20))
                 }
                 
                 VStack(alignment: .leading, spacing: 6) {
@@ -2477,5 +2631,268 @@ struct AnalysisMarkdownView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Extracted Text Preview Sheet (RPG Immersive Style)
+struct ExtractedTextPreviewSheet: View {
+    let extractedText: String
+    let selectedImage: UIImage?
+    let onProceedWithAnalysis: () -> Void
+    let onDismiss: () -> Void
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @State private var animateIn = false
+    
+    var body: some View {
+        ZStack {
+            // RPG mesh gradient background
+            AnimatedMeshGradient()
+                .ignoresSafeArea()
+                .opacity(0.7)
+            
+            NavigationView {
+                ScrollView {
+                    VStack(spacing: 28) {
+                        Text("📜 Text Extraction Complete")
+                            .font(.custom("TTPhobosTrial-Bold", size: 26))
+                            .foregroundColor(colorThemeManager.current.accent)
+                            .padding(.top, 24)
+                            .opacity(animateIn ? 1 : 0)
+                            .offset(y: animateIn ? 0 : -20)
+                            .animation(.easeOut(duration: 0.4).delay(0.1), value: animateIn)
+                        
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("📝 Extracted Text")
+                                .font(.custom("TTPhobosTrial-Bold", size: 18))
+                                .foregroundColor(colorThemeManager.current.accent)
+                            
+                            Text(extractedText.isEmpty ? "No text was detected." : extractedText)
+                                .font(.custom("TTPhobosTrial-Regular", size: 16))
+                                .foregroundColor(colorThemeManager.current.text)
+                                .padding(16)
+                                .background(colorThemeManager.current.surface.opacity(0.7))
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
+                        .padding(.horizontal, 20)
+                        .opacity(animateIn ? 1 : 0)
+                        .offset(y: animateIn ? 0 : 20)
+                        .animation(.easeOut(duration: 0.5).delay(0.2), value: animateIn)
+                        
+                        // RPG Analysis Card Button
+                        if !extractedText.isEmpty {
+                            RPGAnalysisCard(isReady: true, onTap: onProceedWithAnalysis)
+                                .padding(.horizontal, 20)
+                                .opacity(animateIn ? 1 : 0)
+                                .offset(y: animateIn ? 0 : 30)
+                                .animation(.easeOut(duration: 0.5).delay(0.3), value: animateIn)
+                        }
+                        
+                        Button(action: onDismiss) {
+                            Text("Try Different Image")
+                                .font(.custom("TTPhobosTrial-Bold", size: 16))
+                                .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                                .padding(.vertical, 10)
+                                .frame(maxWidth: .infinity)
+                                .background(
+                                    Capsule()
+                                        .fill(colorThemeManager.current.surface.opacity(0.5))
+                                )
+                        }
+                        .padding(.horizontal, 40)
+                        .opacity(animateIn ? 1 : 0)
+                        .offset(y: animateIn ? 0 : 40)
+                        .animation(.easeOut(duration: 0.5).delay(0.4), value: animateIn)
+                    }
+                    .padding(.bottom, 40)
+                }
+                .background(Color.clear)
+                .navigationTitle("")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Cancel", action: onDismiss)
+                            .foregroundColor(colorThemeManager.current.accent)
+                    }
+                }
+            }
+        }
+        .onAppear {
+            withAnimation {
+                animateIn = true
+            }
+        }
+    }
+}
+
+// MARK: - Custom RPG Alert (TEMPORARY HACKATHON FIX)
+struct CustomRPGAlert: View {
+    let title: String
+    let message: String
+    let onDismiss: () -> Void
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        ZStack {
+            // Dimmed background
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
+                .onTapGesture { onDismiss() }
+            
+            VStack(spacing: 20) {
+                Text(title)
+                    .font(.custom("TTPhobosTrial-Bold", size: 22))
+                    .foregroundColor(colorThemeManager.current.accent)
+                    .padding(.top, 12)
+                
+                Text(message)
+                    .font(.custom("TTPhobosTrial-Regular", size: 16))
+                    .foregroundColor(colorThemeManager.current.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+                
+                Button(action: onDismiss) {
+                    Text("OK")
+                        .font(.custom("TTPhobosTrial-Bold", size: 16))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 10)
+                        .background(
+                            Capsule()
+                                .fill(colorThemeManager.current.accent)
+                        )
+                }
+                .padding(.bottom, 12)
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(colorThemeManager.current.surface)
+                    .shadow(color: colorThemeManager.current.accent.opacity(0.2), radius: 10, y: 4)
+            )
+            .padding(.horizontal, 40)
+        }
+    }
+}
+
+// MARK: - RPG Analysis Card
+struct RPGAnalysisCard: View {
+    let isReady: Bool
+    let onTap: () -> Void
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @State private var isGlowing = false
+    
+    var body: some View {
+        Button(action: onTap) {
+            ZStack {
+                // Dark mystical background
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.black.opacity(0.85),
+                                Color.black.opacity(0.95)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(
+                                isReady ? 
+                                LinearGradient(
+                                    colors: [Color.cyan.opacity(0.8), Color.blue.opacity(0.6)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ) :
+                                LinearGradient(
+                                    colors: [colorThemeManager.current.accent.opacity(0.3)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+                
+                // Content
+                VStack(spacing: 16) {
+                    HStack(spacing: 12) {
+                        // Mystical icon
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: isReady ? [
+                                            Color.cyan.opacity(0.6),
+                                            Color.clear
+                                        ] : [
+                                            colorThemeManager.current.accent.opacity(0.4),
+                                            Color.clear
+                                        ],
+                                        center: .center,
+                                        startRadius: 5,
+                                        endRadius: 25
+                                    )
+                                )
+                                .frame(width: 45, height: 45)
+                                .scaleEffect(isGlowing ? 1.1 : 1.0)
+                                .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: isGlowing)
+                            
+                            Image(systemName: isReady ? "sparkles" : "book.closed")
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundColor(isReady ? Color.cyan : colorThemeManager.current.accent)
+                                .shadow(color: isReady ? Color.cyan.opacity(0.8) : Color.clear, radius: 6)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("🔮 View Strategy Guide")
+                                    .font(.custom("TTPhobosTrial-Bold", size: 18))
+                                    .foregroundColor(.white)
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(isReady ? Color.cyan : colorThemeManager.current.accent)
+                            }
+                            
+                            Text(isReady ? "⚡ Mystical analysis ready!" : "🏺 Awaiting ancient wisdom...")
+                                .font(.custom("TTPhobosTrial-Regular", size: 14))
+                                .foregroundColor(isReady ? Color.cyan.opacity(0.9) : Color.gray)
+                        }
+                    }
+                    
+                    // Magical progress crystals
+                    HStack(spacing: 8) {
+                        ForEach(0..<5, id: \.self) { index in
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(
+                                    index < (isReady ? 5 : 0) ? 
+                                    LinearGradient(
+                                        colors: [Color.cyan, Color.blue],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    ) :
+                                    LinearGradient(
+                                        colors: [Color.gray.opacity(0.3)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(height: 6)
+                                .shadow(color: isReady ? Color.cyan.opacity(0.5) : Color.clear, radius: 3)
+                        }
+                    }
+                }
+                .padding(20)
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+        .onAppear {
+            isGlowing = true
+        }
+        .scaleEffect(isReady ? 1.02 : 1.0)
+        .shadow(color: isReady ? Color.cyan.opacity(0.3) : Color.clear, radius: 15)
+        .animation(.easeInOut(duration: 0.3), value: isReady)
     }
 }
