@@ -332,7 +332,7 @@ class GeminiService: ObservableObject {
     }
     
     // MARK: - API Call
-    private func callGeminiAPI(prompt: String) async throws -> String {
+    func callGeminiAPI(prompt: String) async throws -> String {
         guard let url = URL(string: "\(baseURL)?key=\(apiKey)") else {
             throw URLError(.badURL)
         }
