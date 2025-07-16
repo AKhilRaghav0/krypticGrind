@@ -65,6 +65,20 @@ class CFService: ObservableObject {
         return upcomingContests.first
     }
     
+    // Computed property for username
+    var username: String {
+        return UserDefaults.standard.string(forKey: "saved_handle") ?? ""
+    }
+    
+    // Method to update username
+    func updateUsername(_ newHandle: String) {
+        UserDefaults.standard.set(newHandle, forKey: "saved_handle")
+        // Optionally fetch user info for the new handle
+        Task {
+            await fetchUserInfo(handle: newHandle)
+        }
+    }
+    
     private var cancellables = Set<AnyCancellable>()
     
     private init() {

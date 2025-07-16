@@ -297,15 +297,14 @@ struct HomeView: View {
                 }
             }
             .fullScreenCover(isPresented: $showingAIAnalysis) {
-                AIAnalysisFullScreenView(
-                    extractedText: extractedText,
-                    analysisResult: $aiAnalysisResult,
-                    isAnalyzing: $isAnalyzingImage,
-                    selectedImage: selectedImage,
-                    onAnalyze: analyzeTextWithGemini
+                FullScreenAnalysisView(
+                    analysisText: aiAnalysisResult,
+                    onDismiss: {
+                        showingAIAnalysis = false
+                    }
                 )
             }        .sheet(isPresented: $showingFullAnalysis) {
-            MarkdownDisplayView(content: aiAnalysisResult.isEmpty ? """
+            AnalysisMarkdownView(content: aiAnalysisResult.isEmpty ? """
                 # 🔍 Analysis Status
                 
                 ## Current Status
@@ -515,6 +514,397 @@ struct HomeView: View {
     }
 }
 
+// MARK: - Floating Particle Effect
+struct FloatingParticle: View {
+    let color: Color
+    let size: CGFloat
+    
+    @State private var isAnimating = false
+    @State private var xOffset = CGFloat.random(in: -200...200)
+    @State private var yOffset = CGFloat.random(in: -300...300)
+    @State private var opacity = Double.random(in: 0.1...0.6)
+    
+    var body: some View {
+        Circle()
+            .fill(color)
+            .frame(width: size, height: size)
+            .offset(x: xOffset, y: yOffset)
+            .opacity(opacity)
+            .blur(radius: CGFloat.random(in: 0.5...2.0))
+            .onAppear {
+                withAnimation(
+                    .linear(duration: Double.random(in: 3...8))
+                    .repeatForever(autoreverses: false)
+                ) {
+                    xOffset = CGFloat.random(in: -250...250)
+                    yOffset = CGFloat.random(in: -400...400)
+                    opacity = Double.random(in: 0.1...0.8)
+                }
+            }
+    }
+}
+
+// MARK: - Processing Overlay
+struct ProcessingOverlay: View {
+    @State private var isAnimating = false
+    @State private var meshAnimating = false
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        ZStack {
+            // Base material background
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
+            
+            // Mesh gradients in corners
+            GeometryReader { geometry in
+                // Top-left corner mesh
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                colorThemeManager.current.accent.opacity(meshAnimating ? 0.4 : 0.2),
+                                colorThemeManager.current.accent.opacity(0.1),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 150
+                        )
+                    )
+                    .frame(width: 300, height: 300)
+                    .position(x: -50, y: -50)
+                    .blur(radius: 20)
+                
+                // Top-right corner mesh
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.blue.opacity(meshAnimating ? 0.3 : 0.15),
+                                Color.purple.opacity(0.1),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 120
+                        )
+                    )
+                    .frame(width: 240, height: 240)
+                    .position(x: geometry.size.width + 30, y: -30)
+                    .blur(radius: 15)
+                
+                // Bottom-left corner mesh
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.purple.opacity(meshAnimating ? 0.35 : 0.18),
+                                Color.pink.opacity(0.1),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 100
+                        )
+                    )
+                    .frame(width: 200, height: 200)
+                    .position(x: -20, y: geometry.size.height + 20)
+                    .blur(radius: 18)
+                
+                // Bottom-right corner mesh
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                colorThemeManager.current.accent.opacity(meshAnimating ? 0.25 : 0.12),
+                                Color.orange.opacity(0.1),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 130
+                        )
+                    )
+                    .frame(width: 260, height: 260)
+                    .position(x: geometry.size.width + 40, y: geometry.size.height + 40)
+                    .blur(radius: 22)
+            }
+            .ignoresSafeArea()
+            
+            // Central content
+            VStack(spacing: 24) {
+                // Animated processing icon with mesh effect
+                ZStack {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    colorThemeManager.current.accent.opacity(0.3),
+                                    colorThemeManager.current.accent.opacity(0.1),
+                                    Color.clear
+                                ],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 60
+                            )
+                        )
+                        .frame(width: 120, height: 120)
+                        .scaleEffect(isAnimating ? 1.1 : 1.0)
+                    
+                    Image(systemName: "cpu")
+                        .font(.system(size: 40, weight: .bold))
+                        .foregroundColor(colorThemeManager.current.accent)
+                        .rotationEffect(.degrees(isAnimating ? 360 : 0))
+                        .shadow(color: colorThemeManager.current.accent.opacity(0.6), radius: 10)
+                }
+                
+                VStack(spacing: 8) {
+                    Text("⚡ AI Strategy Guide...")
+                        .font(.custom("TTPhobosTrial-Bold", size: 22))
+                        .foregroundColor(colorThemeManager.current.text)
+                        .shadow(color: colorThemeManager.current.accent.opacity(0.3), radius: 5)
+                    
+                    Text("Analyzing problem patterns...")
+                        .font(.custom("TTPhobosTrial-Regular", size: 16))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                }
+                
+                // Animated progress dots
+                HStack(spacing: 8) {
+                    ForEach(0..<3, id: \.self) { index in
+                        Circle()
+                            .fill(colorThemeManager.current.accent)
+                            .frame(width: 8, height: 8)
+                            .scaleEffect(isAnimating ? 1.2 : 0.8)
+                            .animation(
+                                .easeInOut(duration: 0.6)
+                                .repeatForever(autoreverses: true)
+                                .delay(Double(index) * 0.2),
+                                value: isAnimating
+                            )
+                    }
+                }
+            }
+        }
+        .onAppear {
+            withAnimation(.linear(duration: 2.0).repeatForever(autoreverses: false)) {
+                isAnimating = true
+            }
+            withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
+                meshAnimating = true
+            }
+        }
+    }
+}
+
+// MARK: - Sword Fighting Overlay
+struct SwordFightingOverlay: View {
+    @State private var swordPosition: CGFloat = -200
+    @State private var sparkles: [SparkleEffect] = []
+    @State private var showVictoryText = false
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(Color.black.opacity(0.7))
+                .ignoresSafeArea()
+            
+            Image(systemName: "sword.fill")
+                .font(.system(size: 60, weight: .bold))
+                .foregroundColor(colorThemeManager.current.accent)
+                .rotationEffect(.degrees(45))
+                .offset(x: swordPosition)
+                .shadow(color: colorThemeManager.current.accent, radius: 10)
+            
+            ForEach(sparkles, id: \.id) { sparkle in
+                Circle()
+                    .fill(sparkle.color)
+                    .frame(width: sparkle.size, height: sparkle.size)
+                    .offset(x: sparkle.x, y: sparkle.y)
+                    .opacity(sparkle.opacity)
+                    .scaleEffect(sparkle.scale)
+            }
+            
+            if showVictoryText {
+                VStack {
+                    Text("💎 QUEST COMPLETE!")
+                        .font(.custom("TTPhobosTrial-Bold", size: 28))
+                        .foregroundColor(.white)
+                        .shadow(color: colorThemeManager.current.accent, radius: 5)
+                    
+                    Text("XP +50")
+                        .font(.custom("TTPhobosTrial-Regular", size: 18))
+                        .foregroundColor(colorThemeManager.current.accent)
+                }
+                .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .onAppear {
+            startSwordAnimation()
+        }
+    }
+    
+    private func startSwordAnimation() {
+        withAnimation(.easeInOut(duration: 0.8)) {
+            swordPosition = 200
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            generateSparkles()
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            withAnimation(.spring()) {
+                showVictoryText = true
+            }
+        }
+    }
+    
+    private func generateSparkles() {
+        for _ in 0..<15 {
+            let sparkle = SparkleEffect(
+                id: UUID(),
+                x: CGFloat.random(in: -100...100),
+                y: CGFloat.random(in: -50...50),
+                size: CGFloat.random(in: 4...12),
+                color: [Color.yellow, Color.orange, Color.red, Color.purple].randomElement()!,
+                opacity: 1.0,
+                scale: 1.0
+            )
+            sparkles.append(sparkle)
+        }
+        
+        withAnimation(.easeOut(duration: 1.5)) {
+            for i in sparkles.indices {
+                sparkles[i].opacity = 0
+                sparkles[i].scale = 0.5
+                sparkles[i].y -= 30
+            }
+        }
+    }
+}
+
+struct SparkleEffect {
+    let id: UUID
+    var x: CGFloat
+    var y: CGFloat
+    let size: CGFloat
+    let color: Color
+    var opacity: Double
+    var scale: CGFloat
+}
+
+// MARK: - AI Suggestions Card
+struct AISuggestionsCard: View {
+    let suggestions: [String]
+    let onSuggestionTapped: (String) -> Void
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @State private var animateGradient = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(colorThemeManager.current.accent)
+                
+                Text("⚡ AI Insights")
+                    .font(.custom("TTPhobosTrial-Bold", size: 18))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                Spacer()
+            }
+            
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                ForEach(Array(suggestions.enumerated()), id: \.offset) { index, suggestion in
+                    Button(action: { onSuggestionTapped(suggestion) }) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(suggestion)
+                                .font(.custom("TTPhobosTrial-Regular", size: 14))
+                                .foregroundColor(colorThemeManager.current.text)
+                                .multilineTextAlignment(.leading)
+                                .lineLimit(3)
+                        }
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(colorThemeManager.current.tabBar)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(colorThemeManager.current.accent.opacity(0.3), lineWidth: 1)
+                                )
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(colorThemeManager.current.tabBar)
+        )
+    }
+}
+
+// MARK: - Modern Stat Card
+struct ModernStatCard: View {
+    let title: String
+    let value: String
+    let subtitle: String
+    let icon: String
+    let color: Color
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @State private var animateValue = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Circle()
+                    .fill(color.opacity(0.2))
+                    .frame(width: 32, height: 32)
+                    .overlay(
+                        Image(systemName: icon)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(color)
+                    )
+                
+                Spacer()
+            }
+            
+            Text(value)
+                .font(.custom("TTPhobosTrial-Bold", size: 24))
+                .foregroundColor(colorThemeManager.current.text)
+                .scaleEffect(animateValue ? 1.05 : 1.0)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.custom("TTPhobosTrial-Medium", size: 14))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                Text(subtitle)
+                    .font(.custom("TTPhobosTrial-Regular", size: 12))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(colorThemeManager.current.tabBar)
+        )
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                animateValue = true
+            }
+        }
+    }
+}
+
 // MARK: - Modern User Profile Card
 struct ModernUserProfileCard: View {
     let user: CFUser
@@ -595,7 +985,7 @@ struct ModernUserProfileCard: View {
                 StatColumn(
                     title: "Contribution",
                     value: "\(user.contribution)",
-                    color: user.contribution >= 0 ? Color.green : Color.red
+                    color: colorThemeManager.current.accent
                 )
             }
             .padding(.horizontal, 16)
@@ -1293,31 +1683,219 @@ struct EmptyContestCard: View {
 struct EnhancedSettingsSheet: View {
     @EnvironmentObject var colorThemeManager: ColorThemeManager
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var cfService = CFService.shared
+    @State private var newHandle = ""
+    @State private var isEditingHandle = false
+    @State private var showAlert = false
+    @State private var alertMessage = ""
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
-                Text("⚙️ Settings")
-                    .font(.custom("TTPhobosTrial-Bold", size: 24))
-                    .foregroundColor(colorThemeManager.current.text)
+            ZStack {
+                // Mystical background
+                LinearGradient(
+                    colors: [
+                        colorThemeManager.current.background,
+                        colorThemeManager.current.surface.opacity(0.3)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
-                Text("Customize your battle preferences")
-                    .font(.custom("TTPhobosTrial-Regular", size: 14))
-                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
-                
-                Spacer()
-                
-                Button("Close") {
-                    dismiss()
+                // Floating particles
+                ForEach(0..<8, id: \.self) { _ in
+                    FloatingParticle(
+                        color: colorThemeManager.current.accent.opacity(0.3),
+                        size: CGFloat.random(in: 4...8)
+                    )
                 }
-                .font(.custom("TTPhobosTrial-Bold", size: 16))
-                .foregroundColor(.white)
-                .padding()
-                .background(colorThemeManager.current.accent)
-                .cornerRadius(12)
+                
+                ScrollView {
+                    VStack(spacing: 32) {
+                        // Header
+                        VStack(spacing: 12) {
+                            Text("⚔️ Battle Configuration")
+                                .font(.custom("TTPhobosTrial-Bold", size: 28))
+                                .foregroundColor(colorThemeManager.current.text)
+                                .multilineTextAlignment(.center)
+                            
+                            Text("Customize your warrior's arsenal")
+                                .font(.custom("TTPhobosTrial-Regular", size: 16))
+                                .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(.top, 20)
+                        
+                        // Handle Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("🏷️ Warrior Identity", systemImage: "person.circle")
+                                .font(.custom("TTPhobosTrial-Bold", size: 20))
+                                .foregroundColor(colorThemeManager.current.text)
+                            
+                            VStack(spacing: 12) {
+                                if isEditingHandle {
+                                    HStack {
+                                        TextField("Enter new handle...", text: $newHandle)
+                                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                                            .font(.custom("TTPhobosTrial-Regular", size: 16))
+                                        
+                                        Button("Save") {
+                                            saveNewHandle()
+                                        }
+                                        .font(.custom("TTPhobosTrial-Bold", size: 14))
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(colorThemeManager.current.accent)
+                                        .cornerRadius(8)
+                                        .disabled(newHandle.isEmpty)
+                                        
+                                        Button("Cancel") {
+                                            isEditingHandle = false
+                                            newHandle = cfService.username
+                                        }
+                                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                                        .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                                    }
+                                } else {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Current Handle")
+                                                .font(.custom("TTPhobosTrial-Regular", size: 12))
+                                                .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                                            
+                                            Text(cfService.username.isEmpty ? "Unknown Warrior" : cfService.username)
+                                                .font(.custom("TTPhobosTrial-Bold", size: 18))
+                                                .foregroundColor(colorThemeManager.current.accent)
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        Button("Edit") {
+                                            isEditingHandle = true
+                                            newHandle = cfService.username
+                                        }
+                                        .font(.custom("TTPhobosTrial-Bold", size: 14))
+                                        .foregroundColor(colorThemeManager.current.accent)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(colorThemeManager.current.accent.opacity(0.1))
+                                        .cornerRadius(8)
+                                    }
+                                }
+                            }
+                            .padding(20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(colorThemeManager.current.surface.opacity(0.6))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                            .stroke(colorThemeManager.current.accent.opacity(0.3), lineWidth: 1)
+                                    )
+                            )
+                        }
+                        
+                        // Theme Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("🎨 Visual Enchantments", systemImage: "paintbrush")
+                                .font(.custom("TTPhobosTrial-Bold", size: 20))
+                                .foregroundColor(colorThemeManager.current.text)
+                            
+                            VStack(spacing: 12) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Current Theme")
+                                            .font(.custom("TTPhobosTrial-Regular", size: 12))
+                                            .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                                        
+                                        Text(colorThemeManager.current.name)
+                                            .font(.custom("TTPhobosTrial-Bold", size: 18))
+                                            .foregroundColor(colorThemeManager.current.accent)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    // Theme color preview
+                                    HStack(spacing: 8) {
+                                        Circle()
+                                            .fill(colorThemeManager.current.accent)
+                                            .frame(width: 20, height: 20)
+                                        Circle()
+                                            .fill(colorThemeManager.current.surface)
+                                            .frame(width: 20, height: 20)
+                                        Circle()
+                                            .fill(colorThemeManager.current.text)
+                                            .frame(width: 20, height: 20)
+                                    }
+                                }
+                                
+                                Text("Tap outside to access theme selector")
+                                    .font(.custom("TTPhobosTrial-Regular", size: 12))
+                                    .foregroundColor(colorThemeManager.current.text.opacity(0.5))
+                                    .italic()
+                            }
+                            .padding(20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(colorThemeManager.current.surface.opacity(0.6))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                            .stroke(colorThemeManager.current.accent.opacity(0.3), lineWidth: 1)
+                                    )
+                            )
+                        }
+                        
+                        Spacer(minLength: 80)
+                    }
+                    .padding(.horizontal, 24)
+                }
             }
-            .padding()
+            .navigationBarHidden(true)
+            .overlay(
+                // Close button
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 30))
+                                .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                                .background(
+                                    Circle()
+                                        .fill(colorThemeManager.current.surface.opacity(0.8))
+                                        .blur(radius: 10)
+                                )
+                        }
+                        .padding(.trailing, 20)
+                        .padding(.top, 20)
+                    }
+                    Spacer()
+                }
+            )
         }
+        .alert("Handle Update", isPresented: $showAlert) {
+            Button("OK") { }
+        } message: {
+            Text(alertMessage)
+        }
+    }
+    
+    private func saveNewHandle() {
+        guard !newHandle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            alertMessage = "Handle cannot be empty"
+            showAlert = true
+            return
+        }
+        
+        cfService.updateUsername(newHandle.trimmingCharacters(in: .whitespacesAndNewlines))
+        isEditingHandle = false
+        alertMessage = "Handle updated successfully!"
+        showAlert = true
+        
+        // Add haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
     }
 }
 
@@ -1326,41 +1904,252 @@ struct RPGCameraPickerSheet: View {
     let onTakePhoto: () -> Void
     let onChooseFromGallery: () -> Void
     @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var animateCards = false
     
     var body: some View {
-        VStack(spacing: 24) {
-            VStack(spacing: 8) {
-                Text("🏰 Capture Ancient Text")
-                    .font(.custom("TTPhobosTrial-Bold", size: 20))
-                    .foregroundColor(colorThemeManager.current.text)
-                
-                Text("Extract mystical knowledge from scrolls")
-                    .font(.custom("TTPhobosTrial-Regular", size: 14))
-                    .foregroundColor(colorThemeManager.current.text.opacity(0.7))
-            }
+        ZStack {
+            // Mystical background
+            LinearGradient(
+                colors: [
+                    colorThemeManager.current.background,
+                    colorThemeManager.current.surface.opacity(0.3),
+                    colorThemeManager.current.accent.opacity(0.1)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            VStack(spacing: 16) {
-                RPGActionButton(
-                    icon: "�",
-                    title: "Scan Ancient Scroll",
-                    subtitle: "Use mystical camera",
-                    color: colorThemeManager.current.accent,
-                    action: onTakePhoto
-                )
-                
-                RPGActionButton(
-                    icon: "�️",
-                    title: "Choose from Grimoire",
-                    subtitle: "Select from collection",
-                    color: .blue,
-                    action: onChooseFromGallery
+            // Floating mystical particles
+            ForEach(0..<12, id: \.self) { _ in
+                FloatingParticle(
+                    color: colorThemeManager.current.accent.opacity(0.4),
+                    size: CGFloat.random(in: 3...6)
                 )
             }
             
-            Spacer()
+            VStack(spacing: 32) {
+                // Header with mystical styling
+                VStack(spacing: 16) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    colors: [
+                                        colorThemeManager.current.accent.opacity(0.3),
+                                        colorThemeManager.current.accent.opacity(0.1)
+                                    ],
+                                    center: .center,
+                                    startRadius: 10,
+                                    endRadius: 40
+                                )
+                            )
+                            .frame(width: 80, height: 80)
+                        
+                        Text("📜")
+                            .font(.system(size: 36))
+                            .scaleEffect(animateCards ? 1.1 : 1.0)
+                            .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: animateCards)
+                    }
+                    
+                    VStack(spacing: 8) {
+                        Text("🏰 Ancient Text Extraction")
+                            .font(.custom("TTPhobosTrial-Bold", size: 24))
+                            .foregroundColor(colorThemeManager.current.text)
+                            .multilineTextAlignment(.center)
+                        
+                        Text("Unlock the secrets hidden within mystical scrolls and ancient texts")
+                            .font(.custom("TTPhobosTrial-Regular", size: 16))
+                            .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                    }
+                }
+                .padding(.top, 20)
+                
+                // Action cards
+                VStack(spacing: 20) {
+                    EnhancedRPGActionButton(
+                        icon: "📸",
+                        title: "Scan Ancient Scroll",
+                        subtitle: "Use the mystical camera to capture text",
+                        color: colorThemeManager.current.accent,
+                        gradient: [colorThemeManager.current.accent, colorThemeManager.current.accent.opacity(0.7)],
+                        action: {
+                            // Add haptic feedback
+                            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                            impactFeedback.impactOccurred()
+                            dismiss()
+                            onTakePhoto()
+                        }
+                    )
+                    .scaleEffect(animateCards ? 1.0 : 0.9)
+                    .opacity(animateCards ? 1.0 : 0.0)
+                    .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1), value: animateCards)
+                    
+                    EnhancedRPGActionButton(
+                        icon: "🗂️",
+                        title: "Choose from Grimoire",
+                        subtitle: "Select from your collection of texts",
+                        color: .purple,
+                        gradient: [.purple, .blue],
+                        action: {
+                            // Add haptic feedback
+                            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                            impactFeedback.impactOccurred()
+                            dismiss()
+                            onChooseFromGallery()
+                        }
+                    )
+                    .scaleEffect(animateCards ? 1.0 : 0.9)
+                    .opacity(animateCards ? 1.0 : 0.0)
+                    .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2), value: animateCards)
+                }
+                
+                Spacer(minLength: 40)
+                
+                // Cancel button
+                Button(action: { dismiss() }) {
+                    HStack {
+                        Image(systemName: "xmark.circle")
+                            .font(.system(size: 16, weight: .semibold))
+                        Text("Cancel Quest")
+                            .font(.custom("TTPhobosTrial-Bold", size: 16))
+                    }
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(
+                        Capsule()
+                            .fill(colorThemeManager.current.surface.opacity(0.6))
+                            .overlay(
+                                Capsule()
+                                    .stroke(colorThemeManager.current.text.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+                }
+                .scaleEffect(animateCards ? 1.0 : 0.9)
+                .opacity(animateCards ? 1.0 : 0.0)
+                .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.3), value: animateCards)
+            }
+            .padding(.horizontal, 24)
         }
-        .padding(24)
-        .background(colorThemeManager.current.background)
+        .onAppear {
+            withAnimation {
+                animateCards = true
+            }
+        }
+    }
+}
+
+// MARK: - Enhanced RPG Action Button
+struct EnhancedRPGActionButton: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let color: Color
+    let gradient: [Color]
+    let action: () -> Void
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @State private var isPressed = false
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 20) {
+                // Icon with glow effect
+                ZStack {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    color.opacity(0.3),
+                                    color.opacity(0.1)
+                                ],
+                                center: .center,
+                                startRadius: 5,
+                                endRadius: 25
+                            )
+                        )
+                        .frame(width: 50, height: 50)
+                    
+                    Text(icon)
+                        .font(.system(size: 24))
+                }
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title)
+                        .font(.custom("TTPhobosTrial-Bold", size: 18))
+                        .foregroundColor(colorThemeManager.current.text)
+                    
+                    Text(subtitle)
+                        .font(.custom("TTPhobosTrial-Regular", size: 14))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.7))
+                        .lineLimit(2)
+                }
+                
+                Spacer()
+                
+                // Arrow with gradient
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: gradient,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+            .padding(24)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                colorThemeManager.current.surface.opacity(0.9),
+                                colorThemeManager.current.surface.opacity(0.6)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        color.opacity(0.5),
+                                        color.opacity(0.2)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+                    .shadow(
+                        color: color.opacity(0.3),
+                        radius: isPressed ? 5 : 10,
+                        x: 0,
+                        y: isPressed ? 2 : 5
+                    )
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .animation(.easeInOut(duration: 0.1), value: isPressed)
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.1)) {
+                isPressed = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    isPressed = false
+                }
+                action()
+            }
+        }
     }
 }
 
@@ -1470,22 +2259,24 @@ struct ImagePicker: UIViewControllerRepresentable {
         return picker
     }
     
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {
+        // No updates needed
+    }
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(onImagePicked: onImagePicked)
+        Coordinator(self)
     }
     
     class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let onImagePicked: (UIImage) -> Void
+        let parent: ImagePicker
         
-        init(onImagePicked: @escaping (UIImage) -> Void) {
-            self.onImagePicked = onImagePicked
+        init(_ parent: ImagePicker) {
+            self.parent = parent
         }
         
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
             if let image = info[.originalImage] as? UIImage {
-                onImagePicked(image)
+                parent.onImagePicked(image)
             }
             picker.dismiss(animated: true)
         }
@@ -1496,437 +2287,38 @@ struct ImagePicker: UIViewControllerRepresentable {
     }
 }
 
-// MARK: - RPG Navigation Bar
-struct RPGNavigationBar: View {
-    let title: String
-    let subtitle: String?
-    let leftAction: () -> Void
-    let leftIcon: String
-    let rightAction: (() -> Void)?
-    let rightIcon: String?
-    @EnvironmentObject var colorThemeManager: ColorThemeManager
-    
-    init(
-        title: String,
-        subtitle: String? = nil,
-        leftAction: @escaping () -> Void,
-        leftIcon: String = "arrow.left",
-        rightAction: (() -> Void)? = nil,
-        rightIcon: String? = nil
-    ) {
-        self.title = title
-        self.subtitle = subtitle
-        self.leftAction = leftAction
-        self.leftIcon = leftIcon
-        self.rightAction = rightAction
-        self.rightIcon = rightIcon
-    }
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                // Left button
-                Button(action: leftAction) {
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        colorThemeManager.current.surface.opacity(0.8),
-                                        colorThemeManager.current.surface.opacity(0.4)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 40, height: 40)
-                            .overlay(
-                                Circle()
-                                    .stroke(colorThemeManager.current.accent.opacity(0.3), lineWidth: 1)
-                            )
-                        
-                        Image(systemName: leftIcon)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(colorThemeManager.current.accent)
-                    }
-                }
-                .buttonStyle(PlainButtonStyle())
-                
-                Spacer()
-                
-                // Title section
-                VStack(spacing: 2) {
-                    Text(title)
-                        .font(.custom("TTPhobosTrial-Bold", size: 18))
-                        .foregroundColor(colorThemeManager.current.text)
-                    
-                    if let subtitle = subtitle {
-                        Text(subtitle)
-                            .font(.custom("TTPhobosTrial-Regular", size: 12))
-                            .foregroundColor(colorThemeManager.current.text.opacity(0.6))
-                    }
-                }
-                
-                Spacer()
-                
-                // Right button (optional)
-                if let rightAction = rightAction, let rightIcon = rightIcon {
-                    Button(action: rightAction) {
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            colorThemeManager.current.surface.opacity(0.8),
-                                            colorThemeManager.current.surface.opacity(0.4)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 40, height: 40)
-                                .overlay(
-                                    Circle()
-                                        .stroke(colorThemeManager.current.accent.opacity(0.3), lineWidth: 1)
-                                )
-                            
-                            Image(systemName: rightIcon)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(colorThemeManager.current.accent)
-                        }
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                } else {
-                    Circle()
-                        .fill(Color.clear)
-                        .frame(width: 40, height: 40)
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 10)
-            .padding(.bottom, 16)
-            .background(
-                Rectangle()
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        Rectangle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        colorThemeManager.current.background.opacity(0.8),
-                                        colorThemeManager.current.background.opacity(0.95)
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                    )
-            )
-            
-            // Bottom border
-            Rectangle()
-                .fill(colorThemeManager.current.accent.opacity(0.1))
-                .frame(height: 1)
-        }
-    }
-}
-
-// MARK: - AI Analysis Full Screen View
-struct AIAnalysisFullScreenView: View {
-    let extractedText: String
-    @Binding var analysisResult: String
-    @Binding var isAnalyzing: Bool
-    let selectedImage: UIImage?
-    let onAnalyze: () async -> Void
-    @EnvironmentObject var colorThemeManager: ColorThemeManager
-    @Environment(\.dismiss) private var dismiss
-    @State private var showingFullAnalysis = false
-    
-    var body: some View {
-        ZStack {
-            colorThemeManager.current.background
-                .ignoresSafeArea()
-            
-            VStack(spacing: 0) {
-                // Custom RPG Navigation Bar
-                RPGNavigationBar(
-                    title: "Problem Analysis",
-                    subtitle: "Mystical Text Recognition",
-                    leftAction: {
-                        dismiss()
-                    },
-                    leftIcon: "arrow.left"
-                )
-                
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // Header with image preview
-                        if let image = selectedImage {
-                            VStack(spacing: 12) {
-                                Text("📸 Captured Problem")
-                                    .font(.custom("TTPhobosTrial-Bold", size: 18))
-                                    .foregroundColor(colorThemeManager.current.text)
-                                
-                                ZStack {
-                                    // Animated meshnet gradient background
-                                    AnimatedMeshGradient()
-                                        .frame(height: 200)
-                                        .cornerRadius(16)
-                                    
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(maxHeight: 180)
-                                        .cornerRadius(12)
-                                        .shadow(radius: 8)
-                                }
-                                .padding(.horizontal, 20)
-                            }
-                        }
-                        
-                        // Extracted text section
-                        if !extractedText.isEmpty {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Text("📝")
-                                        .font(.system(size: 16))
-                                    Text("Extracted Text")
-                                        .font(.custom("TTPhobosTrial-Bold", size: 16))
-                                        .foregroundColor(colorThemeManager.current.text)
-                                    Spacer()
-                                }
-                                
-                                Text(extractedText)
-                                    .font(.custom("TTPhobosTrial-Regular", size: 14))
-                                    .foregroundColor(colorThemeManager.current.text.opacity(0.8))
-                                    .padding(16)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(colorThemeManager.current.surface.opacity(0.6))
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(colorThemeManager.current.accent.opacity(0.2), lineWidth: 1)
-                                            )
-                                    )
-                            }
-                            .padding(.horizontal, 20)
-                        }
-                        
-                        // AI Analysis section
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Text("🤖")
-                                    .font(.system(size: 20))
-                                Text("AI Strategy Guide")
-                                    .font(.custom("TTPhobosTrial-Bold", size: 20))
-                                    .foregroundColor(colorThemeManager.current.text)
-                                Spacer()
-                            }
-                            
-                            if isAnalyzing {
-                                VStack(spacing: 16) {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: colorThemeManager.current.accent))
-                                        .scaleEffect(1.2)
-                                    
-                                    Text("🧠 Processing problem...")
-                                        .font(.custom("TTPhobosTrial-Regular", size: 16))
-                                        .foregroundColor(colorThemeManager.current.text.opacity(0.7))
-                                    
-                                    Text("Preparing strategic insights...")
-                                        .font(.custom("TTPhobosTrial-Regular", size: 14))
-                                        .foregroundColor(colorThemeManager.current.text.opacity(0.5))
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 40)
-                            } else {
-                                // Always show the button for debugging
-                                Button(action: {
-                                    // Add haptic feedback
-                                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                                    impactFeedback.impactOccurred()
-                                    
-                                    // Add scale animation
-                                    withAnimation(.easeInOut(duration: 0.1)) {
-                                        showingFullAnalysis = true
-                                    }
-                                }) {
-                                    RPGAnalysisCard(
-                                        isReady: !analysisResult.isEmpty
-                                    ) {
-                                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                                        impactFeedback.impactOccurred()
-                                        
-                                        withAnimation(.easeInOut(duration: 0.1)) {
-                                            showingFullAnalysis = true
-                                        }
-                                    }
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        
-                        Spacer(minLength: 100)
-                    }
-                    .padding(.vertical, 20)
-                }
-            }
-        }
-        .sheet(isPresented: $showingFullAnalysis) {
-            MarkdownDisplayView(content: analysisResult.isEmpty ? """
-                # 🔍 Analysis Status
-                
-                ## Current Status
-                No analysis available yet.
-                
-                ## How to get analysis:
-                1. **Tap the test button** 🧪 above to trigger analysis
-                2. **Wait for AI processing** (may take 10-30 seconds)
-                3. **Results will appear here** automatically
-                
-                ## What you'll get:
-                - 🎯 Problem type identification
-                - 🧠 Core concepts needed
-                - ⚡ Difficulty assessment
-                - 🗺️ Step-by-step strategy
-                - 📚 Prerequisites to study
-                - 🎯 Practice recommendations
-                - ⚠️ Common pitfalls to avoid
-                
-                The AI Strategy Guide helps you **think like a pro** without giving away the solution!
-                """ : analysisResult)
-        }
-    }
-}
-
-// MARK: - Markdown Display View
+// MARK: - Markdown Display View  
 struct MarkdownDisplayView: View {
     let content: String
-    @EnvironmentObject var colorThemeManager: ColorThemeManager
-    @Environment(\.dismiss) private var dismiss
-    @State private var animateIn = false
-    
-    var body: some View {
-        ZStack {
-            colorThemeManager.current.background
-                .ignoresSafeArea()
-            
-            VStack(spacing: 0) {
-                // Custom RPG Navigation Bar
-                RPGNavigationBar(
-                    title: "Strategy Guide",
-                    subtitle: "AI-Powered Analysis",
-                    leftAction: {
-                        withAnimation(.easeOut(duration: 0.3)) {
-                            animateIn = false
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                            dismiss()
-                        }
-                    },
-                    leftIcon: "arrow.left"
-                )
-                .opacity(animateIn ? 1 : 0)
-                .offset(y: animateIn ? 0 : -20)
-                .animation(.easeOut(duration: 0.4).delay(0.1), value: animateIn)
-                
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        AdvancedMarkdownText(content)
-                            .padding(20)
-                            .opacity(animateIn ? 1 : 0)
-                            .offset(y: animateIn ? 0 : 30)
-                            .animation(.easeOut(duration: 0.5).delay(0.2), value: animateIn)
-                    }
-                }
-            }
-        }
-        .navigationBarHidden(true)
-        .onAppear {
-            withAnimation(.easeOut(duration: 0.3)) {
-                animateIn = true
-            }
-        }
-    }
-}
-
-// MARK: - Advanced Markdown Text View
-struct AdvancedMarkdownText: View {
-    let content: String
-    @EnvironmentObject var colorThemeManager: ColorThemeManager
     @State private var displayedContent = ""
     @State private var isAnimating = false
-    
-    init(_ content: String) {
-        self.content = content
-    }
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ForEach(parseAdvancedMarkdown(displayedContent), id: \.id) { element in
-                switch element.type {
-                case .header1:
-                    Text(element.text)
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("📊 Analysis Results")
                         .font(.custom("TTPhobosTrial-Bold", size: 24))
                         .foregroundColor(colorThemeManager.current.text)
-                        .padding(.top, 16)
                         .padding(.bottom, 8)
-                        
-                case .header2:
-                    Text(element.text)
-                        .font(.custom("TTPhobosTrial-Bold", size: 20))
-                        .foregroundColor(colorThemeManager.current.accent)
-                        .padding(.top, 12)
-                        .padding(.bottom, 6)
-                        
-                case .header3:
-                    Text(element.text)
-                        .font(.custom("TTPhobosTrial-DemiBold", size: 18))
-                        .foregroundColor(colorThemeManager.current.text)
-                        .padding(.top, 10)
-                        .padding(.bottom, 4)
-                        
-                case .bold:
-                    Text(parseInlineFormatting(element.text))
-                        .font(.custom("TTPhobosTrial-Bold", size: 16))
-                        .foregroundColor(colorThemeManager.current.text)
-                        .padding(.vertical, 2)
-                        
-                case .italic:
-                    Text(parseInlineFormatting(element.text))
-                        .font(.custom("TTPhobosTrial-Italic", size: 16))
-                        .foregroundColor(colorThemeManager.current.text.opacity(0.8))
-                        .padding(.vertical, 2)
-                        
-                case .code:
-                    Text(element.text)
-                        .font(.system(.body, design: .monospaced))
-                        .foregroundColor(colorThemeManager.current.accent)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(colorThemeManager.current.surface.opacity(0.6))
-                        )
-                        
-                case .text:
-                    Text(parseInlineFormatting(element.text))
+                    
+                    Text(displayedContent.isEmpty ? content : displayedContent)
                         .font(.custom("TTPhobosTrial-Regular", size: 16))
-                        .foregroundColor(colorThemeManager.current.text.opacity(0.9))
-                        .padding(.vertical, 2)
-                        
-                case .listItem:
-                    HStack(alignment: .top, spacing: 8) {
-                        Text("•")
-                            .font(.custom("TTPhobosTrial-Bold", size: 16))
-                            .foregroundColor(colorThemeManager.current.accent)
-                        
-                        Text(parseInlineFormatting(element.text))
-                            .font(.custom("TTPhobosTrial-Regular", size: 16))
-                            .foregroundColor(colorThemeManager.current.text.opacity(0.9))
+                        .foregroundColor(colorThemeManager.current.text)
+                        .lineSpacing(6)
+                }
+                .padding(20)
+            }
+            .background(colorThemeManager.current.background)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
                     }
-                    .padding(.vertical, 2)
+                    .foregroundColor(colorThemeManager.current.accent)
                 }
             }
         }
@@ -1940,7 +2332,6 @@ struct AdvancedMarkdownText: View {
         let characters = Array(content)
         var currentIndex = 0
         
-        // Faster, smoother typewriter effect
         Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { timer in
             if currentIndex < characters.count {
                 displayedContent = String(characters[0...currentIndex])
@@ -1950,55 +2341,6 @@ struct AdvancedMarkdownText: View {
                 isAnimating = false
             }
         }
-    }
-    
-    private func parseAdvancedMarkdown(_ text: String) -> [AdvancedMarkdownElement] {
-        var elements: [AdvancedMarkdownElement] = []
-        let lines = text.components(separatedBy: .newlines)
-        
-        for (index, line) in lines.enumerated() {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            
-            if trimmed.isEmpty {
-                continue
-            }
-            
-            if trimmed.hasPrefix("# ") {
-                elements.append(AdvancedMarkdownElement(id: index, type: .header1, text: String(trimmed.dropFirst(2))))
-            } else if trimmed.hasPrefix("## ") {
-                elements.append(AdvancedMarkdownElement(id: index, type: .header2, text: String(trimmed.dropFirst(3))))
-            } else if trimmed.hasPrefix("### ") {
-                elements.append(AdvancedMarkdownElement(id: index, type: .header3, text: String(trimmed.dropFirst(4))))
-            } else if trimmed.hasPrefix("**") && trimmed.hasSuffix("**") && trimmed.count > 4 {
-                elements.append(AdvancedMarkdownElement(id: index, type: .bold, text: String(trimmed.dropFirst(2).dropLast(2))))
-            } else if trimmed.hasPrefix("*") && trimmed.hasSuffix("*") && trimmed.count > 2 && !trimmed.hasPrefix("**") {
-                elements.append(AdvancedMarkdownElement(id: index, type: .italic, text: String(trimmed.dropFirst(1).dropLast(1))))
-            } else if trimmed.hasPrefix("`") && trimmed.hasSuffix("`") && trimmed.count > 2 {
-                elements.append(AdvancedMarkdownElement(id: index, type: .code, text: String(trimmed.dropFirst(1).dropLast(1))))
-            } else if trimmed.hasPrefix("- ") || trimmed.hasPrefix("* ") {
-                elements.append(AdvancedMarkdownElement(id: index, type: .listItem, text: String(trimmed.dropFirst(2))))
-            } else {
-                elements.append(AdvancedMarkdownElement(id: index, type: .text, text: trimmed))
-            }
-        }
-        
-        return elements
-    }
-    
-    private func parseInlineFormatting(_ text: String) -> String {
-        // Simple inline formatting - could be enhanced further
-        return text
-    }
-}
-
-// MARK: - Advanced Markdown Element Model
-struct AdvancedMarkdownElement {
-    let id: Int
-    let type: AdvancedMarkdownType
-    let text: String
-    
-    enum AdvancedMarkdownType {
-        case header1, header2, header3, bold, italic, code, text, listItem
     }
 }
 
@@ -2054,367 +2396,6 @@ struct AnimatedMeshGradient: View {
     }
 }
 
-// MARK: - Processing Overlay
-struct ProcessingOverlay: View {
-    @State private var isAnimating = false
-    @State private var meshAnimating = false
-    @EnvironmentObject var colorThemeManager: ColorThemeManager
-    
-    var body: some View {
-        ZStack {
-            // Base material background
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
-            
-            // Mesh gradients in corners
-            GeometryReader { geometry in
-                // Top-left corner mesh
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                colorThemeManager.current.accent.opacity(meshAnimating ? 0.4 : 0.2),
-                                colorThemeManager.current.accent.opacity(0.1),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 150
-                        )
-                    )
-                    .frame(width: 300, height: 300)
-                    .position(x: -50, y: -50)
-                    .blur(radius: 20)
-                
-                // Top-right corner mesh
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.blue.opacity(meshAnimating ? 0.3 : 0.15),
-                                Color.purple.opacity(0.1),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 120
-                        )
-                    )
-                    .frame(width: 240, height: 240)
-                    .position(x: geometry.size.width + 30, y: -30)
-                    .blur(radius: 15)
-                
-                // Bottom-left corner mesh
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.purple.opacity(meshAnimating ? 0.35 : 0.18),
-                                Color.pink.opacity(0.1),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 100
-                        )
-                    )
-                    .frame(width: 200, height: 200)
-                    .position(x: -20, y: geometry.size.height + 20)
-                    .blur(radius: 18)
-                
-                // Bottom-right corner mesh
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                colorThemeManager.current.accent.opacity(meshAnimating ? 0.25 : 0.12),
-                                Color.orange.opacity(0.1),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 130
-                        )
-                    )
-                    .frame(width: 260, height: 260)
-                    .position(x: geometry.size.width + 40, y: geometry.size.height + 40)
-                    .blur(radius: 22)
-            }
-            .ignoresSafeArea()
-            
-            // Central content
-            VStack(spacing: 24) {
-                // Animated processing icon with mesh effect
-                ZStack {
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    colorThemeManager.current.accent.opacity(0.3),
-                                    colorThemeManager.current.accent.opacity(0.1),
-                                    Color.clear
-                                ],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 60
-                            )
-                        )
-                        .frame(width: 120, height: 120)
-                        .scaleEffect(isAnimating ? 1.1 : 1.0)
-                    
-                    Image(systemName: "cpu")
-                        .font(.system(size: 40, weight: .bold))
-                        .foregroundColor(colorThemeManager.current.accent)
-                        .rotationEffect(.degrees(isAnimating ? 360 : 0))
-                        .shadow(color: colorThemeManager.current.accent.opacity(0.6), radius: 10)
-                }
-                
-                VStack(spacing: 8) {
-                    Text("⚡ AI Strategy Guide...")
-                        .font(.custom("TTPhobosTrial-Bold", size: 22))
-                        .foregroundColor(colorThemeManager.current.text)
-                        .shadow(color: colorThemeManager.current.accent.opacity(0.3), radius: 5)
-                    
-                    Text("Analyzing problem patterns...")
-                        .font(.custom("TTPhobosTrial-Regular", size: 16))
-                        .foregroundColor(colorThemeManager.current.text.opacity(0.7))
-                }
-                
-                // Animated progress dots
-                HStack(spacing: 8) {
-                    ForEach(0..<3, id: \.self) { index in
-                        Circle()
-                            .fill(colorThemeManager.current.accent)
-                            .frame(width: 8, height: 8)
-                            .scaleEffect(isAnimating ? 1.2 : 0.8)
-                            .animation(
-                                .easeInOut(duration: 0.6)
-                                .repeatForever(autoreverses: true)
-                                .delay(Double(index) * 0.2),
-                                value: isAnimating
-                            )
-                    }
-                }
-            }
-        }
-        .onAppear {
-            withAnimation(.linear(duration: 2.0).repeatForever(autoreverses: false)) {
-                isAnimating = true
-            }
-            withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
-                meshAnimating = true
-            }
-        }
-    }
-}
-
-// MARK: - Sword Fighting Overlay
-struct SwordFightingOverlay: View {
-    @State private var swordPosition: CGFloat = -200
-    @State private var sparkles: [SparkleEffect] = []
-    @State private var showVictoryText = false
-    @EnvironmentObject var colorThemeManager: ColorThemeManager
-    
-    var body: some View {
-        ZStack {
-            Rectangle()
-                .fill(Color.black.opacity(0.7))
-                .ignoresSafeArea()
-            
-            Image(systemName: "sword.fill")
-                .font(.system(size: 60, weight: .bold))
-                .foregroundColor(colorThemeManager.current.accent)
-                .rotationEffect(.degrees(45))
-                .offset(x: swordPosition)
-                .shadow(color: colorThemeManager.current.accent, radius: 10)
-            
-            ForEach(sparkles, id: \.id) { sparkle in
-                Circle()
-                    .fill(sparkle.color)
-                    .frame(width: sparkle.size, height: sparkle.size)
-                    .offset(x: sparkle.x, y: sparkle.y)
-                    .opacity(sparkle.opacity)
-                    .scaleEffect(sparkle.scale)
-            }
-            
-            if showVictoryText {
-                VStack {
-                    Text("💎 QUEST COMPLETE!")
-                        .font(.custom("TTPhobosTrial-Bold", size: 28))
-                        .foregroundColor(.white)
-                        .shadow(color: colorThemeManager.current.accent, radius: 5)
-                    
-                    Text("XP +50")
-                        .font(.custom("TTPhobosTrial-Regular", size: 18))
-                        .foregroundColor(colorThemeManager.current.accent)
-                }
-                .transition(.scale.combined(with: .opacity))
-            }
-        }
-        .onAppear {
-            startSwordAnimation()
-        }
-    }
-    
-    private func startSwordAnimation() {
-        withAnimation(.easeInOut(duration: 0.8)) {
-            swordPosition = 200
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            generateSparkles()
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            withAnimation(.spring()) {
-                showVictoryText = true
-            }
-        }
-    }
-    
-    private func generateSparkles() {
-        for _ in 0..<15 {
-            let sparkle = SparkleEffect(
-                id: UUID(),
-                x: CGFloat.random(in: -100...100),
-                y: CGFloat.random(in: -50...50),
-                size: CGFloat.random(in: 4...12),
-                color: [Color.yellow, Color.orange, Color.red, Color.purple].randomElement()!,
-                opacity: 1.0,
-                scale: 1.0
-            )
-            sparkles.append(sparkle)
-        }
-        
-        withAnimation(.easeOut(duration: 1.5)) {
-            for i in sparkles.indices {
-                sparkles[i].opacity = 0
-                sparkles[i].scale = 0.5
-                sparkles[i].y -= 30
-            }
-        }
-    }
-}
-
-struct SparkleEffect {
-    let id: UUID
-    var x: CGFloat
-    var y: CGFloat
-    let size: CGFloat
-    let color: Color
-    var opacity: Double
-    var scale: CGFloat
-}
-
-// MARK: - AI Suggestions Card
-struct AISuggestionsCard: View {
-    let suggestions: [String]
-    let onSuggestionTapped: (String) -> Void
-    @EnvironmentObject var colorThemeManager: ColorThemeManager
-    @State private var animateGradient = false
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(colorThemeManager.current.accent)
-                
-                Text("⚡ AI Insights")
-                    .font(.custom("TTPhobosTrial-Bold", size: 18))
-                    .foregroundColor(colorThemeManager.current.text)
-                
-                Spacer()
-            }
-            
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ForEach(Array(suggestions.enumerated()), id: \.offset) { index, suggestion in
-                    Button(action: { onSuggestionTapped(suggestion) }) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(suggestion)
-                                .font(.custom("TTPhobosTrial-Regular", size: 14))
-                                .foregroundColor(colorThemeManager.current.text)
-                                .multilineTextAlignment(.leading)
-                                .lineLimit(3)
-                        }
-                        .padding(12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(colorThemeManager.current.tabBar)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(colorThemeManager.current.accent.opacity(0.3), lineWidth: 1)
-                                )
-                        )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-            }
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(colorThemeManager.current.tabBar)
-        )
-    }
-}
-
-// MARK: - Modern Stat Card
-struct ModernStatCard: View {
-    let title: String
-    let value: String
-    let subtitle: String
-    let icon: String
-    let color: Color
-    @EnvironmentObject var colorThemeManager: ColorThemeManager
-    @State private var animateValue = false
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Circle()
-                    .fill(color.opacity(0.2))
-                    .frame(width: 32, height: 32)
-                    .overlay(
-                        Image(systemName: icon)
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(color)
-                    )
-                
-                Spacer()
-            }
-            
-            Text(value)
-                .font(.custom("TTPhobosTrial-Bold", size: 24))
-                .foregroundColor(colorThemeManager.current.text)
-                .scaleEffect(animateValue ? 1.05 : 1.0)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.custom("TTPhobosTrial-Medium", size: 14))
-                    .foregroundColor(colorThemeManager.current.text)
-                
-                Text(subtitle)
-                    .font(.custom("TTPhobosTrial-Regular", size: 12))
-                    .foregroundColor(colorThemeManager.current.text.opacity(0.7))
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(colorThemeManager.current.tabBar)
-        )
-        .onAppear {
-            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
-                animateValue = true
-            }
-        }
-    }
-}
-
 // MARK: - Scroll Offset Preference Key
 struct ScrollOffsetPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
@@ -2424,130 +2405,77 @@ struct ScrollOffsetPreferenceKey: PreferenceKey {
     }
 }
 
-// MARK: - RPG Analysis Card
-struct RPGAnalysisCard: View {
-    let isReady: Bool
-    let onTap: () -> Void
+#Preview {
+    HomeView()
+}
+
+// MARK: - Missing View Types
+struct FullScreenAnalysisView: View {
+    let analysisText: String
+    let onDismiss: () -> Void
     @EnvironmentObject var colorThemeManager: ColorThemeManager
-    @State private var isGlowing = false
     
     var body: some View {
-        Button(action: onTap) {
-            ZStack {
-                // Dark mystical background
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.black.opacity(0.85),
-                                Color.black.opacity(0.95)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(
-                                isReady ? 
-                                LinearGradient(
-                                    colors: [Color.cyan.opacity(0.8), Color.blue.opacity(0.6)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ) :
-                                LinearGradient(
-                                    colors: [colorThemeManager.current.accent.opacity(0.3)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 2
-                            )
-                    )
-                
-                // Content
-                VStack(spacing: 16) {
-                    HStack(spacing: 12) {
-                        // Mystical icon
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    RadialGradient(
-                                        colors: isReady ? [
-                                            Color.cyan.opacity(0.6),
-                                            Color.clear
-                                        ] : [
-                                            colorThemeManager.current.accent.opacity(0.4),
-                                            Color.clear
-                                        ],
-                                        center: .center,
-                                        startRadius: 5,
-                                        endRadius: 25
-                                    )
-                                )
-                                .frame(width: 45, height: 45)
-                                .scaleEffect(isGlowing ? 1.1 : 1.0)
-                                .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: isGlowing)
-                            
-                            Image(systemName: isReady ? "sparkles" : "book.closed")
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(isReady ? Color.cyan : colorThemeManager.current.accent)
-                                .shadow(color: isReady ? Color.cyan.opacity(0.8) : Color.clear, radius: 6)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text("🔮 View Strategy Guide")
-                                    .font(.custom("TTPhobosTrial-Bold", size: 18))
-                                    .foregroundColor(.white)
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(isReady ? Color.cyan : colorThemeManager.current.accent)
-                            }
-                            
-                            Text(isReady ? "⚡ Mystical analysis ready!" : "🏺 Awaiting ancient wisdom...")
-                                .font(.custom("TTPhobosTrial-Regular", size: 14))
-                                .foregroundColor(isReady ? Color.cyan.opacity(0.9) : Color.gray)
-                        }
-                    }
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("🔮 AI Strategy Guide")
+                        .font(.custom("TTPhobosTrial-Bold", size: 28))
+                        .foregroundColor(colorThemeManager.current.text)
+                        .padding(.bottom, 8)
                     
-                    // Magical progress crystals
-                    HStack(spacing: 8) {
-                        ForEach(0..<5, id: \.self) { index in
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(
-                                    index < (isReady ? 5 : 0) ? 
-                                    LinearGradient(
-                                        colors: [Color.cyan, Color.blue],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    ) :
-                                    LinearGradient(
-                                        colors: [Color.gray.opacity(0.3)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(height: 6)
-                                .shadow(color: isReady ? Color.cyan.opacity(0.5) : Color.clear, radius: 3)
-                        }
-                    }
+                    Text(analysisText.isEmpty ? "No analysis available yet." : analysisText)
+                        .font(.custom("TTPhobosTrial-Regular", size: 16))
+                        .foregroundColor(colorThemeManager.current.text)
+                        .lineSpacing(6)
                 }
                 .padding(20)
             }
+            .background(colorThemeManager.current.background)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        onDismiss()
+                    }
+                    .foregroundColor(colorThemeManager.current.accent)
+                }
+            }
         }
-        .buttonStyle(PlainButtonStyle())
-        .onAppear {
-            isGlowing = true
-        }
-        .scaleEffect(isReady ? 1.02 : 1.0)
-        .shadow(color: isReady ? Color.cyan.opacity(0.3) : Color.clear, radius: 15)
-        .animation(.easeInOut(duration: 0.3), value: isReady)
     }
 }
 
-#Preview {
-    HomeView()
+struct AnalysisMarkdownView: View {
+    let content: String
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("📊 Analysis Results")
+                        .font(.custom("TTPhobosTrial-Bold", size: 24))
+                        .foregroundColor(colorThemeManager.current.text)
+                        .padding(.bottom, 8)
+                    
+                    Text(content)
+                        .font(.custom("TTPhobosTrial-Regular", size: 16))
+                        .foregroundColor(colorThemeManager.current.text)
+                        .lineSpacing(6)
+                }
+                .padding(20)
+            }
+            .background(colorThemeManager.current.background)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(colorThemeManager.current.accent)
+                }
+            }
+        }
+    }
 }
