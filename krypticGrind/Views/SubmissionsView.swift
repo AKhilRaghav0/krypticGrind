@@ -1499,11 +1499,27 @@ struct SubmissionsView: View {
     @State private var searchText = ""
     
     enum BattleFilter: String, CaseIterable {
-        case all = "All"
-        case victories = "✓ Wins"
-        case defeats = "✗ Losses"
+        case all = "All Battles"
+        case victories = "⚔️ Victories"
+        case defeats = "💀 Defeats"
         
         var displayName: String { rawValue }
+        
+        var icon: String {
+            switch self {
+            case .all: return "⚔️"
+            case .victories: return "🏆"
+            case .defeats: return "💀"
+            }
+        }
+        
+        var color: Color {
+            switch self {
+            case .all: return .blue
+            case .victories: return .green
+            case .defeats: return .red
+            }
+        }
     }
     
     var body: some View {
@@ -1513,78 +1529,62 @@ struct SubmissionsView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Simple title bar
-                    HStack {
+                    // Epic RPG Title Header (matching other pages)
+                    VStack(spacing: 0) {
                         Spacer()
-                        Text("Battle Logs")
-                            .font(.custom("TTPhobosTrial-Bold", size: 20))
-                            .foregroundColor(colorThemeManager.current.textPrimary)
-                        Spacer()
+                            .frame(height: 8) // Blend with safe area
+                        
+                        HStack {
+                            Text("⚔️")
+                                .font(.system(size: 24))
+                            
+                            Text("Battle Chronicles")
+                                .font(.custom("TTPhobosTrial-Bold", size: 20))
+                                .foregroundColor(colorThemeManager.current.textPrimary)
+                            
+                            Text("🏰")
+                                .font(.system(size: 24))
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 16)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 16)
                     .background(colorThemeManager.current.background)
                     
                     ScrollView {
-                        VStack(spacing: 16) {
-                            // Lightweight stats
+                        VStack(spacing: 24) {
+                            // Epic Battle Stats Header
                             if !cfService.recentSubmissions.isEmpty {
-                                LightweightStatsRow()
+                                EpicBattleStatsHeader()
                                     .padding(.horizontal, 20)
+                                    .padding(.top, 20)
                             }
                             
-                            // Simple search
-                            HStack {
-                                TextField("Search...", text: $searchText)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 8)
-                                    .background(colorThemeManager.current.surface.opacity(0.5))
-                                    .cornerRadius(8)
-                            }
-                            .padding(.horizontal, 20)
+                            // RPG Search Bar
+                            RPGSearchBar(searchText: $searchText)
+                                .padding(.horizontal, 20)
                             
-                            // Minimal filter tabs
-                            HStack(spacing: 8) {
-                                ForEach(BattleFilter.allCases, id: \.self) { filter in
-                                    Button(filter.displayName) {
-                                        selectedFilter = filter
-                                    }
-                                    .font(.custom("TTPhobosTrial-Regular", size: 12))
-                                    .foregroundColor(selectedFilter == filter ? .white : colorThemeManager.current.textSecondary)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(selectedFilter == filter ? colorThemeManager.current.accent : Color.clear)
-                                    .cornerRadius(6)
-                                }
-                            }
-                            .padding(.horizontal, 20)
+                            // Epic Filter Tabs
+                            EpicBattleFilterTabs(selectedFilter: $selectedFilter)
+                                .padding(.horizontal, 20)
                             
-                            // Lightweight battle logs list
+                            // Battle Log Cards
                             if isLoading {
-                                ProgressView("Loading...")
+                                EpicLoadingView()
                                     .frame(height: 200)
-                            } else if filteredSubmissions.isEmpty && !isLoading {
-                                VStack(spacing: 16) {
-                                    Text("📜")
-                                        .font(.system(size: 48))
-                                        .opacity(0.6)
-                                    
-                                    Text("No battles found")
-                                        .font(.custom("TTPhobosTrial-Bold", size: 16))
-                                        .foregroundColor(colorThemeManager.current.textPrimary)
-                                }
-                                .frame(height: 200)
+                            } else if filteredSubmissions.isEmpty {
+                                EpicEmptyBattleView()
+                                    .frame(height: 200)
                             } else {
-                                LazyVStack(spacing: 6) {
+                                LazyVStack(spacing: 16) {
                                     ForEach(filteredSubmissions.prefix(15), id: \.id) { submission in
-                                        UltraLightweightBattleLogCard(submission: submission)
+                                        EpicBattleLogCard(submission: submission)
                                     }
                                     
                                     if filteredSubmissions.count > 15 {
-                                        Text("+ \(filteredSubmissions.count - 15) more battles")
-                                            .font(.custom("TTPhobosTrial-Regular", size: 12))
-                                            .foregroundColor(colorThemeManager.current.textSecondary)
-                                            .padding(.vertical, 12)
+                                        Text("+ \(filteredSubmissions.count - 15) more legendary battles")
+                                            .font(.custom("TTPhobosTrial-Regular", size: 14))
+                                            .foregroundColor(colorThemeManager.current.accent)
+                                            .padding(.vertical, 16)
                                     }
                                 }
                                 .padding(.horizontal, 20)
@@ -1641,4 +1641,360 @@ struct SubmissionsView: View {
     }
 }
 
+// MARK: - Epic Battle Stats Header
+struct EpicBattleStatsHeader: View {
+    @StateObject private var cfService = CFService.shared
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    private var battleStats: (victories: Int, defeats: Int, winRate: Int) {
+        let victories = cfService.recentSubmissions.filter { $0.isAccepted }.count
+        let total = cfService.recentSubmissions.count
+        let defeats = total - victories
+        let winRate = total > 0 ? Int((Double(victories) / Double(total)) * 100) : 0
+        return (victories, defeats, winRate)
+    }
+    
+    var body: some View {
+        ZStack {
+            // Epic background with multiple layers
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            colorThemeManager.current.accent.opacity(0.08),
+                            colorThemeManager.current.surface,
+                            colorThemeManager.current.surface.opacity(0.95)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    colorThemeManager.current.accent.opacity(0.3),
+                                    colorThemeManager.current.accent.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+            
+            VStack(spacing: 16) {
+                // Header
+                HStack {
+                    Text("⚔️")
+                        .font(.system(size: 24))
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Warrior Statistics")
+                            .font(.custom("TTPhobosTrial-Bold", size: 18))
+                            .foregroundColor(colorThemeManager.current.text)
+                        
+                        Text("Your battlefield performance")
+                            .font(.custom("TTPhobosTrial-Regular", size: 12))
+                            .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                    }
+                    
+                    Spacer()
+                    
+                    Text("🏆")
+                        .font(.system(size: 24))
+                }
+                
+                // Stats Grid
+                HStack(spacing: 16) {
+                    EpicStatCard(
+                        title: "Victories",
+                        value: "\(battleStats.victories)",
+                        icon: "🏆",
+                        color: .green
+                    )
+                    
+                    EpicStatCard(
+                        title: "Defeats", 
+                        value: "\(battleStats.defeats)",
+                        icon: "💀",
+                        color: .red
+                    )
+                    
+                    EpicStatCard(
+                        title: "Win Rate",
+                        value: "\(battleStats.winRate)%",
+                        icon: "⚡",
+                        color: colorThemeManager.current.accent
+                    )
+                }
+            }
+            .padding(20)
+        }
+    }
+}
 
+// MARK: - Epic Stat Card
+struct EpicStatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(icon)
+                .font(.system(size: 20))
+            
+            Text(value)
+                .font(.custom("TTPhobosTrial-Bold", size: 18))
+                .foregroundColor(color)
+            
+            Text(title)
+                .font(.custom("TTPhobosTrial-Regular", size: 12))
+                .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(color.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(color.opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+}
+
+// MARK: - RPG Search Bar  
+struct RPGSearchBar: View {
+    @Binding var searchText: String
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            HStack(spacing: 12) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(colorThemeManager.current.accent)
+                
+                TextField("Search your battles...", text: $searchText)
+                    .font(.custom("TTPhobosTrial-Regular", size: 16))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                if !searchText.isEmpty {
+                    Button(action: { searchText = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(colorThemeManager.current.text.opacity(0.5))
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(colorThemeManager.current.surface.opacity(0.8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(colorThemeManager.current.accent.opacity(0.3), lineWidth: 1)
+                    )
+            )
+        }
+    }
+}
+
+// MARK: - Epic Battle Filter Tabs
+struct EpicBattleFilterTabs: View {
+    @Binding var selectedFilter: SubmissionsView.BattleFilter
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(SubmissionsView.BattleFilter.allCases, id: \.self) { filter in
+                    Button(action: {
+                        selectedFilter = filter
+                    }) {
+                        HStack(spacing: 8) {
+                            Text(filter.icon)
+                                .font(.system(size: 16))
+                            
+                            Text(filter.displayName)
+                                .font(.custom("TTPhobosTrial-DemiBold", size: 14))
+                        }
+                        .foregroundColor(selectedFilter == filter ? .white : colorThemeManager.current.text)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(
+                            Capsule()
+                                .fill(selectedFilter == filter ? colorThemeManager.current.accent : colorThemeManager.current.surface.opacity(0.5))
+                                .overlay(
+                                    Capsule()
+                                        .stroke(
+                                            selectedFilter == filter ? Color.clear : colorThemeManager.current.accent.opacity(0.3),
+                                            lineWidth: 1
+                                        )
+                                )
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .padding(.horizontal, 20)
+        }
+    }
+}
+
+// MARK: - Epic Battle Log Card
+struct EpicBattleLogCard: View {
+    let submission: CFSubmission
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        ZStack {
+            // Epic background
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            colorThemeManager.current.surface.opacity(0.9),
+                            colorThemeManager.current.surface.opacity(0.7)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(battleResultColor.opacity(0.3), lineWidth: 1)
+                )
+            
+            HStack(spacing: 16) {
+                // Epic battle result icon
+                ZStack {
+                    Circle()
+                        .fill(battleResultColor.opacity(0.2))
+                        .frame(width: 48, height: 48)
+                        .overlay(
+                            Circle()
+                                .stroke(battleResultColor.opacity(0.4), lineWidth: 2)
+                        )
+                    
+                    Text(battleIcon)
+                        .font(.system(size: 24))
+                }
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(submission.problem.name)
+                        .font(.custom("TTPhobosTrial-Bold", size: 16))
+                        .foregroundColor(colorThemeManager.current.text)
+                        .lineLimit(1)
+                    
+                    HStack(spacing: 8) {
+                        Text("Problem \(submission.problem.index)")
+                            .font(.custom("TTPhobosTrial-Regular", size: 12))
+                            .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+                        
+                        Text("•")
+                            .foregroundColor(colorThemeManager.current.text.opacity(0.3))
+                        
+                        Text(submission.programmingLanguage)
+                            .font(.custom("TTPhobosTrial-Regular", size: 12))
+                            .foregroundColor(colorThemeManager.current.accent)
+                    }
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 6) {
+                    Text(battleVerdict)
+                        .font(.custom("TTPhobosTrial-Bold", size: 14))
+                        .foregroundColor(battleResultColor)
+                    
+                    Text(submission.submissionDate.timeAgo())
+                        .font(.custom("TTPhobosTrial-Regular", size: 10))
+                        .foregroundColor(colorThemeManager.current.text.opacity(0.5))
+                }
+            }
+            .padding(16)
+        }
+    }
+    
+    private var battleIcon: String {
+        submission.isAccepted ? "⚔️" : "💀"
+    }
+    
+    private var battleVerdict: String {
+        submission.isAccepted ? "VICTORY" : "DEFEAT"
+    }
+    
+    private var battleResultColor: Color {
+        submission.isAccepted ? .green : .red
+    }
+}
+
+// MARK: - Epic Loading View
+struct EpicLoadingView: View {
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    @State private var isAnimating = false
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(colorThemeManager.current.accent.opacity(0.2))
+                    .frame(width: 60, height: 60)
+                    .scaleEffect(isAnimating ? 1.1 : 1.0)
+                
+                Text("⚔️")
+                    .font(.system(size: 28))
+                    .rotationEffect(.degrees(isAnimating ? 360 : 0))
+            }
+            
+            Text("Loading Battle Chronicles...")
+                .font(.custom("TTPhobosTrial-Bold", size: 16))
+                .foregroundColor(colorThemeManager.current.text)
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                isAnimating = true
+            }
+        }
+    }
+}
+
+// MARK: - Epic Empty Battle View
+struct EpicEmptyBattleView: View {
+    @EnvironmentObject var colorThemeManager: ColorThemeManager
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("📜")
+                .font(.system(size: 48))
+                .opacity(0.6)
+            
+            VStack(spacing: 8) {
+                Text("No Battles Found")
+                    .font(.custom("TTPhobosTrial-Bold", size: 18))
+                    .foregroundColor(colorThemeManager.current.text)
+                
+                Text("Your legendary quests will appear here")
+                    .font(.custom("TTPhobosTrial-Regular", size: 14))
+                    .foregroundColor(colorThemeManager.current.text.opacity(0.6))
+            }
+        }
+        .padding(40)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(colorThemeManager.current.surface.opacity(0.5))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(colorThemeManager.current.accent.opacity(0.2), lineWidth: 1)
+                )
+        )
+    }
+}
